@@ -1,0 +1,87 @@
+			
+
+           package me.ywork.salary.model;
+			
+			import java.io.Serializable;
+			
+			/**
+			 * Created by xiaobai on 2017/1/11.
+			 */
+			public class MonthStaffSalModel extends StaffBaseInfoModel implements Serializable{
+			    /**
+			     *  应发工资
+			     */
+			    private Double shouldPaySal;
+			    /**
+			     * 工资扣款
+			     */
+			    private Double salDeduct;
+			    /**
+			     * 代扣代缴
+			     */
+			    private Double replaceDeduct;
+			    /**
+			     * 实发工资
+			     */
+			    private Double actualSal;
+			
+			    public MonthStaffSalModel() {
+			        super();
+			    }
+			
+               
+			
+
+
+
+				public Double getShouldPaySal() {
+					return shouldPaySal;
+				}
+
+
+
+
+
+
+				public void setShouldPaySal(Double shouldPaySal) {
+					this.shouldPaySal = shouldPaySal;
+				}
+
+
+
+
+
+
+				public Double getSalDeduct() {
+					return salDeduct;
+				}
+
+
+
+				public void setSalDeduct(Double salDeduct) {
+					this.salDeduct = salDeduct;
+				}
+
+
+
+				public Double getActualSal() {
+					return actualSal;
+				}
+
+
+
+				public void setActualSal(Double actualSal) {
+					this.actualSal = actualSal;
+				}
+
+
+
+				public Double getReplaceDeduct() {
+			        return replaceDeduct;
+			    }
+			
+			    public void setReplaceDeduct(Double replaceDeduct) {
+			        this.replaceDeduct = replaceDeduct;
+			    }
+
+			}

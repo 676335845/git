@@ -1,0 +1,35 @@
+package me.ywork.salary.entity;
+
+import java.util.Date;
+
+import me.ywork.base.entity.Entity;
+
+public class AttendanceEntity extends Entity{
+    /**
+     * 考勤表的时间
+     */
+    private Date attendace_time;
+    
+    /**
+     * 悦工作钉钉号
+     */
+    private String corpid;
+
+	public Date getAttendace_time() {
+		return attendace_time;
+	}
+
+	public void setAttendace_time(Date attendace_time) {
+		this.attendace_time = attendace_time;
+	}
+
+	public String getCorpid() {
+		return corpid;
+	}
+
+	public void setCorpid(String corpid) {
+		this.corpid = corpid;
+	}
+    
+    
+}

@@ -1,0 +1,182 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.SalReportModel;
+import me.ywork.salary.model.SalFieldItemModel;
+import me.ywork.salary.model.SalStaffMonthSalReportDetailModel;
+import me.ywork.salary.model.SalStaffMonthSalReportModel;
+import me.ywork.salary.model.SalInfoDetailModel;
+import me.ywork.salary.repository.SalReportRepository;
+import me.ywork.salary.repository.SalInfoRepository;
+import me.ywork.salary.service.SalReportService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class SalReportServiceImpl implements SalReportService {
+	@Autowired
+	private SalReportRepository salReportRepository;
+	@Autowired
+	private SalInfoRepository staffSalInfoRepository;
+
+	private static final Logger logger = LoggerFactory.getLogger(SalAttendanceServiceImpl.class);
+
+	@Override
+	public PageData<SalReportModel> getAllSalReports(String corpId, Pageable pageable) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getAllMonthSalaryies param corpId is null or empty.");
+		}
+		PageData<SalReportModel> salaryReportModels2 = null;
+		try {
+			List<SalReportModel> salaryReportModels = salReportRepository.getAllSalReports(corpId, pageable);
+
+			Long salaryReportNum = salReportRepository.getAllMonthSalaryiesCount(corpId);
+			pageable.setTotalCount(salaryReportNum);
+			salaryReportModels2 = new PageDataImpl<SalReportModel>(salaryReportModels, pageable);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return salaryReportModels2;
+	}
+
+	@Override
+	public PageData<SalStaffMonthSalReportModel> getSalaryDatailByMonthId(String reportId, Pageable pageable) {
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("getSalaryDatailByMonthId param reportId is null or empty.");
+		}
+		if (pageable == null) {
+			throw new IllegalArgumentException("getSalaryDatailByMonthId param pageable  is null or empty.");
+		}
+
+		PageData<SalStaffMonthSalReportModel> monthStaffSalModels2 = null;
+		try {
+			List<SalStaffMonthSalReportModel> monthStaffSalModels = salReportRepository.getSalaryDatailByMonthId(reportId,
+					pageable);
+			monthStaffSalModels2 = new PageDataImpl<SalStaffMonthSalReportModel>(monthStaffSalModels, pageable);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return monthStaffSalModels2;
+	}
+
+	@Override
+	public List<SalStaffMonthSalReportDetailModel> getSelectedStaffSalaryDetail(List<String> staffids, String reportId) {
+		if (staffids == null) {
+			throw new IllegalArgumentException("getSelectedStaffSalaryDetail param staffids is null");
+		}
+		if (staffids.isEmpty()) {
+			throw new IllegalArgumentException("getSelectedStaffSalaryDetail param staffids is empty.");
+		}
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("getSelectedStaffSalaryDetail param reportId is null or empty. ");
+		}
+		List<SalStaffMonthSalReportDetailModel> monthStaffSalDetailModels = null;
+		try {
+			monthStaffSalDetailModels = salReportRepository.getSelectedStaffSalaryDetail(staffids, reportId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return monthStaffSalDetailModels;
+	}
+
+	@Override
+	public Boolean updateSalariesOnStaffes(List<SalStaffMonthSalReportDetailModel> monthStaffSalDetailModels) {
+		if (monthStaffSalDetailModels == null) {
+			throw new IllegalArgumentException("updateSalariesOnStaffes param monthStaffSalDetailModels is null");
+		}
+		if (monthStaffSalDetailModels.isEmpty()) {
+			throw new IllegalArgumentException("updateSalariesOnStaffes param monthStaffSalDetailModels is empty.");
+		}
+		int size = 0;
+		JSONObject.toJSONString(monthStaffSalDetailModels);
+		try {
+			for (SalStaffMonthSalReportDetailModel monthStaffSalDetailModel : monthStaffSalDetailModels) {
+				// JSONObject.toJSONString(monthStaffSalDetailModel);
+				SalStaffMonthSalReportDetailModel staffSalInfoDetailModel = salReportRepository
+						.getSalaryDatailById(monthStaffSalDetailModel.getStaffMonthSalId());
+				if (staffSalInfoDetailModel != null) {
+					staffSalInfoDetailModel.setAnnualBonus(monthStaffSalDetailModel.getAnnualBonus());
+					staffSalInfoDetailModel.setMonthBonus(monthStaffSalDetailModel.getMonthBonus());
+					staffSalInfoDetailModel.setOtherPretaxDeduct(monthStaffSalDetailModel.getOtherPretaxDeduct());
+					staffSalInfoDetailModel.setStaffMonthSalId(monthStaffSalDetailModel.getStaffMonthSalId());
+					staffSalInfoDetailModel.setOtherAftertaxDeduct(monthStaffSalDetailModel.getOtherAftertaxDeduct());
+					staffSalInfoDetailModel.setOtherPretaxSal(monthStaffSalDetailModel.getOtherPretaxSal());
+					staffSalInfoDetailModel.setOtherAftertaxSal(monthStaffSalDetailModel.getOtherAftertaxSal());
+				}
+				if (salReportRepository.updateStaffSalOnMonth(staffSalInfoDetailModel) > 0) {
+					size++;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (size == monthStaffSalDetailModels.size()) {
+			return Boolean.TRUE;
+		} else {
+			return Boolean.FALSE;
+		}
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Boolean lockSalaryTablesByMonthId(String reportId, Short reportState) {
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("lockSalaryTablesByMonthId param corpId is null or empty.");
+		}
+		if (reportState == null) {
+			throw new IllegalArgumentException("lockSalaryTablesByMonthId param reportState is null or empty.");
+		}
+		Integer rs = null;
+		try {
+			rs = salReportRepository.lockSalaryTablesByMonthId(reportId, reportState);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return rs > 0;
+	}
+
+	@Override
+	public Boolean calculateCorpSal(String corpId) {
+		// 应发工资：所有人员应发工资的总和
+		// 实发工资：所有人员实发工资的总和
+		// 公司交金：所有员工拥有公积金或社保的总和
+		// 员工成本：员工成本=应发工资+公司交金
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("calculateCorpSal param corpId is null or empty.");
+		}
+		/**
+		 * 首先应判断当前月份在数据库表中是否存在薪资数据，若存在，在点击显示月度薪资报表的时候，则无需进行计算 若不存在，则要进行计算薪资。
+		 * 
+		 * 如果存在，返回该企业在叮当薪资中存储的所有薪资报表。 不存在，计算完成后，再显示所有月份的薪资报表
+		 */
+		try {
+			// Double shouldPaySal = 0.0;
+			// Double actualSal = 0.0;
+			// Double insuranceSal = 0.0;
+			// Double staffCost
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+}

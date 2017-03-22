@@ -1,0 +1,150 @@
+			
+
+
+            package me.ywork.salary.service.impl;
+			
+			import me.ywork.context.CallContext;
+			import me.ywork.page.PageData;
+			import me.ywork.page.PageDataImpl;
+			import me.ywork.page.Pageable;
+			import me.ywork.salary.entity.AttendanceEntity;
+			import me.ywork.salary.model.AttendanceModel;
+			import me.ywork.salary.model.StaffAttendanceModel;
+			import me.ywork.salary.repository.AttendanceRepository;
+			import me.ywork.salary.service.AttendanceService;
+			import org.apache.commons.lang.StringUtils;
+			import org.springframework.beans.factory.annotation.Autowired;
+			import org.springframework.stereotype.Service;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+
+import java.util.Date;
+			import java.util.ArrayList;
+			import java.util.List;
+			
+			/**
+			 *    Created by xiaobai on 2017/1/11.
+			 */
+			@Service
+			public class AttendanceServiceImpl implements AttendanceService{
+			
+				@Autowired
+				private AttendanceRepository attendanceRepository;
+				private static final Logger logger = LoggerFactory.getLogger(AttendanceServiceImpl.class);
+				
+			    @Override
+			    public PageData<AttendanceModel> getAllMonthesAttendanceData(String corpId , Pageable pageable) {
+			        if(StringUtils.isBlank(corpId)){
+			            throw new IllegalArgumentException("getAllMonthesAttendanceData param corpId is null or empty");
+			        }
+			        if(pageable == null){
+			        	throw new IllegalArgumentException("getAllMonthesAttendanceData param pageable  is null or empty");
+			        }
+			        //去持久层获得所有月度的考勤数据
+			        List<AttendanceModel> attendanceModels = attendanceRepository.getAllMonthesAttendanceData(corpId, pageable);
+			      //得到查询总数
+			        Long  totalCount = attendanceRepository.getAttendanceDataCountByCorpId(corpId);
+			        //重新设置分页的总数
+			        pageable.setTotalCount(totalCount); 
+			        return new PageDataImpl<AttendanceModel>(attendanceModels ,pageable);
+			    }
+			
+			    @Override
+			    public PageData<StaffAttendanceModel> getAllStaffAttendanceByMonthId(String corpId, Date monthId , Pageable pageable) {
+					        if(StringUtils.isBlank(corpId)){
+					            throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param corpId is null or empty");
+					        }
+					        if(monthId == null){
+					            throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param monthId is null or empty");
+					        }
+					        if(pageable == null){
+					        	  throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param pageable is null or empty");
+					        }
+					        List<StaffAttendanceModel> staffAttendanceModels = null;
+		                 try{
+					           //去持久层获得当月度所有员工分页的考勤数据
+					         staffAttendanceModels = attendanceRepository.getAllStaffAttendanceByMonthId(corpId, monthId, pageable);
+		                 }catch(Exception e){
+		                	 e.printStackTrace();
+		                 }
+					     
+					      //去持久层得到当月度所有员工的考勤数据的总数
+					      Long staffAttendanceCount =  attendanceRepository.getAllStaffAttendanceCountByMonthId(corpId, monthId);
+					      pageable.setTotalCount(staffAttendanceCount);
+					      return new PageDataImpl<StaffAttendanceModel>(staffAttendanceModels , pageable);
+					    }
+			
+			    @Override
+			    public List<StaffAttendanceModel> getMutiStaffAttendanceDetail(List<String> staffIds, Date monthId , String corpId) {
+					        if(staffIds == null){
+					            throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is null.");
+					        }
+					        if(staffIds.isEmpty()){
+					            throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is empty.");
+					        }
+					        if(monthId == null){
+					            throw new IllegalArgumentException("getMutiStaffAttendanceDetail param monthId is null.");
+					        }
+					        if(StringUtils.isBlank(corpId)){
+					        	throw new IllegalArgumentException("getMutiStaffAttendanceDetail param corpId is null.");
+					        }
+
+					        List<StaffAttendanceModel> staffAttendanceModels=null;
+					        try{
+					             staffAttendanceModels =  attendanceRepository.getMutiStaffAttendanceDetail(staffIds, monthId ,corpId);
+					        }catch(Exception e){
+					        	e.printStackTrace();
+					        }
+					        return staffAttendanceModels;
+			    }
+			
+			    @Override
+			    public Boolean updateMutiStaffAttendance(List<StaffAttendanceModel> staffAttendances) {
+				        if(staffAttendances == null){
+				            throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is null.");
+				        }
+				        if(staffAttendances.isEmpty()){
+				            throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is empty.");
+				        }
+				        int size=0;
+				        try{
+				        	logger.info("到达后台！！！！！");
+				        StaffAttendanceModel staffAttendance =null;
+				        for(StaffAttendanceModel staffAttendanceModel : staffAttendances){
+				            staffAttendance = attendanceRepository.getStaffAttendanceModelById(staffAttendanceModel.getStaffAttendanceId());
+				            if(staffAttendance !=null){
+				            	staffAttendance.setAttendanceDays(staffAttendanceModel.getAttendanceDays());
+				            	staffAttendance.setEarlyLeaveHours(staffAttendanceModel.getEarlyLeaveHours());
+				            	staffAttendance.setEarlyLeaveTimes(staffAttendanceModel.getEarlyLeaveTimes());
+				            	staffAttendance.setLateHours(staffAttendanceModel.getLateHours());
+				            	staffAttendance.setLateTimes(staffAttendanceModel.getLateTimes());
+				            	staffAttendance.setRestDays(staffAttendanceModel.getRestDays());
+				            	staffAttendance.setSeriousLateHours(staffAttendanceModel.getSeriousLateHours());
+				            	staffAttendance.setSeriousLateTimes(staffAttendanceModel.getSeriousLateTimes());
+				            	staffAttendance.setOffWorkAbsenceTimes(staffAttendanceModel.getOffWorkAbsenceTimes());
+				            	staffAttendance.setWorkHours(staffAttendanceModel.getWorkHours());
+				            	staffAttendance.setUnWorkDays(staffAttendanceModel.getUnWorkDays());
+				            	staffAttendance.setUnWorkLateDays(staffAttendanceModel.getUnWorkLateDays());
+				            }
+				            if(attendanceRepository.updateMutiStaffAttendance(staffAttendance)>0)
+				            {
+				            	size ++;
+				            }
+				        }	        
+				        }catch(Exception e){
+				        	e.printStackTrace();
+				        }
+				        if(size == staffAttendances.size()){
+				             return Boolean.TRUE;
+				        }else{
+				        	return Boolean.FALSE;
+				        }
+			    }
+			
+				@Override
+				public boolean deleteById(CallContext callContext, String id) {
+					// TODO Auto-generated method stub
+					return false;
+				}
+			}

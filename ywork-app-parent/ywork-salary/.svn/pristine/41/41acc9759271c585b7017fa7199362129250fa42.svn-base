@@ -1,0 +1,28 @@
+package me.ywork.salary.service;
+
+import me.ywork.salary.model.SalRuleDetailModel;
+import me.ywork.salary.model.SalRuleModel;
+
+import java.util.List;
+
+/**
+ * 计算薪资正算和反算的规则，可以自定义每个员工的规则
+ *
+ * Created by xiaobai on 2017/1/10.
+ */
+public interface CalcuSalRulesService {
+    /**
+     *  获取规则列表:获取算工资应用的所有的记薪规则
+     */
+    List<SalRuleModel> getAllSalaryRules(String corpId);
+
+    /**
+     *  获取规则详情
+     */
+    SalRuleDetailModel getSalaryRuleByRuleId(String ruleId);
+
+    /**
+     *  保存计薪规则
+     */
+    Boolean updateSalaryRule(SalRuleDetailModel salaryRule);
+}

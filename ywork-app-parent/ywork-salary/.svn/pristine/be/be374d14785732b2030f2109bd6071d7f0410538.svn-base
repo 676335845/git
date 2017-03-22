@@ -1,0 +1,27 @@
+package me.ywork.salary;
+
+import com.alibaba.fastjson.JSON;
+
+import me.ywork.salary.service.SalCalcuSalService;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import java.util.List;
+
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration({"classpath:/META-INF/webapp/WEB-INF/spring.xml",
+                "classpath:/META-INF/webapp/WEB-INF/spring-beans.xml"})
+@WebAppConfiguration
+public class LbCompanyBaseInfoServiceTest {
+      @Autowired
+      private SalCalcuSalService salCalcuSalService;
+      @Test
+     public void syn(){
+    	  salCalcuSalService.calcuSalReportAutomatic("ding2585e7fd381d17fe");
+      }
+}

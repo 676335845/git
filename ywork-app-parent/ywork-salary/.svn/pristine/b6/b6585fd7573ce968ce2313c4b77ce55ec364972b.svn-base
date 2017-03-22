@@ -1,0 +1,108 @@
+
+	  /*==============================================================*/
+	 /* Table: sal_report 创建企业的月度工资报表                                 */
+	/*==============================================================*/
+	  CREATE TABLE `sal_report` (
+	  `id` varchar(32) NOT NULL comment '主键，工资报表的唯一标识 -- id',
+	  `corp_id` varchar(32) NOT NULL comment '企业唯一标识 -- corpId',
+	  `create_time` date NOT NULL comment '工资报表的生成时间 -- createTime',
+	  `sal_report_state` int(11) DEFAULT '0' comment '工资报表的状态,分为锁定 -- salReportState',
+	  `should_pay_sal` double DEFAULT '0' comment '应发工资 -- shouldPaySal',
+	  `insurance_sal` double DEFAULT '0' comment '公司交金 -- insuranceSal',
+	  `staff_cost` double DEFAULT '0' comment '员工成本 -- staffCost',
+	  PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+   	  /*==============================================================*/
+	 /* Table: staff_month_sal  创建企业人员的月度工资详情表                  */
+	/*==============================================================*/
+   CREATE TABLE `staff_month_sal` (
+	  `id` varchar(32) NOT NULL comment '员工月度薪资标识 -- id',
+	  `annual_bonus` double DEFAULT NULL comment '年终奖 -- annualBonus',
+	  `month_bonus` double DEFAULT NULL comment '当月奖金 -- monthBonus',
+	  `other_pretax_sal` double DEFAULT NULL comment '其他税前补款 -- otherPretaxSal',
+	  `other_aftertax_sal` double DEFAULT NULL comment '其他税后补款 -- otherAftertaxSal',
+	  `other_pretax_deduct` double DEFAULT NULL comment '其他税前扣款 -- otherPretaxDeduct',
+	  `other_aftertax_deduct` double DEFAULT NULL comment '其他税后扣款 -- otherAftertaxDeduct',
+	  `staff_id` varchar(32) NOT NULL comment '员工标识 -- staffId',
+	  `sal_report_id` varchar(32) NOT NULL comment '当月薪资报表标识 -- salReportId',
+	  `should_pay_sal` double DEFAULT NULL comment '应发工资 -- shouldPaySal',
+	  `sal_deduct` double DEFAULT NULL comment '工资扣款 -- salDeduct',
+	  `replace_deduct` double DEFAULT NULL comment '代扣代缴 -- replaceDeduct',
+	  `actual_sal` double DEFAULT NULL comment '实际工资 -- actualSal',
+	  `pub_funds` double DEFAULT NULL comment '公积金 -- pubFunds',
+	  `social_security` double DEFAULT NULL comment '社保 -- socialSecurity',
+	  PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8	
+
+--	
+--	
+--	   <!--插入企业的月度工资报表-->
+--	   insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("1234324546","1111","20161101",0,122123243,1234,2134);
+--	     insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("23435463345223","1111","20161001",0,123454532,1234,2134);
+--	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("22522325422321","1111","20160901",0,123454532,1234,2134);
+--	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("754233434312","1111","20160801",0,123454532,1234,2134);
+--	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("987123432324","1111","20160701",0,123454532,1234,2134);
+--	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("06345234523645","1111","20160601",0,123454532,1234,2134);
+--	     	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("063453645","1111","20160501",0,123454532,1234,2134);
+--	     	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("0634522113645","1111","20160401",0,123454532,1234,2134);
+--	     	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("063256453645","1111","20160301",0,123454532,1234,2134);
+--	     	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("06345361234345","1111","20160201",0,123454532,1234,2134);
+--	      	      insert into sal_report(id,corp_id,create_time,sal_report_state,total_sal,insurance_sal,staff_cost)
+--	     values("0634532345645","1111","20160101",0,123454532,1234,2134);
+--	     
+--	     
+--      insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("23465764321","12354621","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--      insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("75643213435","2134356423","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--   insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("2fd2436546","213454523","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--      insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("6453232435621","213456524","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--    insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("gfbdvsaQRT","2136534221","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--   insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("as12132456u","2343215343","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--     insert into staff_month_sal (id,staff_id,month_sal_id,annual_bonus,annual_bonus_comment,month_bonus,month_bonus_comment,
+--   other_pretax_sal,other_pretax_sal_comment,other_after_pretax_sal,other_after_pretax_sal_comment,
+--   other_pretax_deduct,other_pretax_deduct_comment,otherAfterPretaxDeduct,otherAfterPretaxDeductComment
+--   )values("dsawq3wtyu232","234351456","1234324546",23443,"这是年终奖备注",123,"这是当月奖金备注",2134,"这是其他税前补款备注",213,
+--   "这是其他税后补卡备注",234,"其他税前扣款",987,"其它税后扣款备注");
+--   
+--   
+--    update staff_month_sal set staff_id="12354621",month_sal_id="1234324546";

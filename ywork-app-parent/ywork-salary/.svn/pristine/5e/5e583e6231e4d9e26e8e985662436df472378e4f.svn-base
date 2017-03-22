@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.StaffSalInfoRepository">
+   <!--所有字段列表 -->
+    <sql id="fields">
+    id,ding_staffid,sal_rule,should_pay_sal
+    </sql>
+
+    <!--从实体中取值 -->
+    <sql id="values">
+       #{id},#{staffId},#{salRule},#{ShouldPaySal}
+    </sql>
+    
+    <sql id="field_item_field">
+      id,relative_id,item_name,item_value,item_type
+    </sql>
+    <sql id="field_item_value">
+      #{itemId},#{relativeId},#{itemName},#{itemValue},#{itemType}
+    </sql>
+    
+     <!-- 员工薪资情况的大概信息 -->
+    <resultMap id="StaffSalaryInfoMap" type="me.ywork.salary.model.StaffSalInfoModel">
+        <id column="id" property="id"/>
+        <result column="ding_staffid" property="dingsalStaffId"/>
+        <result column="sal_rule" property="salRule"/>
+        <result column="should_pay_sal" property="shouldPaySal"/>
+        <result column="staff_name" property="staffName"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+     </resultMap>
+
+    <!-- 员工薪资情况的详细信息 -->
+   	<resultMap id="StaffSalaryDetailInfoMap" type="me.ywork.salary.model.StaffSalInfoDetailModel">
+        <id column="id" property="id"/>
+        <result column="ding_staffid" property="staffId"/>
+        <result column="sal_rule" property="salRule"/>
+        <result column="total_sal" property="totalSal"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+     </resultMap>
+     
+     <!-- 薪资字段的详细信息 -->
+     <resultMap type="me.ywork.salary.model.FieldItemModel" id="ItemMap">
+        <id column="id" property="itemId"/>
+        <result column="relative_id" property="relativeId"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_value" property="itemValue"/>
+        <result column="item_type" property="itemType"/>
+     </resultMap>
+ 
+   	<!-- 得到分页的员工薪资信息 -->
+	<select id = "getStaffSalaryInfos" resultType= "me.ywork.salary.model.StaffSalInfoModel">
+	    	select e.fd_name as staffName,			          
+	           pe.fd_name as deptName,
+	           staffInfo.sal_rule as salRule,
+	           staffInfo.should_pay_sal as ShouldPaySal 	                     	           
+		     from 
+		          dingsal_staff_info staffInfo,
+		          ding_org_element e INNER JOIN ding_org_element as pe
+		          on e.fd_parentid = pe.fd_id	  
+			  where 
+			        staffInfo.corp_id='1111' and 
+					staffInfo.ding_staffid =e.fd_dingid   
+			        limit #{beginNum},#{endNum}
+	</select>
+	
+
+	
+	<!-- 获取选中人员工资详情(编辑规则):通过编辑可以获取多个人的薪资详情-->
+	<select id="getMutiStaffSalaryInfosDetail" resultMap = "StaffSalaryDetailInfoMap">
+	    select 
+           staffInfo.id,
+           staffInfo.ding_staffid,
+           staffInfo.sal_rule,
+           staffInfo.should_pay_sal
+	        from 
+	             dingsal_staff_info staffInfo
+	        where 
+		        staffInfo.corp_id = #{corpId} and
+                staffInfo.ding_staffid in           
+	                <foreach collection="staffIds" item="staffId" index="i" open="("
+													 separator="," close=")">
+												#{staffId}
+					</foreach>            
+	</select>
+	
+	<!-- 提交编辑数据:批量修改多个人的薪资 以后的版本会有 -->
+	<update id="updateStaffInfo">
+	     update dingsal_staff_sal_info
+	       set
+       	     should_pay_sal = #{staffSalInfo.ShouldPaySal}
+			 where 
+			   id = #{staffSalInfo.id}
+	</update> 
+	
+	<!-- 新增字段 -->
+	<insert id="addNewField" parameterType="me.ywork.salary.model.FieldItemModel">
+	   insert into dingsal_field_item (
+	      <include refid="field_item_field"></include>
+	   )
+	   values(
+	   <include refid="field_item_value"></include>
+	   )	   
+	</insert>
+	
+	<!-- 修改字段 -->
+	<update id="updateField">
+	  update dingsal_field_item 
+	     set
+	       item_name = #{itemName},
+	       item_value = #{itemValue},
+	       item_type = #{itemType}
+	       where id = #{itemId}
+	</update>
+	
+	<!-- 根据字段ID去查找字段的信息 -->
+	<select id="getItemModel" resultMap="ItemMap">
+	   select *from dingsal_field_item where id=#{itemId}
+	</select>
+	
+	<!--  -->
+	<select id="getStaffFieldItems" resultMap="ItemMap">
+	   select *from dingsal_field_item where relative_id=#{relativeId}
+	</select>
+</mapper>

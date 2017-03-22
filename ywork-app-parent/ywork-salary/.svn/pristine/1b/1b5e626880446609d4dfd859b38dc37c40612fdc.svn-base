@@ -1,0 +1,126 @@
+package me.ywork.salary.entity;
+
+import java.util.Date;
+
+public class MonthStaffSalEntity {
+    /**
+     *  年终奖
+     */
+    private Double annualBonus;
+    /**
+     *  年终奖备注
+     */
+    private String annualBonusComment;
+    /**
+     *  当月奖金
+     */
+    private Double monthBonus;
+    /**
+     *  当月奖金备注
+     */
+    private String monthBonusComment;
+    /**
+     * 其他税前补款
+     */
+    private Double otherPretaxSal;
+    /**
+     * 其他税前补款备注
+     */
+    private String otherPretaxSalComment;
+    /**
+     * 其他税后补款
+     */
+    private Double otherAfterPretaxSal;
+    /**
+     * 其他税后补款
+     */
+    private Double otherAfterPretaxSalComment;
+    /**
+     * 其他税前扣款
+     */
+    private Double otherPretaxdeduct;
+    /**
+     * 其他税前扣款备注
+     */
+    private Double otherPretaxdeductComment;
+    /**
+     * 其他税后扣款
+     */
+    private Double otherAfterPretaxDeduct;
+    /**
+     * 其他税后扣款备注
+     */
+    private String otherAfterPretaxDeductComment;
+	public Double getAnnualBonus() {
+		return annualBonus;
+	}
+	public void setAnnualBonus(Double annualBonus) {
+		this.annualBonus = annualBonus;
+	}
+	public String getAnnualBonusComment() {
+		return annualBonusComment;
+	}
+	public void setAnnualBonusComment(String annualBonusComment) {
+		this.annualBonusComment = annualBonusComment;
+	}
+	public Double getMonthBonus() {
+		return monthBonus;
+	}
+	public void setMonthBonus(Double monthBonus) {
+		this.monthBonus = monthBonus;
+	}
+	public String getMonthBonusComment() {
+		return monthBonusComment;
+	}
+	public void setMonthBonusComment(String monthBonusComment) {
+		this.monthBonusComment = monthBonusComment;
+	}
+	public Double getOtherPretaxSal() {
+		return otherPretaxSal;
+	}
+	public void setOtherPretaxSal(Double otherPretaxSal) {
+		this.otherPretaxSal = otherPretaxSal;
+	}
+	public String getOtherPretaxSalComment() {
+		return otherPretaxSalComment;
+	}
+	public void setOtherPretaxSalComment(String otherPretaxSalComment) {
+		this.otherPretaxSalComment = otherPretaxSalComment;
+	}
+	public Double getOtherAfterPretaxSal() {
+		return otherAfterPretaxSal;
+	}
+	public void setOtherAfterPretaxSal(Double otherAfterPretaxSal) {
+		this.otherAfterPretaxSal = otherAfterPretaxSal;
+	}
+	public Double getOtherAfterPretaxSalComment() {
+		return otherAfterPretaxSalComment;
+	}
+	public void setOtherAfterPretaxSalComment(Double otherAfterPretaxSalComment) {
+		this.otherAfterPretaxSalComment = otherAfterPretaxSalComment;
+	}
+	public Double getOtherPretaxdeduct() {
+		return otherPretaxdeduct;
+	}
+	public void setOtherPretaxdeduct(Double otherPretaxdeduct) {
+		this.otherPretaxdeduct = otherPretaxdeduct;
+	}
+	public Double getOtherPretaxdeductComment() {
+		return otherPretaxdeductComment;
+	}
+	public void setOtherPretaxdeductComment(Double otherPretaxdeductComment) {
+		this.otherPretaxdeductComment = otherPretaxdeductComment;
+	}
+	public Double getOtherAfterPretaxDeduct() {
+		return otherAfterPretaxDeduct;
+	}
+	public void setOtherAfterPretaxDeduct(Double otherAfterPretaxDeduct) {
+		this.otherAfterPretaxDeduct = otherAfterPretaxDeduct;
+	}
+	public String getOtherAfterPretaxDeductComment() {
+		return otherAfterPretaxDeductComment;
+	}
+	public void setOtherAfterPretaxDeductComment(String otherAfterPretaxDeductComment) {
+		this.otherAfterPretaxDeductComment = otherAfterPretaxDeductComment;
+	}
+}

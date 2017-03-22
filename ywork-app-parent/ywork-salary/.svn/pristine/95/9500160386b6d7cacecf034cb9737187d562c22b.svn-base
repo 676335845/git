@@ -1,0 +1,101 @@
+			
+
+
+           package me.ywork.salary.controller;
+			
+			import java.util.List;
+			import javax.servlet.http.HttpServletRequest;
+			import javax.servlet.http.HttpServletResponse;
+			import org.springframework.beans.factory.annotation.Autowired;
+			import org.springframework.stereotype.Controller;
+			import org.springframework.web.bind.annotation.RequestMapping;
+			import org.springframework.web.bind.annotation.RequestMethod;
+			import org.springframework.web.bind.annotation.RequestParam;			
+			import me.ywork.controller.RestController;
+			import me.ywork.page.Pageable;
+			import me.ywork.page.PageableDefaults;
+			import me.ywork.salary.model.StaffSalInfoDetailModel;
+			import me.ywork.salary.service.StaffSalInfoService;
+			
+			
+			/**
+			 *     
+			 *     员工薪资信息模块的控制器
+			 *
+			 **/
+			@Controller
+			@RequestMapping(value = {  "**/app/calsalary/salInfo" })
+			public class StaffSalInfoController  extends RestController<StaffSalInfoService> {
+				
+				@Autowired
+				private StaffSalInfoService staffSalInfoService;
+				
+			    /**
+			     *   获取员工薪详情:获取所有员工的薪资规则，要分页
+			     */
+				 @RequestMapping(value="/getAllSalRules**",method=RequestMethod.GET)
+			   public void  getStaffSalaryInfos(HttpServletRequest request,HttpServletResponse response,
+																	   @RequestParam(value="corpId") String corpId ,
+																	   @PageableDefaults Pageable pageable){
+					 staffSalInfoService.getStaffSalaryInfos(corpId, pageable);
+				 }
+
+			    /**
+			     *   获取员工规则详情:通过员工ID来获取该员工的薪资规则
+			     */
+				 @RequestMapping(value="/getAllSalRules**",method=RequestMethod.GET)
+				 public void  getSalaryInfosByStaffId(HttpServletRequest request,HttpServletResponse response,
+																				 @RequestParam(value="staffId") String staffId){
+					 staffSalInfoService.getSalaryInfosByStaffId(staffId);
+				 }
+
+			    /**
+			     *   获取选中人员工资规则详情(编辑规则):通过编辑可以获取多个人的薪资规则
+			     */
+				 @RequestMapping(value="/getAllSalRules**",method=RequestMethod.GET)
+				 public void  getMutiStaffSalaryInfosDetail(HttpServletRequest request,HttpServletResponse response,
+																							 @RequestParam(value="corpId")String corpId ,
+																							 @RequestParam(value="staffids")List<String> staffids){
+					 staffSalInfoService.getMutiStaffSalaryInfosDetail(corpId, staffids);
+				 }
+
+			    /**
+			     *   提交编辑数据:批量修改多个人的薪资
+			     */
+				 @RequestMapping(value="/getAllSalRules**",method=RequestMethod.POST)
+				 public void updateMutiStaffInfos(HttpServletRequest request,HttpServletResponse response,
+																			 @RequestParam(value="salInfos")List<StaffSalInfoDetailModel> salInfos){
+					 staffSalInfoService.updateMutiStaffInfos(salInfos);
+				 }
+
+			    /**
+			     *   下载薪资模板
+			     */
+				 @RequestMapping(value="/getAllSalRules**",method=RequestMethod.GET)
+				 public void downloadSalaryTemplet(HttpServletRequest request,HttpServletResponse response){
+					 staffSalInfoService.downloadSalaryTemplet();
+				 }
+
+			    /**
+			     *   上传薪资模板
+			     *   线上文件key：654465465465
+			     */
+				 @RequestMapping(value="/getAllSalRules**",method=RequestMethod.POST)
+				 public void uploadSalaryTemplet(HttpServletRequest request,HttpServletResponse response,
+																			 @RequestParam(value="fileKey") String fileKey){
+					 staffSalInfoService.uploadSalaryTemplet(fileKey);
+				 }
+			
+				@Override
+				protected String getHomePageUrl(String param) {
+					// TODO Auto-generated method stub
+					return null;
+				}
+			
+				@Override
+				protected StaffSalInfoService getService() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+			
+			}

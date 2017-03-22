@@ -1,0 +1,21 @@
+package me.ywork.salary.model;
+
+public class SalStaffSalExcelModel {
+   /*
+    * 员工钉钉标识
+    */
+	private String  dingStaffId;
+	/**
+	 * 员工部门名
+	 */
+	private String deptName;
+	/**
+	 * 员工姓名
+	 */
+	private String staffName;
+	/**
+	 * 员工工号
+	 */
+	private String jobNum;
+	
+}

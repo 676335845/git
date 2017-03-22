@@ -1,0 +1,196 @@
+			
+
+package me.ywork.salary.controller;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;		
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;			
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+	
+import com.heyi.utils.MD5Util;
+
+import me.ywork.context.CallContext;
+import me.ywork.controller.RestController;
+import me.ywork.salary.model.SalCorpInfoModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.model.SalUpdateMutiStaffModel;
+import me.ywork.salary.service.SalPassService;
+				
+				
+/**
+ *     
+*     密码管理的控制器
+ *
+ **/
+@Controller
+@RequestMapping(value = {  "**/app/calsalary/salPass" })
+public class SalPassController  extends RestController<SalPassService> {
+	@Autowired 
+	private SalPassService salPassService;
+    /**
+ * 得到企业密码锁开启的状态
+ *
+ * @param request
+ * @param response
+ * @param corpId   钉钉企业号
+ */
+@RequestMapping(value = "/getCorpPassOpenStatus**" , method = RequestMethod.GET)
+ public void getCorpPasswordOpenStatus(HttpServletRequest request , HttpServletResponse response){
+	CallContext callContext = this.getCallContext(request);
+	String corpId = callContext.getCorpId();
+		try{
+				Short openStatus = salPassService.getCorpPassOpenStatus(corpId);
+				  this.writeSuccessJsonToClient(response, openStatus);
+		}catch(Exception e){
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+}
+
+/**
+ * 更新企业密码锁的状态
+ */
+@RequestMapping(value = "/updateCorpPassStatus**",method=RequestMethod.POST)
+public void updateCorpPassStatus(HttpServletRequest request , HttpServletResponse response){
+	CallContext callContext =this.getCallContext(request);
+	String corpId =callContext.getCorpId();
+	try{
+		SalCorpInfoModel salCorpInfoModel = this.fromInputJson(request , SalCorpInfoModel.class);
+		salCorpInfoModel.setCorpId(corpId);
+		Boolean rs = salPassService.updateCorpPassStatus(salCorpInfoModel);
+		  this.writeSuccessJsonToClient(response , rs);
+	}catch(Exception e){
+		e.printStackTrace();
+		this.writeFailJsonToClient(response);
+	}
+}
+
+/**
+ * 根据员工的信息去模糊查询员工的信息
+ * 
+ * @param request
+ * @param response
+ * @param corpId  钉钉企业号
+ * @param keyword   搜索的关键字
+ */
+@RequestMapping(value = "/getStaffInfoByKeyword**" , method = RequestMethod.GET)
+ public void  getStaffInfoByKeyword(HttpServletRequest request , HttpServletResponse response,
+																 @RequestParam(value = "keyword")String keyword){
+	CallContext callContext = this.getCallContext(request);
+	String corpId = callContext.getCorpId();
+		try{
+			   List<SalStaffBaseInfoModel> staffBaseInfos =  salPassService.getStaffInfoByKeyword(corpId,keyword);
+			  this.writeSuccessJsonToClient(response, staffBaseInfos);
+			}catch(Exception e){
+				e.printStackTrace();
+				this.writeFailJsonToClient(response);
+			}
+}
+
+/**
+ *  对员工的密码进行重置
+ * 
+ * @param request
+ * @param response
+ * @param corpId  钉钉企业号
+ * @param staffId  员工ID
+ */
+@RequestMapping(value = "/resetStaffPass**" , method = RequestMethod.POST)
+public void  resetStaffPassword(HttpServletRequest request , HttpServletResponse response){
+	CallContext callContext = this.getCallContext(request);
+	String corpId =callContext.getCorpId();
+	try{
+		SalUpdateMutiStaffModel salStaffs = this.fromInputJson(request, SalUpdateMutiStaffModel.class);
+		  Boolean resetRs =  salPassService.resetStaffPass(corpId ,salStaffs.getStaffBaseInfoModels());
+		  this.writeSuccessJsonToClient(response, resetRs);
+	}catch(Exception e){
+		e.printStackTrace();
+		this.writeFailJsonToClient(response);
+	}
+}
+
+@Override
+protected String getHomePageUrl(String param) {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+protected SalPassService getService() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+/**
+ * 判断是否设置过密码	
+ */
+@RequestMapping(value = "/everUserSetPwd**" , method =RequestMethod.GET)
+public void everSetPwd(HttpServletRequest request , HttpServletResponse response){
+	CallContext callContext = this.getCallContext(request);
+	try{
+		SalStaffBaseInfoModel salStaffBaseInfoModel = salPassService.everStaffsetpwd(callContext);
+		this.writeSuccessJsonToClient(response, salStaffBaseInfoModel);
+	}catch(Exception e){
+		this.writeFailJsonToClient(response);
+	}
+}
+
+
+/**
+ *密码验证
+ */
+@RequestMapping(value = "/checkUserPwd**" , method =RequestMethod.POST)
+public void checkUserPwd(HttpServletRequest request , HttpServletResponse response){
+	CallContext callContext = this.getCallContext(request);
+	try{
+		SalStaffBaseInfoModel salStaffBaseInfoModel = this.fromInputJson(request , SalStaffBaseInfoModel.class);
+		String password =salStaffBaseInfoModel.getStaffPass();
+		 password = MD5Util.getMD5String(MD5Util.getMD5String(password));
+		 if(password.equals(salPassService.getUserPwd(callContext))){
+			 this.writeSuccessJsonToClient(response, Boolean.TRUE);
+		 }else{
+			 this.writeSuccessJsonToClient(response, Boolean.FALSE);
+		 }						 
+	}catch(Exception e){
+		this.writeFailJsonToClient(response);
+		e.printStackTrace();
+	}
+}
+
+
+/**
+ *  设置用户密码
+ */
+@RequestMapping(value = "/setUserPwd**" , method =RequestMethod.POST)
+public void setUserPwd(HttpServletRequest request , HttpServletResponse response){
+	CallContext callContext = this.getCallContext(request);
+	try{
+		SalStaffBaseInfoModel salStaffBaseInfoModel = this.fromInputJson(request , SalStaffBaseInfoModel.class);
+		String password=salStaffBaseInfoModel.getStaffPass();
+	    String newPass =  MD5Util.getMD5String(MD5Util.getMD5String(password));
+        Boolean rs = salPassService.setUserPwd(callContext , newPass);
+        this.writeSuccessJsonToClient(response, rs);
+	}catch(Exception e){
+		this.writeFailJsonToClient(response);
+		e.printStackTrace();
+	}
+}
+/**
+ * 开启或关闭密码查看
+ */
+@RequestMapping(value = "/managerUserPwdState**" , method =RequestMethod.POST)
+				public void managerUserPwdState(HttpServletRequest request , HttpServletResponse response){
+					CallContext callContext = this.getCallContext(request);
+					try{
+						SalStaffBaseInfoModel salStaffBaseInfoModel = this.fromInputJson(request , SalStaffBaseInfoModel.class);
+	                    Boolean rs = salPassService.managerUserPwdState(callContext, salStaffBaseInfoModel.getPassState());
+	                    this.writeSuccessJsonToClient(response , rs);
+					}catch(Exception e){
+						this.writeFailJsonToClient(response);
+						e.printStackTrace();
+					}
+				}
+}

@@ -1,0 +1,106 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+public class SalStaffSalReportDetailModel extends SalStaffBaseInfoModel implements Serializable {
+	/**
+	 * 员工月工资ID
+	 */
+	@JSONField(name="id")
+	private String id;;
+	/**
+	 * 年终奖
+	 */
+	@JSONField(name="nzj")
+	private Long annualBonus;
+
+	/**
+	 * 当月奖金
+	 */
+	@JSONField(name="dyjj")
+	private Long monthBonus;
+
+	/**
+	 * 其他税前补款
+	 */
+	@JSONField(name = "qtsqbk")
+	private Long otherPretaxSal;
+
+	/**
+	 * 其他税后补款
+	 */
+	@JSONField(name = "qtshbk")
+	private Long otherAftertaxSal;
+	/**
+	 * 
+	 * /** 其他税前扣款
+	 */
+	@JSONField(name = "qtsqkk")
+	private Long otherPretaxDeduct;
+
+	/**
+	 * 其他税后扣款
+	 */
+	@JSONField(name = "qtshkk")
+	private Long otherAftertaxDeduct;
+
+	public SalStaffSalReportDetailModel() {
+		super();
+	}
+
+	public Long getAnnualBonus() {
+		return annualBonus;
+	}
+
+	public void setAnnualBonus(Long annualBonus) {
+		this.annualBonus = annualBonus;
+	}
+
+	public Long getMonthBonus() {
+		return monthBonus;
+	}
+
+	public void setMonthBonus(Long monthBonus) {
+		this.monthBonus = monthBonus;
+	}
+
+	public Long getOtherPretaxSal() {
+		return otherPretaxSal;
+	}
+
+	public void setOtherPretaxSal(Long otherPretaxSal) {
+		this.otherPretaxSal = otherPretaxSal;
+	}
+
+	public Long getOtherAftertaxSal() {
+		return otherAftertaxSal;
+	}
+
+	public void setOtherAftertaxSal(Long otherAftertaxSal) {
+		this.otherAftertaxSal = otherAftertaxSal;
+	}
+
+   
+
+	public Long getOtherPretaxDeduct() {
+		return otherPretaxDeduct;
+	}
+
+	public void setOtherPretaxDeduct(Long otherPretaxDeduct) {
+		this.otherPretaxDeduct = otherPretaxDeduct;
+	}
+
+	public Long getOtherAftertaxDeduct() {
+		return otherAftertaxDeduct;
+	}
+
+	public void setOtherAftertaxDeduct(Long otherAftertaxDeduct) {
+		this.otherAftertaxDeduct = otherAftertaxDeduct;
+	}
+
+}

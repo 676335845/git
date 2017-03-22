@@ -1,0 +1,97 @@
+package me.ywork.salary.model;
+
+import java.util.List;
+
+public class SalStaffMbSalInfoModel {
+	  /*
+	   * 员工ID
+	   */
+	private String staffId;
+	  /*
+	   * 名字
+	   */
+	 private String name;
+	  /*
+	   * 头像
+	   */
+	 private String  avatar;
+	  /*
+	   *  部门
+	   */
+	 private String  deptName;
+	  /*
+	   *  应发工资
+	   */
+	 private Long  yfgz;
+	  /*
+	   *  实发工资
+	   */
+	 private Long  sfgz;
+	  /*
+	   *  代缴
+	   */
+	 private Long  dj;
+	  /*
+	   *  扣款
+	   */
+	 private Long kk;
+	 /**
+	  * 薪资的详细情况
+	  */
+	 private List<SalSysFieldItemModel> detail;
+	 
+	public String getStaffId() {
+		return staffId;
+	}
+	public void setStaffId(String staffId) {
+		this.staffId = staffId;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getAvatar() {
+		return avatar;
+	}
+	public void setAvatar(String avatar) {
+		this.avatar = avatar;
+	}
+	public String getDeptName() {
+		return deptName;
+	}
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+	public Long getYfgz() {
+		return yfgz;
+	}
+	public void setYfgz(Long yfgz) {
+		this.yfgz = yfgz;
+	}
+	public Long getSfgz() {
+		return sfgz;
+	}
+	public void setSfgz(Long sfgz) {
+		this.sfgz = sfgz;
+	}
+	public Long getDj() {
+		return dj;
+	}
+	public void setDj(Long dj) {
+		this.dj = dj;
+	}
+	public Long getKk() {
+		return kk;
+	}
+	public void setKk(Long kk) {
+		this.kk = kk;
+	}
+	public List<SalSysFieldItemModel> getDetail() {
+		return detail;
+	}
+	public void setDetail(List<SalSysFieldItemModel> detail) {
+		this.detail = detail;
+	}
+}

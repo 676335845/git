@@ -1,0 +1,77 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+import me.ywork.page.PageData;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.SalCorpReportModel;
+import me.ywork.salary.model.SalStaffSalReportDetailModel;
+import me.ywork.salary.model.SalStaffSalReportModel;
+import me.ywork.salary.model.SalInfoDetailModel;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+
+/**
+ * 一年四季有12个月，我们算工资这个应用可以结合考勤和每个员工基本的薪资规则来生成一个预估的月度工资表
+ * 当然由于可能会有特殊情况，如外派、年假，这时候就要让公司的管理员手动的去修改员工的当月薪资情况，在管理员反复的 确定之后，即可锁定该工资表
+ *
+ * Created by xiaobai on 2017/1/10.
+ */
+@Service
+public interface SalReportService extends BizService {
+	/**
+	 * 获取所有月份工资表概要:获取所有月份的工资表，分页展示
+	 * 
+	 * @param corpId 钉钉企业号
+	 * @param pageable 分页的pageable
+	 * @return 获取的月度薪资报表的集合
+	 */
+	List<SalCorpReportModel> getAllSalReports(String corpId);
+
+	/**
+	 * 根据工资表ID来获得该月的工资详情
+	 * 
+	 * @param corpId 钉钉企业号
+	 * @param monthSalId 月度工资报表的ID
+	 * @param pageable  分页的pageable
+	 * @return 得到企业月度所有员工的薪资大概
+	 */
+	PageData<SalStaffSalReportModel> getSalDatailByReportId(String reportId,String corpId , Pageable pageable);
+
+	/**
+	 * 锁定该月工资表：根据工资表ID来锁定该工资表
+	 * 
+	 * @param corpId  钉钉企业号
+	 * @param reportId 月度工资报表的ID
+	 * @param reportState 工资表的状态
+	 * @return 锁定的结果
+	 */
+	Boolean lockSalReportById(String reportId, Short reportState);
+
+	/**
+	 * 获取选中人员该月工资详情(修改浮动款项):传递工资表ID和多个员工ID去返回多个员工的工资数据
+	 * 
+	 * @param staffids 员工ID的集合
+	 * @param reportId 月度工资报表的ID
+	 * @return 得到选择员工的月度薪资信息的集合
+	 */
+	List<SalStaffSalReportDetailModel> getSelectedStaffSalDetail(List<String> staffids, String reportId);
+
+	/**
+	 * 具体员工的工资情况可以修改,向后台传递的是修改后的工资数据
+	 * 
+	 * @param monthStaffSalDetailModels 月度员工工资的数据的集合
+	 * @return 得到的更新的结果
+	 */
+	Boolean updateSalsOnStaffes(List<SalStaffSalReportDetailModel> monthStaffSalDetailModels);
+
+	/**
+	 * 计算当月企业的薪资
+	 * 
+	 * @Param corpId
+	 * @return 计算的结果
+	 */
+
+	Boolean calculateCorpSal(String corpId);
+}

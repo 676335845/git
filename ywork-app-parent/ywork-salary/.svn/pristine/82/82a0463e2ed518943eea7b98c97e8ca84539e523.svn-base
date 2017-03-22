@@ -1,0 +1,468 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+import com.alibaba.fastjson.annotation.JSONField;
+
+/**
+ * 薪资规则的具体信息
+ *
+ * Created by xiaobai on 2017/1/11.
+ */
+public class SalCorpBaseSalRuleModel extends SalSysRuleModel implements Serializable {
+
+	/**
+	 * 企业薪资规则ID
+	 */
+	private String id;;
+	
+	/**
+	 * 迟到早退扣款方式
+	 */
+	@JSONField(name = "lateType")
+	private Short lateEarlyDeductType;
+	/**
+	 * 迟到早退扣款数额 元/次或 元/分钟
+	 */
+	@JSONField(name = "latePay")
+	private Integer lateEarlyDeduct;
+	/**
+	 * 严重迟到扣款
+	 */
+	@JSONField(name ="tooLatePay")
+	private Integer seriousLateDeduct;
+	/**
+	 * 旷工扣款
+	 */
+	@JSONField(name = "kgPay")
+	private Integer stayAwayDeduct;
+
+	/**
+	 * 计薪天数
+	 */
+	@JSONField(name = "days")
+	private Integer calSalDays;
+	/**
+	 * 试用人数
+	 */
+	@JSONField(name = "count")
+	private Integer fitNums;
+
+	/**
+	 * 规则对应的企业
+	 */
+	private String corpId;
+	
+	/**
+	 * 系统或自定义的薪资规则
+	 */
+	private String salRuleId;
+    
+	/**
+	 *   旷工扣款方式
+	 */
+	@JSONField(name = "kgPayType")
+	private Short  stayAwayDeductType;
+	
+	/**
+	 *  缺卡扣款方式
+	 */
+	@JSONField(name = "qkPayType")
+	private Short lackDeductType;
+	
+	/**
+	 *  缺卡扣款
+	 */
+	@JSONField(name = "qkPay")
+	private Integer lackDeduct;
+	
+	/**
+	 * 事假扣款方式 
+	 */
+	@JSONField(name = "sjPayType")
+	private Short affairLeaveDeductType;
+	
+	/**
+	 * 事假扣款
+	 */
+	@JSONField(name = "sjPay")
+	private Integer affairLeaveDeduct;
+	
+	/**
+	 * 病假扣款方式
+	 */
+	@JSONField(name = "bjPayType")
+	private Integer illnessDeductType;
+	/**
+	 * 病假扣款 
+	 */
+	@JSONField(name = "bjPay")
+	private Integer  illnessDeduct;
+	/**
+	 * 外出扣款方式
+	 */
+	@JSONField(name = "wcPayType")
+	private Integer  outDeductType;
+	/**
+	 * 外出扣款
+	 */
+	@JSONField(name = "wcPay")
+	private Integer outDeduct ;
+	/**
+	 * 出差扣款方式
+	 */
+	@JSONField(name = "ccPayType")
+	private Integer  busyOutDeductType;
+	/**
+	 * 出差扣款
+	 */
+	@JSONField(name = "ccPay")
+	private Integer  busyOutDeduct;
+	/**
+	 * 年假扣款方式
+	 */
+	@JSONField(name = "njPayType")
+	private Integer yearDeductType ;
+	/**
+	 * 年假扣款 
+	 */
+	@JSONField(name = "njPay")
+	private Integer yearDeduct ;
+	/**
+	 * 调休扣款方式 
+	 */
+	@JSONField(name = "txPayType")
+	private Integer dayOffDeductType ;
+	/**
+	 * 调休扣款
+	 */
+	@JSONField(name = "txPay")
+	private Integer  dayOffDeduct;
+	/**
+	 * 婚嫁扣款方式
+	 */
+	@JSONField(name = "hjPayType")
+	private Integer marryOffDeductType ;
+   /**
+    * 婚嫁扣款
+    */
+	@JSONField(name = "hjPay")
+	private Integer marryOffDeduct ;
+	/**
+	    * 产假扣款方式
+	    */
+	@JSONField(name = "cjPayType")
+	private Integer maternityDeductType ;
+	/**
+	    * 产假扣款
+	    */
+	@JSONField(name = "cjPay")
+	private Integer  maternityDeduct;
+	/**
+	    * 陪产假扣款方式 
+	    */
+	@JSONField(name = "pcjPayType")
+	private Integer  accoMaternityDeductType;
+	/**
+	    * 陪产假扣款
+	    */
+	@JSONField(name = "pcjPay")
+	private Integer accoMaternityDeduct ;
+	/**
+	 * 路途扣款方式
+	 */
+	@JSONField(name = "ltjPayType")
+	private Integer journeyDeductType ;
+	/**
+	 * 路途扣款
+	 */
+	@JSONField(name = "ltjPay")
+	private Integer journeyDeduct ;
+	/**
+	 * 其他扣款方式
+	 */
+	@JSONField(name = "otherType")
+	private Integer otherDeductType ;
+	/**
+	 *  其他扣款
+	 */
+	@JSONField(name = "otherPay")
+	private Integer otherDeduct ;
+
+	public SalCorpBaseSalRuleModel() {
+		super();
+	}
+    	
+	public Short getLateEarlyDeductType() {
+		return lateEarlyDeductType;
+	}
+
+	public void setLateEarlyDeductType(Short lateEarlyDeductType) {
+		this.lateEarlyDeductType = lateEarlyDeductType;
+	}
+
+	public Integer getLateEarlyDeduct() {
+		return lateEarlyDeduct;
+	}
+
+	public void setLateEarlyDeduct(Integer lateEarlyDeduct) {
+		this.lateEarlyDeduct = lateEarlyDeduct;
+	}
+
+	public Integer getSeriousLateDeduct() {
+		return seriousLateDeduct;
+	}
+
+	public void setSeriousLateDeduct(Integer seriousLateDeduct) {
+		this.seriousLateDeduct = seriousLateDeduct;
+	}
+
+	public Integer getStayAwayDeduct() {
+		return stayAwayDeduct;
+	}
+
+	public void setStayAwayDeduct(Integer stayAwayDeduct) {
+		this.stayAwayDeduct = stayAwayDeduct;
+	}
+
+	public Integer getCalSalDays() {
+		return calSalDays;
+	}
+
+	public void setCalSalDays(Integer calSalDays) {
+		this.calSalDays = calSalDays;
+	}
+
+	public Integer getFitNums() {
+		return fitNums;
+	}
+
+	public void setFitNums(Integer fitNums) {
+		this.fitNums = fitNums;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getCorpId() {
+		return corpId;
+	}
+
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+
+	public String getSalRuleId() {
+		return salRuleId;
+	}
+
+	public void setSalRuleId(String salRuleId) {
+		this.salRuleId = salRuleId;
+	}
+
+	public Short getStayAwayDeductType() {
+		return stayAwayDeductType;
+	}
+
+	public void setStayAwayDeductType(Short stayAwayDeductType) {
+		this.stayAwayDeductType = stayAwayDeductType;
+	}
+
+	public Short getLackDeductType() {
+		return lackDeductType;
+	}
+
+	public void setLackDeductType(Short lackDeductType) {
+		this.lackDeductType = lackDeductType;
+	}
+
+	public Integer getLackDeduct() {
+		return lackDeduct;
+	}
+
+	public void setLackDeduct(Integer lackDeduct) {
+		this.lackDeduct = lackDeduct;
+	}
+
+	public Short getAffairLeaveDeductType() {
+		return affairLeaveDeductType;
+	}
+
+	public void setAffairLeaveDeductType(Short affairLeaveDeductType) {
+		this.affairLeaveDeductType = affairLeaveDeductType;
+	}
+
+	public Integer getAffairLeaveDeduct() {
+		return affairLeaveDeduct;
+	}
+
+	public void setAffairLeaveDeduct(Integer affairLeaveDeduct) {
+		this.affairLeaveDeduct = affairLeaveDeduct;
+	}
+   
+	public Integer getIllnessDeductType() {
+		return illnessDeductType;
+	}
+
+	public void setIllnessDeductType(Integer illnessDeductType) {
+		this.illnessDeductType = illnessDeductType;
+	}
+
+	public Integer getIllnessDeduct() {
+		return illnessDeduct;
+	}
+
+	public void setIllnessDeduct(Integer illnessDeduct) {
+		this.illnessDeduct = illnessDeduct;
+	}
+
+	public Integer getOutDeductType() {
+		return outDeductType;
+	}
+
+	public void setOutDeductType(Integer outDeductType) {
+		this.outDeductType = outDeductType;
+	}
+
+	public Integer getOutDeduct() {
+		return outDeduct;
+	}
+
+	public void setOutDeduct(Integer outDeduct) {
+		this.outDeduct = outDeduct;
+	}
+
+	public Integer getBusyOutDeductType() {
+		return busyOutDeductType;
+	}
+
+	public void setBusyOutDeductType(Integer busyOutDeductType) {
+		this.busyOutDeductType = busyOutDeductType;
+	}
+
+	public Integer getBusyOutDeduct() {
+		return busyOutDeduct;
+	}
+
+	public void setBusyOutDeduct(Integer busyOutDeduct) {
+		this.busyOutDeduct = busyOutDeduct;
+	}
+
+	public Integer getYearDeductType() {
+		return yearDeductType;
+	}
+
+	public void setYearDeductType(Integer yearDeductType) {
+		this.yearDeductType = yearDeductType;
+	}
+
+	public Integer getYearDeduct() {
+		return yearDeduct;
+	}
+
+	public void setYearDeduct(Integer yearDeduct) {
+		this.yearDeduct = yearDeduct;
+	}
+
+	public Integer getDayOffDeductType() {
+		return dayOffDeductType;
+	}
+
+	public void setDayOffDeductType(Integer dayOffDeductType) {
+		this.dayOffDeductType = dayOffDeductType;
+	}
+
+	public Integer getDayOffDeduct() {
+		return dayOffDeduct;
+	}
+
+	public void setDayOffDeduct(Integer dayOffDeduct) {
+		this.dayOffDeduct = dayOffDeduct;
+	}
+
+	public Integer getMarryOffDeductType() {
+		return marryOffDeductType;
+	}
+
+	public void setMarryOffDeductType(Integer marryOffDeductType) {
+		this.marryOffDeductType = marryOffDeductType;
+	}
+
+	public Integer getMarryOffDeduct() {
+		return marryOffDeduct;
+	}
+
+	public void setMarryOffDeduct(Integer marryOffDeduct) {
+		this.marryOffDeduct = marryOffDeduct;
+	}
+
+	public Integer getMaternityDeductType() {
+		return maternityDeductType;
+	}
+
+	public void setMaternityDeductType(Integer maternityDeductType) {
+		this.maternityDeductType = maternityDeductType;
+	}
+
+	public Integer getMaternityDeduct() {
+		return maternityDeduct;
+	}
+
+	public void setMaternityDeduct(Integer maternityDeduct) {
+		this.maternityDeduct = maternityDeduct;
+	}
+
+	public Integer getAccoMaternityDeductType() {
+		return accoMaternityDeductType;
+	}
+
+	public void setAccoMaternityDeductType(Integer accoMaternityDeductType) {
+		this.accoMaternityDeductType = accoMaternityDeductType;
+	}
+
+	public Integer getAccoMaternityDeduct() {
+		return accoMaternityDeduct;
+	}
+
+	public void setAccoMaternityDeduct(Integer accoMaternityDeduct) {
+		this.accoMaternityDeduct = accoMaternityDeduct;
+	}
+
+	public Integer getJourneyDeductType() {
+		return journeyDeductType;
+	}
+
+	public void setJourneyDeductType(Integer journeyDeductType) {
+		this.journeyDeductType = journeyDeductType;
+	}
+
+	public Integer getJourneyDeduct() {
+		return journeyDeduct;
+	}
+
+	public void setJourneyDeduct(Integer journeyDeduct) {
+		this.journeyDeduct = journeyDeduct;
+	}
+
+	public Integer getOtherDeductType() {
+		return otherDeductType;
+	}
+
+	public void setOtherDeductType(Integer otherDeductType) {
+		this.otherDeductType = otherDeductType;
+	}
+
+	public Integer getOtherDeduct() {
+		return otherDeduct;
+	}
+
+	public void setOtherDeduct(Integer otherDeduct) {
+		this.otherDeduct = otherDeduct;
+	}
+}

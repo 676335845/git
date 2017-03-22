@@ -1,0 +1,54 @@
+package me.ywork.salary.repository;
+
+import java.util.Date;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+import me.ywork.base.repository.IRepository;
+import me.ywork.page.Pageable;
+import me.ywork.salary.entity.AttendanceEntity;
+import me.ywork.salary.model.AttendanceModel;
+import me.ywork.salary.model.StaffAttendanceModel;
+
+
+@Repository
+public interface AttendanceRepository extends IRepository<AttendanceEntity>{
+    /**
+     *  获取所有月份考勤:返回所有月份的的考勤数据
+     */
+	List<AttendanceModel> getAllMonthesAttendanceData(@Param("corpId")String corpId , @Param("pageable") Pageable pageable);
+    /**
+     *    查询企业考勤表的总数
+     */
+    Long getAttendanceDataCountByCorpId(@Param("corpId")String corpId);
+
+    /**
+     *   获取该月人员考勤详情:根据考勤id得到该月所有员工的考勤情况
+     */
+    List<StaffAttendanceModel> getAllStaffAttendanceByMonthId(@Param("corpId")String corpId ,@Param("monthId")Date monthId ,@Param("pageable")Pageable pageable);
+    
+    /**
+     *   根据钉钉企业号和考勤表ID来获得总数
+     *   
+     * @param corpId
+     * @param monthId
+     * @return
+     */
+    Long getAllStaffAttendanceCountByMonthId(@Param("corpId")String corpId ,@Param("monthId")Date monthId );
+
+    /**
+     *  获取选中人员该月考勤详情(编辑考勤):管理员可以选择多个员工和该月考勤的ID来得到这些员工的考勤详情
+     */
+    List<StaffAttendanceModel> getMutiStaffAttendanceDetail(@Param("staffIds")List<String> staffIds , @Param("monthId")Date monthId ,@Param("corpId") String corpId);
+
+    /**
+     *  修改某员工的考勤数据后可以保存到数据库
+     */
+    Integer updateMutiStaffAttendance(@Param("staffAttendance")StaffAttendanceModel staffAttendance);
+    
+    /**
+     * 根据员工考勤标识得到该员工的考勤数据
+     */
+     StaffAttendanceModel getStaffAttendanceModelById(@Param("attendanceId") String attendanceId);
+}

@@ -1,0 +1,100 @@
+package me.ywork.salary.entity;
+
+import java.util.Date;
+
+import me.ywork.base.entity.Entity;
+
+public class SalReportEntity extends Entity {
+	/**
+	 * 企业Id
+	 */
+	private String corpId;
+	/**
+	 * 工资报表的状态
+	 */
+	private Short salReportState;
+	/**
+	 * 应发工资
+	 */
+	private Long shouldPaySal;
+	/**
+	 * 实发工资
+	 */
+	private Long actualPaySal;
+	/**
+	 * 公司交金
+	 */
+	private Long insuranceSal;
+	/**
+	 * 员工成本
+	 */
+	private Long staffCost;	
+	/**
+	 * 工资报表的月份
+	 */
+	private Date monthTime;
+	
+	
+
+	public SalReportEntity() {
+		super();
+	}
+
+	public String getCorpId() {
+		return corpId;
+	}
+
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+
+	public Short getSalReportState() {
+		return salReportState;
+	}
+
+	public void setSalReportState(Short salReportState) {
+		this.salReportState = salReportState;
+	}
+
+	public Long getShouldPaySal() {
+		return shouldPaySal;
+	}
+
+	public void setShouldPaySal(Long shouldPaySal) {
+		this.shouldPaySal = shouldPaySal;
+	}
+
+	public Long getInsuranceSal() {
+		return insuranceSal;
+	}
+
+	public void setInsuranceSal(Long insuranceSal) {
+		this.insuranceSal = insuranceSal;
+	}
+
+	public Long getStaffCost() {
+		return staffCost;
+	}
+
+	public void setStaffCost(Long staffCost) {
+		this.staffCost = staffCost;
+	}
+
+	public Date getMonthTime() {
+		return monthTime;
+	}
+
+	public void setMonthTime(Date monthTime) {
+		this.monthTime = monthTime;
+	}
+
+	public Long getActualPaySal() {
+		return actualPaySal;
+	}
+
+	public void setActualPaySal(Long actualPaySal) {
+		this.actualPaySal = actualPaySal;
+	}
+	
+	
+}

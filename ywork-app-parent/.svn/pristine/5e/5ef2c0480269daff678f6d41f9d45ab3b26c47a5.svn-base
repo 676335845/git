@@ -1,0 +1,14 @@
+package me.ywork.ticket.api.rpc;
+
+
+
+public interface SuiteRpcService {
+
+    /**
+     *
+     * @param platformSuiteId
+     * @param appId
+     * @return
+     */
+    String getPlatformAppId(String platformSuiteId, String appId);
+}

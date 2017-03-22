@@ -1,0 +1,51 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+public class AttendanceModel implements Serializable {
+	/**
+	 * 考勤表的ID
+	 */
+	private String attendanceId;
+	/**
+	 * 考勤表的时间
+	 */
+	private Date attendanceTime;
+
+	/**
+	 * 悦工作钉钉ID
+	 */
+	private String corpId;
+
+	public AttendanceModel() {
+		super();
+	}
+
+	public String getAttendanceId() {
+		return attendanceId;
+	}
+
+	public void setAttendanceId(String attendanceId) {
+		this.attendanceId = attendanceId;
+	}
+
+	public Date getAttendanceTime() {
+		return attendanceTime;
+	}
+
+	public void setAttendanceTime(Date attendanceTime) {
+		this.attendanceTime = attendanceTime;
+	}
+
+	public String getCorpId() {
+		return corpId;
+	}
+
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+}

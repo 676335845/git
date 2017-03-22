@@ -1,0 +1,43 @@
+			
+
+            package me.ywork.salary.repository;
+			
+			import java.util.List;
+			import org.apache.ibatis.annotations.Param;
+			import me.ywork.base.repository.IRepository;
+			import me.ywork.salary.entity.SalRuleEntity;
+			import me.ywork.salary.model.SalRuleDetailModel;
+			import me.ywork.salary.model.SalRuleModel;
+			
+			public interface SalRuleRepository extends IRepository<SalRuleEntity>{
+			    /**
+			     *  获取规则列表:获取算工资应用的所有的记薪规则
+			     *  
+				 * @param corpId 钉钉企业号
+				 * @return 得到的所有的薪资规则
+				 */
+			    List<SalRuleModel> getAllSalRules(@Param("corpId")String corpId);
+			
+			    /**
+			     *  获取规则详情
+			     *  
+			     * @param ruleId 薪资规则的ID
+			     * @return 获取薪资规则的结果
+			     */
+			    SalRuleDetailModel getSalRuleByRuleId(@Param("ruleId") String ruleId);
+			    
+			    /**
+			     *  根据企业计薪规则ID得到企业的 计薪规则
+			     * @param ruleId 企业薪资规则的ID
+			     * @return 企业的薪资规则
+			     */
+			    SalRuleDetailModel getCorpSalRuleByRuleid(@Param("ruleId") String ruleId);
+			
+			    /**
+			     *  保存计薪规则
+			     * 
+			     * @param salaryRule
+			     * @return 保存薪资规则的结果
+			     */
+			    Integer updateSalRule(@Param("salaryRule") SalRuleDetailModel salaryRule);
+			}

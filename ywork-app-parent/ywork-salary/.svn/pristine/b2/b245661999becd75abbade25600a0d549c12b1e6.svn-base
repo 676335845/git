@@ -1,0 +1,71 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+
+public class SalCorpInfoModel implements Serializable {
+	/**
+	 * 企业信息的主键
+	 */
+	private String id;
+	/**
+	 * 企业ID
+	 */
+	private String corpId;
+	/**
+	 * 企业信息的创建时间
+	 */
+	private String createTime;
+	/**
+	 * 企业信息的更新时间
+	 */
+	private String updateTime;
+	/**
+	 * 企业的密码锁开启状态
+	 */
+	private Short passState;
+	/**
+	 * 钉钉企业ID
+	 */
+	private String dingCorpId;
+	
+	
+	public SalCorpInfoModel() {
+		super();
+	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public String getCorpId() {
+		return corpId;
+	}
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+	public String getCreateTime() {
+		return createTime;
+	}
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+	public String getUpdateTime() {
+		return updateTime;
+	}
+	public void setUpdateTime(String updateTime) {
+		this.updateTime = updateTime;
+	}
+	public Short getPassState() {
+		return passState;
+	}
+	public void setPassState(Short passState) {
+		this.passState = passState;
+	}
+	public String getDingCorpId() {
+		return dingCorpId;
+	}
+	public void setDingCorpId(String dingCorpId) {
+		this.dingCorpId = dingCorpId;
+	}
+}

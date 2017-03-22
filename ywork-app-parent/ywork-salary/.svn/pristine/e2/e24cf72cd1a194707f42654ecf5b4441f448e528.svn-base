@@ -1,0 +1,75 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+
+public class SalFieldItemModel implements Serializable {
+
+	/**
+	 * 字段ID
+	 */
+	private String itemId;
+	/**
+	 * 字段名字
+	 */
+	private String itemName;
+	/**
+	 * 字段值
+	 */
+	private Long itemValue;
+	/**
+	 * 字段类型，0是增加，-1是减少
+	 */
+	private Short itemType;
+
+	/**
+	 * 与之相关的标识
+	 */
+	private String relativeId;
+	
+	
+
+	public SalFieldItemModel() {
+		super();
+	}
+
+	public String getItemId() {
+		return itemId;
+	}
+
+	public void setItemId(String itemId) {
+		this.itemId = itemId;
+	}
+
+	public String getItemName() {
+		return itemName;
+	}
+
+	public void setItemName(String itemName) {
+		this.itemName = itemName;
+	}
+
+	public Long getItemValue() {
+		return itemValue;
+	}
+
+	public void setItemValue(Long itemValue) {
+		this.itemValue = itemValue;
+	}
+
+	public Short getItemType() {
+		return itemType;
+	}
+
+	public void setItemType(Short itemType) {
+		this.itemType = itemType;
+	}
+
+	public String getRelativeId() {
+		return relativeId;
+	}
+
+	public void setRelativeId(String relativeId) {
+		this.relativeId = relativeId;
+	}
+
+}

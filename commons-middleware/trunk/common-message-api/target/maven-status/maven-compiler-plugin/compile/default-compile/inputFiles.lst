@@ -1,0 +1,17 @@
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\ons\OnsConfig.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\ons\OnsTopics.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\epc\EpcOnsMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\commitable\CommitableMessageHandler.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\epc\EpcKafkaMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\MessageHandler.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\commitable\ICommitableMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\IMessageHandler.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\OnsMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\responsible\ResponsibleMessageHandler.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\kafka\KafkaProducer.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\epc\EpcMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\MessageHandlers.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\ons\OnsTags.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\message\DefaultMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\ons\codec\JsonJacksonCodec.java
+D:\workspace\dingding\commons-middleware\trunk\common-message-api\src\main\java\com\heyi\framework\messagebus\ons\OnsProducer.java

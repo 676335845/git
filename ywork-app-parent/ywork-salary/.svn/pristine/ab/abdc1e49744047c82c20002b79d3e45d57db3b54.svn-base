@@ -1,0 +1,177 @@
+package me.ywork.salary.entity;
+
+import java.util.Date;
+
+import me.ywork.base.entity.Entity;
+
+public class SalStaffSalReportEntity extends Entity{
+	/**
+	 * 企业月度工资报表标识
+	 */
+	private String salReportId;
+	
+	/**
+	 * 应发工资
+	 */
+	private Long shouldPaySal;
+	/**
+	 * 工资扣款
+	 */
+	private Integer salDeduct;
+	/**
+	 * 代扣代缴
+	 */
+	private Long replaceDeduct;
+	/**
+	 * 实发工资
+	 */
+	private Long actualSal;
+	/**
+	 * 年终奖
+	 */
+	private Long annualBonus;
+
+	/**
+	 * 当月奖金
+	 */
+	private Long monthBonus;
+
+	/**
+	 * 其他税前补款
+	 */
+	private Long otherPretaxSal;
+
+	/**
+	 * 其他税后补款
+	 */
+	private Long otherAftertaxSal;
+	/**
+	 * 
+	 * /** 其他税前扣款
+	 */
+	private Long otherPretaxDeduct;
+
+	/**
+	 * 其他税后扣款
+	 */
+	private Long otherAftertaxDeduct;
+	
+	/**
+	 * 
+	 */
+	private String dingStaffId;
+	
+	/**
+	 *  年月份
+	 */
+	private Date monthTime;
+	
+	public SalStaffSalReportEntity() {
+		super();
+	}
+
+	public Long getShouldPaySal() {
+		return shouldPaySal;
+	}
+
+	public void setShouldPaySal(Long shouldPaySal) {
+		this.shouldPaySal = shouldPaySal;
+	}
+
+	public Integer getSalDeduct() {
+		return salDeduct;
+	}
+
+	public void setSalDeduct(Integer salDeduct) {
+		this.salDeduct = salDeduct;
+	}
+
+	public Long getReplaceDeduct() {
+		return replaceDeduct;
+	}
+
+	public void setReplaceDeduct(Long replaceDeduct) {
+		this.replaceDeduct = replaceDeduct;
+	}
+
+	public Long getActualSal() {
+		return actualSal;
+	}
+
+	public void setActualSal(Long actualSal) {
+		this.actualSal = actualSal;
+	}
+
+	public Long getAnnualBonus() {
+		return annualBonus;
+	}
+
+	public void setAnnualBonus(Long annualBonus) {
+		this.annualBonus = annualBonus;
+	}
+
+	public Long getMonthBonus() {
+		return monthBonus;
+	}
+
+	public void setMonthBonus(Long monthBonus) {
+		this.monthBonus = monthBonus;
+	}
+
+	public Long getOtherPretaxSal() {
+		return otherPretaxSal;
+	}
+
+	public void setOtherPretaxSal(Long otherPretaxSal) {
+		this.otherPretaxSal = otherPretaxSal;
+	}
+
+	public Long getOtherAftertaxSal() {
+		return otherAftertaxSal;
+	}
+
+	public void setOtherAftertaxSal(Long otherAftertaxSal) {
+		this.otherAftertaxSal = otherAftertaxSal;
+	}
+
+	public Long getOtherPretaxDeduct() {
+		return otherPretaxDeduct;
+	}
+
+	public void setOtherPretaxDeduct(Long otherPretaxDeduct) {
+		this.otherPretaxDeduct = otherPretaxDeduct;
+	}
+
+	public Long getOtherAftertaxDeduct() {
+		return otherAftertaxDeduct;
+	}
+
+	public void setOtherAftertaxDeduct(Long otherAftertaxDeduct) {
+		this.otherAftertaxDeduct = otherAftertaxDeduct;
+	}
+
+	public Date getMonthTime() {
+		return monthTime;
+	}
+
+	public void setMonthTime(Date monthTime) {
+		this.monthTime = monthTime;
+	}
+
+	public String getDingStaffId() {
+		return dingStaffId;
+	}
+
+	public void setDingStaffId(String dingStaffId) {
+		this.dingStaffId = dingStaffId;
+	}
+
+	public String getSalReportId() {
+		return salReportId;
+	}
+
+	public void setSalReportId(String salReportId) {
+		this.salReportId = salReportId;
+	}
+	
+}

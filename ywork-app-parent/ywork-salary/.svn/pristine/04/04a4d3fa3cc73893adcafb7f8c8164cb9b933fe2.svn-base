@@ -1,0 +1,72 @@
+
+	  /*==============================================================*/
+	 /* Table: staff_sal_info  创建员工薪资表                  */
+	/*==============================================================*/
+	CREATE TABLE `staff_sal_info` (
+	  `id` varchar(32) NOT NULL comment '员工薪资表标识 -- id',
+	  `staff_id` varchar(64) NOT NULL comment '员工标识  -- staffId',
+	  `sal_rule` int(11) NOT NULL comment '薪资规则 -- salRule',
+	  `should_pay_sal` double DEFAULT '0' comment '应发工资 -- shouldPaySal',
+	  `sal_effect_time` date DEFAULT NULL comment '薪资信息生效时间 -- salEffectTime',
+	  `base_sal` double DEFAULT NULL comment '基本工资 -- baseSal',
+	  `job_sal` double DEFAULT NULL comment '岗位工资 -- jobSal',
+	  `allowance` double DEFAULT '0' comment '生活津贴 -- allowance',
+	   'parent_itemid' varchar(32) not null comment '员工薪资字段父ID'
+--	  `travel_assistance` double DEFAULT '0' comment '交通补助 --travelAssistance',
+--	  `pub_funds` double DEFAULT '0' comment '公积金扣款 -- pubFounds',
+--	  `social_security` double DEFAULT '0' comment '社保扣款 -- socialSecurity',
+	   PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
+	
+ CREATE TABLE `field_item` (
+  `id` varchar(32) NOT NULL COMMENT '字段标识 -- itemId',
+  `parent_item_id` varchar(32) NOT NULL COMMENT '字段父ID -- parentItemId',
+  `item_name` varchar(32) NOT NULL COMMENT '员工薪资字段名字 -- itemName',
+  `item_value` double DEFAULT NULL COMMENT '字段值 -- itemValue',
+  'item_type' int(11) default 0
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+	
+   insert into field_item (id,parent_item_id,item_name,item_value)values("34675564","4623564622","交通补助",2343532);
+   insert into field_item (id,parent_item_id,item_name,item_value)values("86754w3q35","4623564622","生活补助",2343);
+   insert into field_item (id,parent_item_id,item_name,item_value)values("ert","4623564622","通讯补助",100);
+ 
+--     <!--插入员工薪资-->
+--     
+--     大侠
+--     Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("21324355","12354621",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--     刘丹
+--      Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("2132435","21343512",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--           
+--     王五
+--       Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("213454634","2134356423",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--    alise
+--       Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("5432q324","213454523",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--     大致
+--        Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("867543453","213456524",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--     刘翔
+--       Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("346543756","2136534221",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--         
+    

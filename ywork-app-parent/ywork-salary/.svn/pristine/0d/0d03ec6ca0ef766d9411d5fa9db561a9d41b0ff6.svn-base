@@ -1,0 +1,77 @@
+			
+
+           package me.ywork.salary.repository;
+			
+			import java.util.Date;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+			
+			import me.ywork.base.repository.IRepository;
+			import me.ywork.page.PageData;
+			import me.ywork.page.Pageable;
+			import me.ywork.salary.entity.SalaryReportEntity;
+			import me.ywork.salary.model.MonthStaffSalDetailModel;
+			import me.ywork.salary.model.MonthStaffSalModel;
+			import me.ywork.salary.model.SalaryReportModel;
+			import me.ywork.salary.model.StaffSalInfoDetailModel;
+			
+			@Repository
+			public interface SalReportRepository extends IRepository<SalaryReportEntity>{
+			    /**
+			     *   获取所有月份工资表概要:获取所有月份的工资表，分页展示
+			     *   
+				 * @param corpId 钉钉企业号
+				 * @param pageable 分页的pageable
+				 * @return 获取的月度薪资报表的集合
+				 */
+			    List<SalaryReportModel> getAllMonthSalaryies(@Param("corpId")String corpId ,@Param("pageable")Pageable pageable);
+			
+			    /**
+			     * 根据工资表ID来获得该月的工资详情
+			     * 
+			     * @param corpId 钉钉企业号
+			     * @param monthId  月度工资报表的ID
+			     * @param pageable  分页的pageable
+			     * @return  得到企业月度所有员工的薪资大概
+			     */
+			    List<MonthStaffSalModel> getSalaryDatailByMonthId(@Param("corpId")String corpId ,@Param("monthId") Date monthId , @Param("pageable")Pageable pageable);
+			
+			    /**
+			     *  根据员工ID去获取员工的工资详情
+			     * 
+			     * @param corpId 钉钉企业号
+			     * @param monthId  月度工资报表的ID
+			     * @param staffId 员工ID
+			     * @return  员工的工资详情
+			     */
+			    StaffSalInfoDetailModel getSalaryDatailByStaffId(@Param("corpId")String corpId ,@Param("monthId")Date monthId, @Param("staffId")String staffId);
+			
+			    /**
+			     *  锁定该月工资表：根据工资表ID来锁定该工资表
+			     * 
+			     * @param corpId 钉钉企业号
+			     * @param monthId 月度工资报表的ID
+			     * @param reportState 工资表的状态
+			     * @return 锁定的结果
+			     */
+			    Integer  lockSalaryTablesByMonthId(@Param("corpId")String corpId , @Param("monthId")Date monthId ,@Param("reportState") Short reportState);
+			
+			    /**
+			     *  获取选中人员该月工资详情(修改浮动款项):传递工资表ID和多个员工ID去返回多个员工的工资数据
+			     * 
+			     * @param staffids  员工ID的集合
+			     * @param monthId  月度工资报表的ID
+			     * @return   得到选择员工的月度薪资信息的集合
+			     */
+			    List<MonthStaffSalDetailModel> getSelectedStaffSalaryDetail(@Param("staffids")List<String> staffids , @Param("monthId")Date monthId);
+			
+			    /**
+			     *  具体员工的工资情况可以修改,向后台传递的是修改后的工资数据
+			     * 
+			     * @param monthStaffSalDetailModels  月度员工工资的数据的集合
+			     * @return  得到的更新的结果
+			     */
+			    Integer updateStaffSalOnMonth(@Param("monthStaffSalDetailModels") MonthStaffSalDetailModel monthStaffSalDetailModels);
+			}

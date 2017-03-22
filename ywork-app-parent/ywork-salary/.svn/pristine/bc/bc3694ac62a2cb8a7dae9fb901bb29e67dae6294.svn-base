@@ -1,0 +1,69 @@
+			
+	
+	      package me.ywork.salary.repository;
+			
+			import java.util.List;
+			
+			import org.apache.ibatis.annotations.Param;
+			import org.springframework.stereotype.Repository;
+			
+			import me.ywork.base.repository.IRepository;
+			import me.ywork.page.PageData;
+			import me.ywork.page.Pageable;
+			import me.ywork.salary.entity.StaffSalInfoEntity;
+			import me.ywork.salary.model.StaffSalInfoDetailModel;
+			import me.ywork.salary.model.StaffSalInfoModel;
+			
+			@Repository
+			public interface StaffSalInfoRepository extends IRepository<StaffSalInfoEntity>{
+				
+				/**
+			     *   获取员工薪详情:获取所有员工的薪资规则，要分页
+				 * 
+				 * @param corpId  钉钉企业号
+				 * @param pageable 分页的Pageable
+				 * @return 分页的数据
+				 */
+			    List<StaffSalInfoModel> getStaffSalaryInfos(@Param("corpId")String corpId ,@Param("pageable") Pageable pageable);
+			
+			    /**
+			     *   获取员工规则详情:通过员工ID来获取该员工的薪资规则
+			     * 
+			     * @param staffId 员工标识
+			     * @return  员工薪资信息的详情
+			     */
+			    StaffSalInfoDetailModel getSalaryInfosByStaffId(@Param("corpId")String corpId  , @Param("staffId")String staffId);
+			
+			    /**
+			     *   获取选中人员工资详情详情(编辑规则):通过编辑可以获取多个人的薪资详情
+			     * 
+			     * @param corpId  钉钉企业号
+			     * @param staffids 员工ID的集合
+			     * @return 员工薪资详细的集合
+			     */
+			    List<StaffSalInfoDetailModel> getMutiStaffSalaryInfosDetail(@Param("corpId")String corpId ,@Param("staffIds") List<String> staffids);
+			
+			    /**
+			     *   修改多个人的薪资
+			     * 
+			     * @param staffSalInfo 员工薪资信息
+			     * @return 更新的结果
+			     */
+			    Integer updateStaffInfo(@Param("staffSalInfo") StaffSalInfoDetailModel staffSalInfo);
+			
+			    /**
+			     *   下载薪资模板
+			     * 
+			     * @return
+			     */
+			    Object downloadSalaryTemplet();
+
+			    /**
+			     *   上传薪资模板
+			     *   线上文件key：654465465465
+			     * 
+			     * @param fileKey
+			     * @return
+			     */
+			    Object uploadSalaryTemplet(@Param("fileKey") String fileKey);
+			}

@@ -1,0 +1,5 @@
+package com.heyi.epc.message;
+
+public interface EpcMessage {
+	Object getSource();
+}

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.SalRuleRepository">
+   <!--所有字段列表 -->
+    <sql id="fields">
+       id,sal_rule_id,sal_rule_des, cal_sal_days,fit_nums,late_early_deduct_type,late_early_educt,
+       serious_late_deduct,corp_id,
+       stay_away_deduct,sal_rule_name
+    </sql>
+
+    <!--从实体中取值 -->
+    <sql id="values">
+	   #{id},
+	   #{salRuleName}
+	   #{salRuleId},
+	   #{salRuleDes},
+       #{calSalDays},
+       #{fitNums},
+       #{lateEearlyDeductType},
+       #{lateEarlyEduct},
+       #{corpId},
+       #{seriousLateDeduct},
+       #{stayAwayDeduct}    
+    </sql>
+    <!-- 员工薪资情况的大概信息 -->
+    <resultMap id="SalaryRuleMap" type="me.ywork.salary.model.SalRuleDetailModel">
+        <id column="id" property="corpSalRuleId"/>
+        <result column="sal_rule_name" property="salRuleName"/>
+        <result column="sal_rule_des" property="salRuleDes"/>
+        <result column="sal_rule_type" property="salRuleType"/>
+        <result column="fit_nums" property="fitNums"/>
+	    <result column="cal_sal_days" property="calSalDays"/>
+	    <result column="late_early_deduct_type" property="lateEarlyDeductType"/>
+	    <result column="late_early_educt" property="lateEarlyEduct"/>
+	    <result column="serious_late_deduct" property="seriousLateDeduct"/>
+	    <result column="stay_away_deduct" property="stayAwayDeduct"/>
+	    <result column="corp_id" property="corpId"/>
+     </resultMap>
+    
+    <!-- 获取算工资应用的所有的记薪规则 -->
+   <select id="getAllSalRules" resultMap="SalaryRuleMap">
+     select 
+       corpRule.id,
+       salRule.sal_rule_name,
+       salRule.sal_rule_des,
+       salRule.sal_rule_type,
+       corpRule.cal_sal_days,
+       corpRule.fit_nums
+       from 
+          dingsal_corpsal_rule corpRule,
+          dingsal_sal_rule salRule
+          where corpRule.sal_rule_id = salRule.id and
+                corpRule.corp_id=#{corpId}          
+   </select>
+   <!--  获取规则详情 -->
+   <select id="getSalRuleByRuleId" resultType="me.ywork.salary.model.SalRuleDetailModel">
+      select 
+         corpRule.id,
+         salRule.sal_rule_name as salRuleName,
+         salRule.sal_rule_des as salRuleDes,
+         salRule.sal_rule_type as salRuleType,
+         corpRule.cal_sal_days as calSalDays,
+         corpRule.fit_nums as fitNums
+         from 
+            dingsal_corpsal_rule corpRule,
+            dingsal_sal_rule salRule
+               where corpRule.sal_rule_id = salRule.id and
+                corpRule.id=#{ruleId}    
+   </select>
+   
+   <!-- 保存计薪规则 -->
+	<update id="updateSalRule">
+	     update dingsal_corp_sal_rule
+	       set	        	 
+      	     cal_sal_days = #{salaryRule.calSalDays},
+      	     fit_nums = #{salaryRule.fitNums},
+      	     late_early_deduct_type = #{salaryRule.lateEearlyDeductType},
+	         late_early_educt = #{salaryRule.lateEarlyEduct}, 
+	         serious_late_deduct = #{salaryRule.seriousLateDeduct},
+	         stay_away_deduct = #{salaryRule.stayAwayDeduct}
+			 where 
+			   id = #{salaryRule.corpSalRuleId}
+    </update> 
+    
+    <!-- 根据企业计薪规则ID得到企业的 计薪规则-->
+    <select id = "getCorpSalRuleByRuleid" resultMap="SalaryRuleMap">
+        select  
+            cal_sal_days
+     	    fit_nums,
+     	    late_early_deduct_type,
+	        late_early_educt, 
+	        serious_late_deduct,
+	        stay_away_deduct
+	        from dingsal_corpsal_rule corpRule
+	        where
+	          corpRule.id=#{ruleId}    
+    </select>
+</mapper>

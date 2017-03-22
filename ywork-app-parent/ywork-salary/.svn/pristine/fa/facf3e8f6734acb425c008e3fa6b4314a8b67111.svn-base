@@ -1,0 +1,41 @@
+			
+
+            package me.ywork.salary.entity;
+			
+			import java.util.Date;
+			
+			import me.ywork.base.entity.Entity;
+			
+			public class StaffSalInfoEntity extends Entity{
+			    /**
+			     *  薪资计算规则
+			     */
+			    private Short salaryRule;
+			    /**
+			     *  工资合计
+			     */
+			    private Long  totalSalary;
+			
+			    /**
+			     *  薪资生效时间
+			     */
+			    private Date  salaryEffectTime;
+			    
+			
+				public Short getSalaryRule() {
+					return salaryRule;
+				}
+				public void setSalaryRule(Short salaryRule) {
+					this.salaryRule = salaryRule;
+				}
+
+				public Date getSalaryEffectTime() {
+					return salaryEffectTime;
+				}
+				public void setSalaryEffectTime(Date salaryEffectTime) {
+					this.salaryEffectTime = salaryEffectTime;
+				}
+				
+			    
+			    
+			}

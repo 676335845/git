@@ -1,0 +1,103 @@
+package me.ywork.salary.entity;
+
+import me.ywork.base.entity.Entity;
+
+public class SalRuleEntity extends Entity {
+	/**
+	 * 薪资规则名称
+	 */
+	private Short salRule;
+
+	/**
+	 * 薪资规则描述
+	 */
+	private String salRuleDes;
+	/**
+	 * 计薪天数
+	 */
+	private Double calSalaryDays;
+	/**
+	 * 试用人数
+	 */
+	private Long fitNums;
+	/**
+	 * 迟到早退扣款方式
+	 */
+	private Short lateEarlyDeductType;
+	/**
+	 * 迟到早退扣款数额 元/次或 元/分钟
+	 */
+	private Double lateEarlyDeduct;
+	/**
+	 * 严重迟到扣款
+	 */
+	private Double seriousLateDeduct;
+	/**
+	 * 旷工扣款
+	 */
+	private Double stayAwayDeduct;
+
+	public Short getSalRule() {
+		return salRule;
+	}
+
+	public void setSalRule(Short salRule) {
+		this.salRule = salRule;
+	}
+
+	public String getSalRuleDes() {
+		return salRuleDes;
+	}
+
+	public void setSalRuleDes(String salRuleDes) {
+		this.salRuleDes = salRuleDes;
+	}
+
+	public Double getCalSalaryDays() {
+		return calSalaryDays;
+	}
+
+	public void setCalSalaryDays(Double calSalaryDays) {
+		this.calSalaryDays = calSalaryDays;
+	}
+
+	public Long getFitNums() {
+		return fitNums;
+	}
+
+	public void setFitNums(Long fitNums) {
+		this.fitNums = fitNums;
+	}
+
+	public Short getLateEarlyDeductType() {
+		return lateEarlyDeductType;
+	}
+
+	public void setLateEarlyDeductType(Short lateEarlyDeductType) {
+		this.lateEarlyDeductType = lateEarlyDeductType;
+	}
+
+	public Double getLateEarlyDeduct() {
+		return lateEarlyDeduct;
+	}
+
+	public void setLateEarlyDeduct(Double lateEarlyDeduct) {
+		this.lateEarlyDeduct = lateEarlyDeduct;
+	}
+
+	public Double getSeriousLateDeduct() {
+		return seriousLateDeduct;
+	}
+
+	public void setSeriousLateDeduct(Double seriousLateDeduct) {
+		this.seriousLateDeduct = seriousLateDeduct;
+	}
+
+	public Double getStayAwayDeduct() {
+		return stayAwayDeduct;
+	}
+
+	public void setStayAwayDeduct(Double stayAwayDeduct) {
+		this.stayAwayDeduct = stayAwayDeduct;
+	}
+}

@@ -1,0 +1,207 @@
+package me.ywork.salary.repository;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+import me.ywork.base.repository.IRepository;
+import me.ywork.salary.entity.SalSysFieldItemEntity;
+import me.ywork.salary.entity.SalElementInfoEntity;
+import me.ywork.salary.entity.SalStaffBaseInfoEntity;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.model.SalDeptInfoModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+
+@Repository
+public interface SalStaffBaseInfoRepository extends IRepository<SalStaffBaseInfoEntity> {
+	/**
+	 * 获取员工薪详情：获取所有员工的薪资详情，要分页
+	 * 
+	 * @param corpId 钉钉企业号
+	 * @param pageable  分页的Pageable
+	 * @return 分页的数据
+	 */
+	List<SalStaffBaseInfoModel> getStaffSalInfos(@Param("corpId") String corpId, @Param("beginNum") Integer beginNum,
+			@Param("endNum") Integer endNum);
+	
+	/**
+	 * 获取企业所有员工的信息
+	 */
+	List<SalStaffBaseInfoModel> getStaffInfos(@Param("corpId")String corpId);
+	
+	/**
+	 * 返回企业所有员工的薪资信息的总数 
+	 */
+	Long getStaffSalInfosCount(@Param("corpId")String corpId);
+	
+	/**
+	 * 查询企业具体员工的信息
+	 */
+	SalStaffBaseInfoModel getStaffBaseInfo(@Param("corpId")String corpId,@Param("staffId")String staffId);
+	
+	/**
+	 * 查询在组织架构中员工中的具体信息
+	 * 
+	 * @param corpId
+	 * @param staffId
+	 * @return
+	 */
+	SalStaffBaseInfoModel getOrgStaffInfo(@Param("corpId")String corpId,@Param("staffId")String staffId);
+	/**
+	 * 新增字段
+	 * 
+	 * @param fieldItemModel
+	 * @return
+	 */
+	Integer addNewField(SalSysFieldItemModel fieldItemModel);
+	/**
+	 * 新增员工自定义薪资字段
+	 */
+	Integer addNewSalInfoField(SalSysFieldItemModel fieldItemModel);
+	
+	/**
+	 * 删除员工的自定义的薪资字段
+	 */
+	Integer deleteStaffSalField(@Param("staffId")String staffId);
+	/**
+	 * 新增企业考勤请假的自定义的字段
+	 * 
+	 * @param salSysFieldItemModel
+	 * @return
+	 */
+	Integer addNewAttendanceVacationField(SalSysFieldItemModel salSysFieldItemModel);
+
+	/**
+	 * 根据字段标识去查找字段信息
+	 */
+	SalSysFieldItemModel getItemModel(@Param("itemId") String itemId);
+	
+	/**
+	 * 根据字段标识去查找字段实体
+	 */
+	SalSysFieldItemEntity getItemEntity(@Param("itemId") String itemId);
+
+	/**
+	 * 更新字段
+	 * 
+	 * @param fieldItemModel
+	 * @return
+	 */
+	Integer updateField(SalSysFieldItemModel fieldItemModel);
+
+	/**
+	 * 根据父字段ID去查询该员工所有自定义的字段
+	 */
+	List<SalSysFieldItemModel> getStaffFieldItems(@Param("corpId") String corpId , @Param("dingStaffId") String dingStaffId);
+	
+	
+	 /**
+	  * 删除企业对应的薪资规则
+	  */
+	 Integer deleteCorpSalRule(@Param("corpId")String corpId,	
+			                                      @Param("cbRuleId") String cbRuleId ,
+											   	@Param("updateType")Short updateType);
+	/**
+	 *  更新企业人员对应的基本薪资规则
+	 */
+	Integer updateSalRuleStaffies(@Param("sal")SalStaffBaseInfoModel salStaffBaseInfoModel ,
+														@Param("cbRuleId") String cbRuleId ,
+														@Param("updateType")Short updateType,
+														@Param("corpId")String corpId);
+	
+	/**
+	 * 更新部门下的所有人员的薪资规则
+	 */
+//	Integer updateApplicationDeptStafies(SalStaffBaseInfoModel salStaffBaseInfoModel);
+	/**
+	 * 删除企业员工的基本薪资规则
+	 * @param staffBaseInfoModels
+	 * @return 删除的结果
+	 */
+	Integer deleteStaffSalRule(@Param("sal")SalStaffBaseInfoModel salStaffBaseInfoModel , @Param("type")Short deleteType);
+	
+	/**
+	 * 得到企业所有的部门及相应的人数
+	 */
+	List<SalDeptInfoModel> getDeptInfoByCorpId(@Param("corpId")String corpId);
+	
+	/**
+	 * 得到企业所有的子部门
+	 */
+	List<String> getDeptInfoByParentId(@Param("corpId") String corpId , @Param("deptId")String deptId);
+	
+	/**
+	 * 得到企业所有的子部门
+	 */
+	List<String> getDeptInfoAndStaffIdByParentId(@Param("corpId") String corpId , @Param("deptId")String deptId);
+	
+   /**
+    * 得到部门下的所有的人员信息
+    */
+	List<SalStaffBaseInfoModel> getStaffBaseInfosByDept(@Param("corpId")String corpId , @Param("deptId")String deptId);
+	
+	/**
+	 * 得到在算工资应用中匹配某项规则的人数
+	 */
+	Long getRuleStaffNoByDeptId(@Param("corpId") String corpId ,@Param("deptId")String deptId , @Param("type")Short type ,@Param("corpBaseRuleId")String corpBaseRuleId);
+	
+	/**
+	 * 
+	 */
+	List<SalStaffBaseInfoModel> getStaffInfoOnRule(@Param("corpId")String corpId , @Param("deptId")String deptId,
+			 @Param("type")Short type ,@Param("corpBaseRuleId")String corpBaseRuleId);
+	List<SalStaffBaseInfoModel> getStaffInfoOnUnSetDept(@Param("corpId")String corpId, @Param("type")Short type ,@Param("corpBaseRuleId")String corpBaseRuleId);
+	
+	/**
+	 * 得到企业的请假类型的字段集合
+	 */
+	List<SalSysFieldItemModel> getCorpVacations(@Param("corpId")String corpId);
+	/**
+	 * 判断指定的人是否在该部门下
+	 */
+	Integer getStaffInfoByDeptIdAndStaffId(@Param("corpId")String corpId , 
+			                                                             @Param("staffId")String staffId,
+			                                                             @Param("deptId")String deptId,
+			                                                             @Param("type") Short  type,
+			                                                             @Param("cbRuleId") String cbRuleId
+			                                                             );
+	/**
+	 * 得到选择是某种规则的部门ID
+	 */
+	String getChoiceRuleId(@Param("corpId")String corpId,@Param("staffId")String staffId,@Param("type")Short type);
+	
+	/**
+	 * 得到员工所有的部门的名字
+	 */
+	List<String> getStaffAllDeptName(@Param("corpId")String corpId , @Param("staffId")String staffId);
+	
+	/**
+	 * 判断该员工是否参与社保和公积金
+	 */
+	Integer getStaffSocialStatus(@Param("corpId")String corpId , @Param("staffId")String staffId);
+	
+	/**
+	 * 判断该员工是否参与个人所得税
+	 */
+	Integer getStaffTaxStatus(@Param("corpId")String corpId , @Param("staffId")String staffId);
+	
+	/**
+	 * 得到指定的组织架构的信息
+	 */
+	SalElementInfoEntity getOrgInfo(@Param("corpId")String corpId,@Param("fdDingId")String fdDingId,@Param("fdOrgType")Short fdOrgType);
+	
+	/**
+	 * 根据部门的名字逐个获取员工的钉钉ID
+	 */
+	List<String> getStaffDingIdByDeptName(@Param("corpId")String corpId);
+	
+	/**
+	 * 根据企业的钉钉ID去获取企业组织架构中员工的总数
+	 */
+	Integer getCorpStaffOrgCount(@Param("corpId")String corpId);
+	
+	/**
+	 * 得到组织架构下指定部门下的所有人员的信息
+	 */
+	List<SalElementInfoEntity> getOrgStaffInfosUnderDept(@Param("corpId")String corpId , @Param("deptId")String deptId);
+}

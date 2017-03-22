@@ -1,0 +1,16 @@
+package me.ywork.salary.model;
+
+import java.util.List;
+
+public class UpdateMutiStaffAttendanceModel {
+	 private List<StaffAttendanceModel> staffAttendances;
+
+	public List<StaffAttendanceModel> getStaffAttendances() {
+		return staffAttendances;
+	}
+
+	public void setStaffAttendances(List<StaffAttendanceModel> staffAttendances) {
+		this.staffAttendances = staffAttendances;
+	}
+	 
+}

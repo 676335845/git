@@ -1,0 +1,469 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.entity.SalCorpBaseRuleEntity;
+import me.ywork.salary.entity.SalCorpWhpRuleEntity;
+import me.ywork.salary.entity.SalElementInfoEntity;
+import me.ywork.salary.entity.SalStaffBaseInfoEntity;
+import me.ywork.salary.enumeration.OptPersonType;
+import me.ywork.salary.enumeration.SalStateType;
+import me.ywork.salary.enumeration.StaffDeptType;
+import me.ywork.salary.model.SalCorpWhpRuleModel;
+import me.ywork.salary.model.SalDeptInfoModel;
+import me.ywork.salary.model.SalCorpBaseSalRuleModel;
+import me.ywork.salary.model.SalSysRuleModel;
+import me.ywork.salary.model.SalUpdateStaffesModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.repository.SalReportRepository;
+import me.ywork.salary.repository.SalRuleRepository;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.repository.SalSynCorpInfoRepository;
+import me.ywork.salary.service.SalBaseService;
+import me.ywork.salary.service.SalCalcuSalService;
+import me.ywork.salary.service.SalRuleService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+import com.heyi.utils.IdGenerator;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalRuleServiceImpl implements SalRuleService {
+	@Autowired
+	private SalRuleRepository salRuleRepository;
+	@Autowired
+	private SalStaffBaseInfoRepository staffBaseInfoRepository;
+	@Autowired
+	private SalSynCorpInfoRepository salSynCorpInfo;
+	@Autowired
+    private SalCalcuSalService saCalcuSalService;
+	@Autowired
+	private SalBaseService salBaseService;
+	private static final Logger logger = LoggerFactory.getLogger(SalRuleServiceImpl.class);
+
+	@Override
+	public List<SalCorpBaseSalRuleModel> getAllSalRules(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getAllSalaryRules param corpId is null or empty");
+		}
+		List<SalCorpBaseSalRuleModel> salRuleModels = salRuleRepository.getAllSalRules(corpId);
+        if(salRuleModels.isEmpty()){//如果该企业没有基本的薪资规则，则系统自动创建薪资规则
+        	salBaseService.initCorpBsRule(corpId);
+        	salRuleModels = salRuleRepository.getAllSalRules(corpId);
+        }else{
+        	for(SalCorpBaseSalRuleModel salCorpBaseSalRule:salRuleModels){//计算该规则下的适用人数
+        		Integer fitNum = salRuleRepository.getCorpRuleFitNum(corpId,salCorpBaseSalRule.getId(),null);
+        		salCorpBaseSalRule.setFitNums(fitNum);
+        	}
+        }
+		return salRuleModels;
+	}
+
+	@Override
+	public SalCorpBaseSalRuleModel getSalRuleByRuleId(String corpId , String ruleId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getSalaryRuleByRuleId param corpId is null or empty");
+		}
+		if (StringUtils.isBlank(ruleId)) {
+			throw new IllegalArgumentException("getSalaryRuleByRuleId param ruleId is null or empty");
+		}
+		SalCorpBaseSalRuleModel salRuleDetailModel =  salRuleRepository.getCorpSalRuleByRuleId(corpId , ruleId);
+		return salRuleDetailModel;
+	}
+
+	@Override
+	public Boolean updateSalRule(String corpId ,SalCorpBaseSalRuleModel salaryRule) {
+		if (salaryRule == null) {
+			throw new IllegalArgumentException("updateSalRule param salaryRule is null");
+		}
+		String bsRuleId=salaryRule.getId();
+		if(StringUtils.isBlank(bsRuleId)){
+			throw new IllegalArgumentException("updateSalRule param salaryRule  bsRuleId is null");
+		}
+		Integer rs = null;
+	
+		SalCorpBaseSalRuleModel salRuleDetailModel = salRuleRepository
+					.getCorpSalRuleByRuleId(corpId,bsRuleId);
+		if (salRuleDetailModel != null) {
+			salRuleDetailModel.setCalSalDays(salaryRule.getCalSalDays()*100);
+			salRuleDetailModel.setFitNums(salaryRule.getFitNums());
+			salRuleDetailModel.setModifiedDate(new Date());
+			if(salRuleDetailModel.getHasSet()==SalStateType.CLOSE.getCode()){
+				salRuleDetailModel.setHasSet(SalStateType.OPEN.getCode());
+			}
+			rs = salRuleRepository.updateSalRule(salRuleDetailModel);
+		}
+		if(rs>0){
+			  logger.info("updateSalRule--".concat(corpId).concat("更新企业基本薪规则:").concat(bsRuleId).concat("成功！"));
+			/**
+			 * 重新计算企业员工的工资和薪资报表的总工资
+			 */		
+			saCalcuSalService.calcuSalReportAutomatic(corpId);
+		}
+		return rs>0;
+	}
+
+	@Override
+	public Boolean updateSalRuleStaffies(SalUpdateStaffesModel salUpdateStaffesModel,String corpId) {
+		if(salUpdateStaffesModel == null){
+			throw new IllegalArgumentException("updateSalRuleStaffies param model is null or empty");
+		}
+       String cbRuleId =  salUpdateStaffesModel.getCorpBaseRuleId();
+       Short ruleType = salUpdateStaffesModel.getRuleType();
+       List<SalStaffBaseInfoModel> staffs= salUpdateStaffesModel.getStaffInfos();
+       staffBaseInfoRepository.deleteCorpSalRule(corpId, cbRuleId, ruleType);       //删除企业原有的薪资规则
+       SalStaffBaseInfoModel salStaffBaseInfo = null;
+       for(SalStaffBaseInfoModel salModel:staffs){
+    	   if(salModel.getType() == StaffDeptType.DEPT.getCode()){//如果是部门
+    		   String id= salModel.getId();
+    		   /**
+    		    * 检测该部门下的人员的信息有没有拉取到我们的应用下，若数据没有抓取过来，则发送请求初始化该人员的信息
+    		    */
+    		   salBaseService.synOrgDeptStaffToApplication(corpId,id);
+				List<String> deptIds = staffBaseInfoRepository.getDeptInfoByParentId(corpId,id ); //查找该部门下的所有的子部门信息
+				for(String deptId:deptIds){
+					salStaffBaseInfo = new SalStaffBaseInfoModel();
+					salStaffBaseInfo.setId(deptId);
+					salStaffBaseInfo.setType(StaffDeptType.DEPT.getCode());
+					staffBaseInfoRepository.updateSalRuleStaffies(salStaffBaseInfo, cbRuleId, ruleType,corpId);
+				}
+    	   }else if(salModel.getType() == StaffDeptType.STAFF.getCode()){
+    		   String staffId=salModel.getId();
+    		  salBaseService.synOrgStaffToApplication(corpId, staffId);
+
+    		   staffBaseInfoRepository.updateSalRuleStaffies(salModel, cbRuleId, ruleType,corpId);
+    	   }
+       } 
+       
+     	/**
+		 * 重新计算企业员工的工资和薪资报表的总工资
+		 */		
+		saCalcuSalService.calcuSalReportAutomatic(corpId);
+		return Boolean.TRUE;
+	}
+
+	@Override
+	public Boolean deleteStaffSalRule(String corpId , SalStaffBaseInfoModel salStaffBaseInfoModel) {
+		if(salStaffBaseInfoModel == null){
+			throw new IllegalArgumentException("deleteStaffSalRule param salStaffBaseInfoModel  is null or empty");
+		}
+		String id =salStaffBaseInfoModel.getId();
+		Short type=salStaffBaseInfoModel.getType();		
+		Integer rs = staffBaseInfoRepository.deleteStaffSalRule(salStaffBaseInfoModel,type);
+		Boolean updateRs = rs == null ?false:rs>0;
+		if(updateRs==Boolean.TRUE){
+			/**
+			 * 重新计算企业员工的工资和薪资报表的总工资
+			 */		
+			saCalcuSalService.calcuSalReportAutomatic(corpId);
+		}
+		return updateRs;  
+	}
+
+	@Override
+	public Boolean updateCwhpRuleList(String corpId ,List<SalCorpWhpRuleModel> salCwhpRuleModels) {
+		if(salCwhpRuleModels == null){
+			throw new IllegalArgumentException("updateCwhpRuleList param salCwhpRuleModels  is null or empty");
+		}
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("updateCwhpRuleList param corpId  is null or empty");
+		}
+		Integer  size=0;
+		Double baseHigh = null;;
+		Double baseLow = null;
+		Double corpPercent = null;
+		Double personalPercent = null;
+		SalCorpWhpRuleModel salCwhpRuleModelUpdate = new SalCorpWhpRuleModel();
+		for(SalCorpWhpRuleModel salCwhpRuleModel:salCwhpRuleModels){
+			String cwhpRuleId = salCwhpRuleModel.getId();
+			SalCorpWhpRuleEntity cwhpRule = salRuleRepository.getCwhpRuleEntity(cwhpRuleId);
+			if(cwhpRule ==null){
+				return Boolean.FALSE;
+			}
+			baseHigh = salCwhpRuleModel.getBaseHigh();
+			baseLow = salCwhpRuleModel.getBaseLow();
+			corpPercent =salCwhpRuleModel.getCorpPercent();
+			personalPercent =salCwhpRuleModel.getPersonalPercent();
+			if(cwhpRule.getHasSet() == SalStateType.CLOSE.getCode()){//若是没有设置过
+				salCwhpRuleModelUpdate.setHasSet( SalStateType.OPEN.getCode());
+			}
+			if(baseHigh != null){
+				salCwhpRuleModelUpdate.setBaseHigh(baseHigh*100);
+			}
+			if(baseLow != null){
+				salCwhpRuleModelUpdate.setBaseLow(baseLow*100);
+			}
+			if(corpPercent!=null){
+				salCwhpRuleModelUpdate.setCorpPercent(corpPercent*100);
+			}
+			if(personalPercent!=null){
+				salCwhpRuleModelUpdate.setPersonalPercent(personalPercent*100);
+			}
+			salCwhpRuleModelUpdate.setModifiedDate(new Date());
+			salCwhpRuleModelUpdate.setId(salCwhpRuleModel.getId());
+			if(salRuleRepository.updateCwhpRule(salCwhpRuleModelUpdate)>0){
+			    size++;
+			}
+		}	
+		if( size==salCwhpRuleModels.size()){
+			  logger.info("updateSalRule--".concat(corpId).concat("更新企业代缴代扣的薪资规则成功:"));
+			/**
+			 * 重新计算企业员工的工资和薪资报表的总工资
+			 */		
+			saCalcuSalService.calcuSalReportAutomatic(corpId);
+		}
+		return Boolean.TRUE;
+	}
+
+	@Override
+	public List<SalCorpWhpRuleModel> getCwhpRuleList(String corpId) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getCwhpRuleList param corpId  is null or empty");
+		}
+		List<SalCorpWhpRuleModel>salCwhpRuleModels= salRuleRepository.getCwhpRuleList(corpId);
+		if(salCwhpRuleModels.isEmpty()){//如果社保公积金的列表为空，则要为其初始化
+           if( salBaseService.initCorpWhpRule(corpId)==Boolean.TRUE){	
+			    salCwhpRuleModels= salRuleRepository.getCwhpRuleList(corpId);
+           }
+		}
+		return salCwhpRuleModels;
+	}
+
+
+	@Override
+	public List<SalStaffBaseInfoModel> getStaffAddress(String corpId , String ruleId ,Short type) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getStaffAddress param corpId  is null or empty");
+		}
+		List<SalStaffBaseInfoModel> sals =new ArrayList<SalStaffBaseInfoModel>();
+		// 得到企业所有的部门
+		List<SalDeptInfoModel> depts =staffBaseInfoRepository.getDeptInfoByCorpId(corpId);
+		Set<String> deptIds =new HashSet<String>();
+		for(SalDeptInfoModel d:depts){
+			deptIds.add(d.getDeptId());
+		}
+		Short personType = 0;
+		Set<String> unRepeatedSet = new HashSet<String>();
+		Set<String> choiceControllerSet = new HashSet<String>();
+		Set<String> deptHashSet =new HashSet<String>();
+		SalStaffBaseInfoModel sal = null;
+		if(depts!=null){//如果企业部门的集合不为空
+			for(SalDeptInfoModel salDeptInfoModel:depts){//循环得到部门列表
+				 Long staffNo =	salDeptInfoModel.getStaffNo(); //得到企业部门中的人数
+				 String deptId=salDeptInfoModel.getDeptId();//通讯录部门ID
+				 Long salNo = staffBaseInfoRepository.getRuleStaffNoByDeptId(corpId,deptId,type,ruleId);//根据部门Id去查相关的人数
+				 if(salNo == 0)//若该部门的人在此薪资规则下没有存在一个人，则检测下一个部门
+				 {
+					 continue;
+				 }
+				 //若部门的名字不是企业的名字且部门的人数相等则代表部门的人都选择了
+				 if(salNo == staffNo &&deptId.equals("1")==false){//若部门的人数和应用中的人数相等，则返回部门的信息即可
+						 personType=2;					 
+						 Boolean dept = true;					
+						 List<SalStaffBaseInfoModel>  salStaffs = staffBaseInfoRepository.getStaffBaseInfosByDept(corpId, deptId); //根据部门的ID，查找部门下的所有人
+						 for(SalStaffBaseInfoModel staff:salStaffs){//循环部门下的所有人，判断是否存在已经加入集合中的元素,若有，说明部门的人并没有全部选中
+							 String staffId = staff.getDingStaffId();
+							 if(unRepeatedSet.contains(staff.getDingStaffId())){
+								 dept =false;
+								 //此时还要判断我们选中的这个人是否是规则操作中指定部门的人,若是，则从集合中删除，且dept为true(前提是应用中存储了该部门的信息必须是在组织架构中，
+								  Integer rsCount  = staffBaseInfoRepository.getStaffInfoByDeptIdAndStaffId(corpId, staffId, deptId, type, ruleId);								 
+								  if(rsCount>0){ //若这个人在这个部门中,说明选择是该人在这个部门，并不能为false
+								       dept = true;
+								  }
+							 }
+						 }
+						 if(dept == false){
+							 personType=8;
+							 //得到部门下匹配某项规则的人员信息
+							 List<SalStaffBaseInfoModel> staffIds= staffBaseInfoRepository.getStaffInfoOnRule(corpId , deptId , type , ruleId);
+							 if(staffIds!=null){
+								 for(SalStaffBaseInfoModel m :staffIds){
+									 Integer rsCount  = staffBaseInfoRepository.getStaffInfoByDeptIdAndStaffId(corpId , m.getId() , deptId, type, ruleId);	
+									 if(!unRepeatedSet.contains(m.getId())&&rsCount == 1){//若hashset中没有该元素，且该人员的部门匹配应用存储的部门
+										 sal=new SalStaffBaseInfoModel();
+										 sal.setId(m.getId());
+										 sal.setStaffName(m.getStaffName());
+										 sal.setType(personType);
+										 sals.add(sal);
+										 unRepeatedSet.add(m.getId());
+										 choiceControllerSet.add(m.getId());
+									 }
+									 if(rsCount== 0){//若该人员对应的不是该部门：一种情况是以往存在的部门被删除，另外一种情况是该人存在两个部门，另外一个部门选择了他
+										 //针对第一种情况，直接显示该人员即可
+										 String choiceDeptId = staffBaseInfoRepository.getChoiceRuleId(corpId ,m.getId(),type);
+										 if(!deptIds.contains(choiceDeptId)){//若选择是该部门现在已经被删除，显示该人员
+											 sal=new SalStaffBaseInfoModel();
+											 sal.setId(m.getId());
+											 sal.setStaffName(m.getStaffName());
+											 sal.setType(personType);
+											 sals.add(sal);
+											 choiceControllerSet.add(m.getId());
+											 unRepeatedSet.add(m.getId());
+										 }
+									 }
+								 }
+							 }						 
+						 }else{					
+							 sal=new SalStaffBaseInfoModel();
+							 sal.setId(deptId);						 
+							 sal.setType(personType);
+							 sal.setStaffName(salDeptInfoModel.getDeptName());
+							 sals.add(sal);
+							 deptHashSet.add(deptId);
+							 choiceControllerSet.add(deptId);
+							 for(SalStaffBaseInfoModel staff:salStaffs){
+								     unRepeatedSet.add(staff.getDingStaffId());
+							 }
+						 }
+				 }else if(salNo != staffNo || deptId.equals("1")){//若部门的人数和应用中的人数不匹配，则查询该部门下的所有人
+					 personType=8;
+					 //得到部门下匹配某项规则的人员信息
+					 List<SalStaffBaseInfoModel> staffIds= staffBaseInfoRepository.getStaffInfoOnRule(corpId , deptId , type , ruleId);
+					 if(staffIds!=null){
+						 for(SalStaffBaseInfoModel m :staffIds){
+							 Integer rsCount  = staffBaseInfoRepository.getStaffInfoByDeptIdAndStaffId(corpId , m.getId() , deptId, type, ruleId);	
+							 if(!unRepeatedSet.contains(m.getId())&&rsCount == 1){//若hashset中没有该元素，且该人员的部门匹配应用存储的部门
+								 sal=new SalStaffBaseInfoModel();
+								 sal.setId(m.getId());
+								 sal.setStaffName(m.getStaffName());
+								 sal.setType(personType);
+								 sal.setDeptId(deptId);
+								 sals.add(sal);
+								 choiceControllerSet.add(m.getId());
+								 unRepeatedSet.add(m.getId());
+							 }
+							 if(rsCount== 0){//若该人员对应的不是该部门：一种情况是以往存在的部门被删除，另外一种情况是该人存在两个部门，另外一个部门选择了他
+								 //针对第一种情况，直接显示该人员即可
+								 String choiceDeptId = staffBaseInfoRepository.getChoiceRuleId(corpId ,m.getId(),type);
+								 if(!deptIds.contains(choiceDeptId)){//若选择是该部门现在已经被删除，显示该人员
+									 sal=new SalStaffBaseInfoModel();
+									 sal.setId(m.getId());
+									 sal.setDeptId(deptId);
+									 sal.setStaffName(m.getStaffName());
+									 sal.setType(personType);
+									 sals.add(sal);
+									 choiceControllerSet.add(m.getId());
+									 unRepeatedSet.add(m.getId());
+								 }
+							 }
+						 }
+					 }
+				 }
+			}
+		}
+		for(String deptId:deptIds){
+			staffBaseInfoRepository.getDeptInfoByParentId(corpId,deptId);
+		}
+	Set<String> deleteSet = new  HashSet<String>();
+		for(SalStaffBaseInfoModel salStaffBaseInfoModel:sals){
+			String deptId = salStaffBaseInfoModel.getId();
+		    Short idType =salStaffBaseInfoModel.getType();
+			if(salStaffBaseInfoModel.getDeptId()==null&&idType == StaffDeptType.DEPT.getCode()){//如果id的类型是人员或部门，则检测它的下级人员或部门的id是否被选中，若被选中了则删除以该ID对应的Bean
+				List<String> s=staffBaseInfoRepository.getDeptInfoAndStaffIdByParentId(corpId,deptId);
+				int i=0;
+				for(String id:s){
+					if(choiceControllerSet.contains(id)){
+						i++;
+					}
+				}
+				if(i==s.size()&&i>0){//说明该部门下的所有子部门都应该被过滤掉
+					for(String id:s){
+				     	deleteSet.add(id);
+					}
+;				}
+			}
+		}
+		List<String> s=staffBaseInfoRepository.getDeptInfoAndStaffIdByParentId(corpId,"1");
+		for(String a:s){
+				List<String> c=staffBaseInfoRepository.getDeptInfoAndStaffIdByParentId(corpId,a);
+				int i=0;
+				for(String id:c){
+					if(choiceControllerSet.contains(id)){
+						i++;
+					}
+				}
+				if(i==c.size()&&i>0){//说明该部门下的所有子部门都应该被过滤掉
+					for(String id:c){
+				     	deleteSet.add(id);
+					}
+					if(!choiceControllerSet.contains(a)){
+						sal=new SalStaffBaseInfoModel();
+						 sal.setId(a);
+				     	SalElementInfoEntity deptName =	staffBaseInfoRepository.getOrgInfo(corpId , a, StaffDeptType.DEPT.getCode());
+						 sal.setStaffName(deptName.getFdName());
+						 Short type2=2;
+						 sal.setType(type2);
+						 sals.add(sal);
+					}
+				}
+		}
+		
+		List<SalStaffBaseInfoModel> tempList=new ArrayList<SalStaffBaseInfoModel>();
+		//删除该部门下的
+		int tempNum=0;
+		for(SalStaffBaseInfoModel salStaffBaseInfoModel:sals){
+			if(deleteSet.contains(salStaffBaseInfoModel.getId())){
+				tempList.add(sals.get(tempNum));
+			}
+			tempNum++;
+		}
+		sals.removeAll(tempList);
+		return sals;
+	}
+	public void addNotDepts(List<SalStaffBaseInfoModel> sals ,SalStaffBaseInfoModel sal,String corpId,String deptId,Set<String> unRepeatedSet,Set<String> deptIds,
+			Short personType ,Short type,String ruleId){
+		 personType=8;
+		 //得到部门下匹配某项规则的人员信息
+		 List<SalStaffBaseInfoModel> staffIds= staffBaseInfoRepository.getStaffInfoOnRule(corpId , deptId , type , ruleId);
+		 if(staffIds!=null){
+			 for(SalStaffBaseInfoModel m :staffIds){
+				 Integer rsCount  = staffBaseInfoRepository.getStaffInfoByDeptIdAndStaffId(corpId , m.getId() , deptId, type, ruleId);	
+				 if(!unRepeatedSet.contains(m.getId())&&rsCount == 1){//若hashset中没有该元素，且该人员的部门匹配应用存储的部门
+					 sal=new SalStaffBaseInfoModel();
+					 sal.setId(m.getId());
+					 sal.setStaffName(m.getStaffName());
+					 sal.setType(personType);
+					 sals.add(sal);
+					 unRepeatedSet.add(m.getId());
+				 }
+				 if(rsCount== 0){//若该人员对应的不是该部门：一种情况是以往存在的部门被删除，另外一种情况是该人存在两个部门，另外一个部门选择了他
+					 //针对第一种情况，直接显示该人员即可
+					 String choiceDeptId = staffBaseInfoRepository.getChoiceRuleId(corpId ,m.getId(),type);
+					 if(!deptIds.contains(choiceDeptId)){//若选择是该部门现在已经被删除，显示该人员
+						 sal=new SalStaffBaseInfoModel();
+						 sal.setId(m.getId());
+						 sal.setStaffName(m.getStaffName());
+						 sal.setType(personType);
+						 sals.add(sal);
+						 unRepeatedSet.add(m.getId());
+					 }
+				 }
+			 }
+		 }
+	}
+	
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+}

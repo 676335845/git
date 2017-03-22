@@ -1,0 +1,137 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+/**
+ *  月度工资报表
+ *
+ * Created by xiaobai on 2017/1/11.
+ */
+public class SalReportModel implements Serializable {
+	/*
+	 * 月度工资报表Id
+	 */
+	private String salReportId;
+	
+	/**
+	 * 企业Id
+	 */
+	private String corpId;
+	/**
+	 * 工资报表的状态
+	 */
+	private Short salReportState;
+	/**
+	 * 应发工资
+	 */
+	private Long shouldPaySal;
+	/**
+	 * 公司交金
+	 */
+	private Long insuranceSal;
+	/**
+	 * 员工成本
+	 */
+	private Long staffCost;
+	/**
+	 * 工资报表产生时间
+	 */
+	private Date createTime;
+	
+	/**
+	 * 工资报表的更新时间
+	 */
+	private Date updateTime;
+	
+	/**
+	 * 工资报表的月份
+	 */
+	private Date monthTime;
+
+	public SalReportModel() {
+		super();
+	}
+
+   
+
+	public String getSalReportId() {
+		return salReportId;
+	}
+
+
+
+	public void setSalReportId(String salReportId) {
+		this.salReportId = salReportId;
+	}
+
+
+
+	public Date getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+
+	public Short getSalReportState() {
+		return salReportState;
+	}
+
+	public void setSalReportState(Short salReportState) {
+		this.salReportState = salReportState;
+	}
+
+	public Long getShouldPaySal() {
+		return shouldPaySal;
+	}
+
+	public void setShouldPaySal(Long shouldPaySal) {
+		this.shouldPaySal = shouldPaySal;
+	}
+
+	public Long getInsuranceSal() {
+		return insuranceSal;
+	}
+
+	public void setInsuranceSal(Long insuranceSal) {
+		this.insuranceSal = insuranceSal;
+	}
+
+	public Long getStaffCost() {
+		return staffCost;
+	}
+
+	public void setStaffCost(Long staffCost) {
+		this.staffCost = staffCost;
+	}
+
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+
+	public Date getMonthTime() {
+		return monthTime;
+	}
+
+	public void setMonthTime(Date monthTime) {
+		this.monthTime = monthTime;
+	}
+
+	public String getCorpId() {
+		return corpId;
+	}
+
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+	
+	
+	
+
+}

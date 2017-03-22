@@ -1,0 +1,15 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+import me.ywork.salary.model.SalBaseInfoModel;
+import me.ywork.salary.model.SalBaseStateModel;
+
+public interface SalBaseService extends BizService{
+	/**
+	 * 得到企业基本的一些信息
+	 * 
+	 * @param corpId
+	 * @return
+	 */
+	SalBaseStateModel getCorpBaseInfo(String corpId);
+}

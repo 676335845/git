@@ -1,0 +1,117 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class SalCorpWhpRuleModel implements Serializable{
+	/**
+	 * 代缴代扣薪资规则标识
+	 */
+	private String id;
+	/**
+	 * 缴纳科目标识
+	 */
+	private String subjectId;
+	
+	/**
+	 * 缴纳科目的名字
+	 */
+	private String subjectName;
+	/**
+	 * 基数下限
+	 */
+	private Integer baseLow;
+	/**
+	 * 基数上限
+	 */
+	private Integer baseHigh;
+	/**
+	 * 公司比例
+	 */
+	private Integer corpPercent;
+	/**
+	 * 个人比例
+	 */
+	private Integer personalPercent;
+	/**
+	 * 钉钉企业标识
+	 */
+	private String corpId;
+	/**
+	 * 代缴代扣薪资规则创建时间
+	 */
+	private Date createDate;
+	/**
+	 * 代缴代扣薪资规则更新时间 
+	 */
+	private Date modifiedDate;
+	
+	
+	public SalCorpWhpRuleModel() {
+		super();
+	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public String getSubjectId() {
+		return subjectId;
+	}
+	public void setSubjectId(String subjectId) {
+		this.subjectId = subjectId;
+	}
+	public Integer getBaseLow() {
+		return baseLow;
+	}
+	public void setBaseLow(Integer baseLow) {
+		this.baseLow = baseLow;
+	}
+	public Integer getBaseHigh() {
+		return baseHigh;
+	}
+	public void setBaseHigh(Integer baseHigh) {
+		this.baseHigh = baseHigh;
+	}
+	public Integer getCorpPercent() {
+		return corpPercent;
+	}
+	public void setCorpPercent(Integer corpPercent) {
+		this.corpPercent = corpPercent;
+	}
+	public Integer getPersonalPercent() {
+		return personalPercent;
+	}
+	public void setPersonalPercent(Integer personalPercent) {
+		this.personalPercent = personalPercent;
+	}
+	public String getCorpId() {
+		return corpId;
+	}
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+    
+	public Date getCreateDate() {
+		return createDate;
+	}
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
+	}
+	public Date getModifiedDate() {
+		return modifiedDate;
+	}
+	public void setModifiedDate(Date modifiedDate) {
+		this.modifiedDate = modifiedDate;
+	}
+	public String getSubjectName() {
+		return subjectName;
+	}
+	public void setSubjectName(String subjectName) {
+		this.subjectName = subjectName;
+	}
+	
+    
+	
+}

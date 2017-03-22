@@ -1,0 +1,41 @@
+package me.ywork.salary.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import me.ywork.context.CallContext;
+import me.ywork.controller.RestController;
+import me.ywork.salary.service.SalPassService;
+
+@Controller
+@RequestMapping(value = { "**/app/calsalary/staffInfo" })
+public class SalBaseInfoController  extends RestController<SalPassService>{
+
+	@Override
+	protected String getHomePageUrl(String param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected SalPassService getService() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+//	 /*
+//	  * 得到员工的基本信息
+//	  * 
+//	 * @param request
+//	 * @param response
+//	 */
+//	public void getStaffBaseInfo(HttpServletRequest request , HttpServletResponse response){
+//		 CallContext callContext =this.getCallContext(request);
+//		 callContext.getAvatar();
+//	}
+	
+	
+	
+}

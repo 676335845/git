@@ -1,0 +1,161 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.entity.SalCorpWhpRuleEntity;
+import me.ywork.salary.model.SalCorpWhpRuleModel;
+import me.ywork.salary.model.SalCorpBaseSalRuleModel;
+import me.ywork.salary.model.SalSysRuleModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.repository.SalReportRepository;
+import me.ywork.salary.repository.SalRuleRepository;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.service.SalRuleService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalRuleServiceImpl implements SalRuleService {
+	@Autowired
+	private SalRuleRepository salRuleRepository;
+	@Autowired
+	private SalStaffBaseInfoRepository staffBaseInfoRepository;
+
+	@Override
+	public List<SalSysRuleModel> getAllSalRules(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getAllSalaryRules param corpId is null or empty");
+		}
+		List<SalSysRuleModel> salRuleModels = null;
+		salRuleModels = salRuleRepository.getAllSalRules(corpId);
+
+		return salRuleModels;
+	}
+
+	@Override
+	public SalCorpBaseSalRuleModel getSalRuleByRuleId(String ruleId) {
+		if (StringUtils.isBlank(ruleId)) {
+			throw new IllegalArgumentException("getSalaryRuleByRuleId param ruleId is null or empty");
+		}
+		SalCorpBaseSalRuleModel salRuleDetailModel = null;
+		salRuleDetailModel = salRuleRepository.getCorpSalRuleByRuleId(ruleId);
+
+		return salRuleDetailModel;
+	}
+
+	@Override
+	public Boolean updateSalRule(SalCorpBaseSalRuleModel salaryRule) {
+		if (salaryRule == null) {
+			throw new IllegalArgumentException("updateSalaryRule param salaryRule is null");
+		}
+		Boolean rs = null;
+		SalCorpBaseSalRuleModel salRuleDetailModel = salRuleRepository
+					.getCorpSalRuleByRuleId(salaryRule.getCorpSalRuleId());
+		if (salRuleDetailModel != null) {
+			salRuleDetailModel.setCalSalDays(salaryRule.getCalSalDays());
+			salRuleDetailModel.setFitNums(salaryRule.getFitNums());
+			salRuleDetailModel.setLateEarlyDeduct(salRuleDetailModel.getLateEarlyDeduct());
+			salRuleDetailModel.setLateEarlyDeductType(salRuleDetailModel.getLateEarlyDeductType());
+			salRuleDetailModel.setSeriousLateDeduct(salaryRule.getSeriousLateDeduct());
+			salRuleDetailModel.setStayAwayDeduct(salRuleDetailModel.getStayAwayDeduct());
+			rs = salRuleRepository.updateSalRule(salRuleDetailModel) > 0;
+		}
+
+		return rs;
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public List<SalStaffBaseInfoModel> getStafiesByRuleType(String corpId, Short salRuleHandleType,Short salBaseRule) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getStafiesByCopSalRuleId param corpId is null or empty");
+		}
+		if(salRuleHandleType == null){
+			throw new IllegalArgumentException("getStafiesByCopSalRuleId param salRuleHandleType is null or empty");
+		}
+		if(salBaseRule == null){
+			throw new IllegalArgumentException("getStafiesByCopSalRuleId param salBaseRule is null or empty");
+		}
+		List<SalStaffBaseInfoModel>  staffBaseInfoModels = staffBaseInfoRepository.getStafiesByRuleType(corpId , salRuleHandleType ,salBaseRule);
+		return staffBaseInfoModels;
+	}
+
+	@Override
+	public Boolean updateSalRuleStaffies(SalStaffBaseInfoModel staffBaseInfoModel) {
+		if(staffBaseInfoModel == null){
+			throw new IllegalArgumentException("updateSalRuleStaffies param staffBaseInfoModel is null or empty");
+		}
+		List<String> staffIds = staffBaseInfoModel.getStaffIds();
+		String corpId = staffBaseInfoModel.getCorpId();
+		if(staffIds == null  || staffIds.isEmpty()){
+			throw new IllegalArgumentException("updateSalRuleStaffies param staffIds is null or empty");
+		}
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("updateBaseSalRuleStaffies param corpId  is null or empty");
+		}
+		 Integer rs = null;
+		 rs = staffBaseInfoRepository.updateSalRuleStaffies(staffBaseInfoModel);
+
+		return rs == null ?false:rs>0;
+	}
+
+	@Override
+	public Boolean deleteStaffSalRule(SalStaffBaseInfoModel salStaffBaseInfoModel) {
+		if(salStaffBaseInfoModel == null){
+			throw new IllegalArgumentException("deleteStaffSalRule param salStaffBaseInfoModel  is null or empty");
+		}
+		Integer rs =null;
+		 rs = staffBaseInfoRepository.deleteStaffSalRule(salStaffBaseInfoModel);
+
+		return rs == null ?false:rs>0;
+	}
+
+	@Override
+	public Boolean updateCwhpRuleList(List<SalCorpWhpRuleModel> salCwhpRuleModels) {
+		if(salCwhpRuleModels == null){
+			throw new IllegalArgumentException("updateCwhpRuleList param salCwhpRuleModels  is null or empty");
+		}
+		Integer  size=0;
+		SalCorpWhpRuleModel salCwhpRuleModel2 = new SalCorpWhpRuleModel();
+		for(SalCorpWhpRuleModel salCwhpRuleModel:salCwhpRuleModels){
+			String cwhpRuleId = salCwhpRuleModel.getId();
+			SalCorpWhpRuleEntity cwhpRule = salRuleRepository.getCwhpRuleEntity(cwhpRuleId);
+			if(cwhpRule ==null){
+				return Boolean.FALSE;
+			}
+			salCwhpRuleModel2.setBaseHigh(cwhpRule.getBaseHigh());
+			salCwhpRuleModel2.setBaseLow(cwhpRule.getBaseLow());
+			salCwhpRuleModel2.setCorpPercent(cwhpRule.getCorpPercent());
+			salCwhpRuleModel2.setModifiedDate(new Date());
+			salCwhpRuleModel2.setPersonalPercent(cwhpRule.getPersonalPercent());
+			salCwhpRuleModel2.setId(cwhpRule.getId());
+			if(salRuleRepository.updateCwhpRule(salCwhpRuleModel2)>0)
+			size++;
+		}	
+		return size==salCwhpRuleModels.size()?Boolean.TRUE:Boolean.FALSE;
+	}
+
+	@Override
+	public List<SalCorpWhpRuleModel> getCwhpRuleList(String corpId) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getCwhpRuleList param corpId  is null or empty");
+		}
+		List<SalCorpWhpRuleModel>salCwhpRuleModels= salRuleRepository.getCwhpRuleList(corpId);
+		return salCwhpRuleModels;
+	}
+}

@@ -1,0 +1,128 @@
+package me.ywork.salary.service.impl;
+
+
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.enumeration.SalRuleType;
+import me.ywork.salary.model.SalBaseInfoModel;
+import me.ywork.salary.model.SalCorpAttenModel;
+import me.ywork.salary.model.SalCorpBaseSalRuleModel;
+import me.ywork.salary.model.SalCorpDeductModel;
+import me.ywork.salary.model.SalCorpWhpRuleModel;
+import me.ywork.salary.repository.SalAttendanceRepository;
+import me.ywork.salary.repository.SalInfoRepository;
+import me.ywork.salary.repository.SalRuleRepository;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.service.SalBaseService;
+
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalBaseInfoServiceImpl implements SalBaseService {
+
+	@Autowired
+	private SalAttendanceRepository salAttendanceRepository;
+	
+	@Autowired
+	private SalStaffBaseInfoRepository salStaffBaseInfoRepository;
+	
+	@Autowired
+	private SalInfoRepository salInfoRepository;
+	
+	@Autowired
+	private SalRuleRepository salRuleRepository;
+
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public SalBaseInfoModel getStaffBaseInfo(String corpId) {
+		/**
+		 * 得到企业组织架构中员工的总的数量
+		 */
+		Integer staffTotalCount = salStaffBaseInfoRepository.getCorpStaffOrgCount(corpId);
+		/**
+		 * 得到企业员工没有导入考勤数据的数量
+		 */
+		List<SalCorpAttenModel>  salCorpAttenModels = salAttendanceRepository.getAllMonthesAttendanceData(corpId);
+		String attenReprtId = null;
+		Integer attenImportCount =null;
+		Integer attenNotImportCount =null;
+		for(SalCorpAttenModel salCorpAttenModel:salCorpAttenModels){
+			attenReprtId = salCorpAttenModel.getId();
+			if(attenReprtId!=null){//如果考勤表的主键不为空，则发送请求得到当月导入员工考勤数据的总数
+				attenImportCount = salAttendanceRepository.getAllStaffAttendanceCountByReportId(attenReprtId);//导入考勤数据总数
+				if(staffTotalCount!=null&&attenImportCount!=null){
+				    attenNotImportCount =staffTotalCount-attenImportCount;//未导入员工考勤数据的数量
+				}
+			}
+		}
+		
+		/**
+		 * 得到企业导入员工薪资数据的数量
+		 */
+		Long staffSalCount = salStaffBaseInfoRepository.getStaffSalInfosCount(corpId);
+		/**
+		 * 得到企业员工未设置薪资数据的数量
+		 */
+		Long staffSalUnSetCount = staffTotalCount - staffSalCount;
+		/**
+		 * 得到企业设置代缴代扣的状态，状态为1是已经设置，为0是没有设置
+		 */
+		
+		List<SalCorpWhpRuleModel> salCorpWhpRuleModels = salRuleRepository.getCwhpRuleList(corpId);
+		
+		/**
+		 * 得到企业设置了代缴代扣的人数
+		 */
+		Integer socialNum = salRuleRepository.getCorpRuleFitNum(corpId, null,SalRuleType.SOCIAL.getCode());
+		
+		/**
+		 * 没有设置代缴代扣的人数
+		 */
+		Integer unSocialNum = staffTotalCount -socialNum;
+		/**
+		 * 得到企业设置了个人所得税的人数
+		 */
+		Integer personalTaxNum = salRuleRepository.getCorpRuleFitNum(corpId, null,SalRuleType.PERSONALTAX.getCode());
+		/**
+		 * 没有设置个人所得税的人数
+		 */
+		Integer unPersonalTaxNum = staffTotalCount-personalTaxNum;
+		
+		/**
+		 * 判断企业设置了正算或反算的薪资规则，若没有，则引导用户去设置企业的基本薪资规则
+		 */
+		//Integer un{ersonalTaxNum = salRuleRepository.getCorpRuleFitNum(corpId, null,SalRuleType.PERSONALTAX.getCode());
+		List<SalCorpBaseSalRuleModel>  salRules = salRuleRepository.getAllSalRules(corpId);
+		
+		/**
+		 * 得到企业在某个基本薪资规则或自定义的薪资规则下的人数
+		 */
+		Integer bsFitNum = null;
+		for(SalCorpBaseSalRuleModel salCorpBaseSalRuleModel:salRules){
+			bsFitNum = salRuleRepository.getCorpRuleFitNum(corpId, salCorpBaseSalRuleModel.getId(),null);
+		}
+		
+		/**
+		 * 判断企业是否有设置考勤扣款，若没有，则引导其去设置考勤扣款规则
+		 */
+		SalCorpDeductModel salCorpDeductModel = salRuleRepository.getCorpdeductRule(corpId);
+		Boolean hasSetCorpDeductRule =false;
+		if(salCorpDeductModel !=null){
+			hasSetCorpDeductRule = true;
+		}
+	   return null;
+	}
+}

@@ -1,0 +1,150 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.model.SalCorpInfoModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.repository.SalPassRepository;
+import me.ywork.salary.service.SalPassService;
+import me.ywork.salary.util.DateUtils;
+
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalPassServiceImpl implements SalPassService {
+	@Autowired
+	private SalPassRepository salPassRepository;
+
+	@Override
+	public Short getCorpPassOpenStatus(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getCorpPasswordOpenStatus param corpId is null or empty");
+		}
+		Short corpPassOpenStatus = null;
+		corpPassOpenStatus = salPassRepository.getCorpPasswordOpenStatus(corpId);
+		
+		return corpPassOpenStatus;
+	}
+
+	@Override
+	public List<SalStaffBaseInfoModel> getStaffInfoByKeyword(String corpId, String keyword) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getStaffInfoByKeyword param corpId is null or empty.");
+		}
+		if (StringUtils.isBlank(keyword)) {
+			throw new IllegalArgumentException("getStaffInfoByKeyword param keyword is null or empty.");
+		}
+		List<SalStaffBaseInfoModel> staffBaseInfoModels = null;
+		staffBaseInfoModels = salPassRepository.getStaffInfoByKeyword(corpId, keyword);
+
+		return staffBaseInfoModels;
+	}
+
+	@Override
+	public Boolean resetStaffPass(String corpId, String dingStaffId) {
+		if (StringUtils.isBlank(dingStaffId)) {
+			throw new IllegalArgumentException("resetStaffPass param dingStaffId is null or empty.");
+		}
+		Integer resetRs = null;
+		resetRs = salPassRepository.resetStaffPassword(corpId, dingStaffId,new Date());
+
+		return resetRs == null ? Boolean.FALSE : resetRs > 0;
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Boolean updateCorpPassStatus(SalCorpInfoModel salCorpInfoModel) {
+		if (salCorpInfoModel == null) {
+			throw new IllegalArgumentException("updateCorpPassStatus param salCorpInfoModel is null or empty.");
+		}
+		Integer rs =null;
+		salCorpInfoModel.setModifiedDate(new Date());
+	    rs = salPassRepository.updateCorpPassStatus(salCorpInfoModel);
+
+		return rs == null?Boolean.FALSE:rs>0;
+	}
+
+	@Override
+	public SalStaffBaseInfoModel everStaffsetpwd(CallContext  callContext) {
+		String corpId = callContext.getCorpId();
+		String userId =callContext.getUserId();
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("everStaffsetpwd param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(userId)){
+			throw new IllegalArgumentException("everStaffsetpwd param dingStaffId is null or empty.");
+		}
+		SalStaffBaseInfoModel salStaffBaseInfoModel = salPassRepository.everStaffsetpwd(corpId, userId);
+		salStaffBaseInfoModel.setStaffName(callContext.getUserName());
+		salStaffBaseInfoModel.setHeadUrl(callContext.getAvatar());
+		salStaffBaseInfoModel.setHavePwd(salStaffBaseInfoModel.getStaffPass() != null);
+		salStaffBaseInfoModel.setNeedPwd(salStaffBaseInfoModel.getPassState() >0);
+		Boolean sysPassState = this.getCorpPassOpenStatus(corpId) >0;
+		salStaffBaseInfoModel.setSysPassState(sysPassState);
+		return salStaffBaseInfoModel;
+	}
+
+	@Override
+	public String getUserPwd(CallContext callContext) {
+		String corpId = callContext.getCorpId();
+		String userId =callContext.getUserId();
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("everStaffsetpwd param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(userId)){
+			throw new IllegalArgumentException("everStaffsetpwd param dingStaffId is null or empty.");
+		}
+		String password = salPassRepository.getUserPwd(corpId, userId);
+		return password;
+	}
+
+	@Override
+	public Boolean setUserPwd(CallContext callContext , String password) {
+		String corpId = callContext.getCorpId();
+		String userId =callContext.getUserId();
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("everStaffsetpwd param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(userId)){
+			throw new IllegalArgumentException("everStaffsetpwd param dingStaffId is null or empty.");
+		}
+		if(StringUtils.isBlank(password)){
+			throw new  IllegalArgumentException("everStaffsetpwd param password is null or empty.");
+		}
+		Integer rs = salPassRepository.setUserPwd(corpId, userId,password);
+		return rs>0;
+	}
+
+	@Override
+	public Boolean  managerUserPwdState(CallContext callContext , Short passState) {
+		String corpId = callContext.getCorpId();
+		String userId =callContext.getUserId();
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("everStaffsetpwd param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(userId)){
+			throw new IllegalArgumentException("everStaffsetpwd param dingStaffId is null or empty.");
+		}
+		if(passState == null){
+			throw new  IllegalArgumentException("everStaffsetpwd param passState  is null.");
+		}
+	 	Integer rs = salPassRepository.managerUserPwdState(corpId, userId ,passState);
+		return rs >0;
+	}
+	
+}

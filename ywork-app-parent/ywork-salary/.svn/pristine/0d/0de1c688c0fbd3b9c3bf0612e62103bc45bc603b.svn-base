@@ -1,0 +1,69 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+
+/**
+ * 薪资规则的 Created by xiaobai on 2017/1/11.
+ */
+public class SalRuleModel implements Serializable {
+	/**
+	 * 获取规则ID
+	 */
+	private String salRuleId;
+	/**
+	 * 薪资规则名称
+	 */
+	private Short salRule;
+
+	/**
+	 * 薪资规则描述
+	 */
+	private String salRuleDes;
+
+	/**
+	 * 薪资规则的名字
+	 */
+	private String salRuleName;
+
+	/**
+	 * 薪资规则的类型
+	 */
+	private String salRuleType;
+
+	public SalRuleModel() {
+		super();
+	}
+
+	public Short getSalRule() {
+		return salRule;
+	}
+
+	public void setSalRule(Short salRule) {
+		this.salRule = salRule;
+	}
+
+	public String getSalRuleDes() {
+		return salRuleDes;
+	}
+
+	public void setSalRuleDes(String salRuleDes) {
+		this.salRuleDes = salRuleDes;
+	}
+
+	public String getSalRuleName() {
+		return salRuleName;
+	}
+
+	public void setSalRuleName(String salRuleName) {
+		this.salRuleName = salRuleName;
+	}
+
+	public String getSalRuleType() {
+		return salRuleType;
+	}
+
+	public void setSalRuleType(String salRuleType) {
+		this.salRuleType = salRuleType;
+	}
+
+}

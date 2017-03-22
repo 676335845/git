@@ -1,0 +1,69 @@
+package me.ywork.salary.repository;
+
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+
+import me.ywork.base.repository.IRepository;
+import me.ywork.salary.entity.SalCorpBaseRuleEntity;
+import me.ywork.salary.entity.SalCorpWhpRuleEntity;
+import me.ywork.salary.model.SalCorpWhpRuleModel;
+import me.ywork.salary.model.SalCorpBaseSalRuleModel;
+import me.ywork.salary.model.SalSysRuleModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+
+@Repository
+public interface SalRuleRepository extends IRepository<SalCorpBaseRuleEntity> {
+	/**
+	 * 获取规则列表:获取算工资应用的所有的记薪规则
+	 * 
+	 * @param corpId 钉钉企业号
+	 * @return 得到的所有的薪资规则
+	 */
+	List<SalSysRuleModel> getAllSalRules(@Param("corpId") String corpId);
+
+	/**
+	 * 获取规则详情
+	 * 
+	 * @param ruleId   薪资规则的ID
+	 * @return 获取薪资规则的结果
+	 */
+	SalCorpBaseSalRuleModel getSalRuleByRuleId(@Param("ruleId") String ruleId);
+
+	/**
+	 * 根据企业计薪规则ID得到企业的 计薪规则
+	 * 
+	 * @param ruleId  企业薪资规则的ID
+	 * @return 企业的薪资规则
+	 */
+	SalCorpBaseSalRuleModel getCorpSalRuleByRuleId(@Param("corpId") String corpId , @Param("ruleId") String ruleId);
+
+	/**
+	 * 保存计薪规则
+	 * 
+	 * @param salaryRule
+	 * @return 保存薪资规则的结果
+	 */
+	Integer updateSalRule( SalCorpBaseSalRuleModel salaryRule);
+	
+	/**
+	 * 更新企业代缴代扣规则
+	 * 
+	 * @param salCwhpRuleModels 代缴代扣列表
+	 * @return  更新的结果
+	 */
+	 Integer updateCwhpRule(SalCorpWhpRuleModel  salCwhpRuleModels);
+	 
+	 /**
+	  * 得到代缴代扣的规则
+	  */
+	 SalCorpWhpRuleEntity getCwhpRuleEntity(@Param("id")String id);
+	/**
+	 *   得到企业代缴代扣规则
+	 *   
+	 * @param corpId  企业标识
+	 * @return  得到企业代缴代扣的列表
+	 */
+	List<SalCorpWhpRuleModel> getCwhpRuleList(@Param("corpId") String corpId);
+	
+}

@@ -1,0 +1,1196 @@
+package me.ywork.salarybill.controller;
+
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.redisson.cache.CacheableService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.alibaba.fastjson.JSONObject;
+import com.heyi.framework.spring.context.AppContext;
+
+import me.ywork.controller.RestController;
+import me.ywork.oss.OSSObjectService;
+import me.ywork.page.PageData;
+import me.ywork.page.PageRequest;
+import me.ywork.page.Pageable;
+import me.ywork.salarybill.SalaryBillConfigure;
+import me.ywork.salarybill.base.SalaryPwdType;
+import me.ywork.salarybill.model.CacheSalaryModel;
+import me.ywork.salarybill.model.OrgDataModel;
+import me.ywork.salarybill.model.OrgItemResult;
+import me.ywork.salarybill.model.OrgTreeModel;
+import me.ywork.salarybill.model.PwdCheckResult;
+import me.ywork.salarybill.model.SalaryBillCommitModel;
+import me.ywork.salarybill.model.SalaryBillLogModel;
+import me.ywork.salarybill.model.SalaryBillModel;
+import me.ywork.salarybill.model.SalaryBillNoPwdSelectedItemViewMode;
+import me.ywork.salarybill.model.SalaryBillPwdSetModel;
+import me.ywork.salarybill.model.SalaryBillReadRecordModel;
+import me.ywork.salarybill.model.SalaryBillTemplateModel;
+import me.ywork.salarybill.model.SearchUserModel;
+import me.ywork.salarybill.model.UserModel;
+import me.ywork.salarybill.service.SalaryBillLogService;
+import me.ywork.salarybill.service.SalaryBillPwdSetService;
+import me.ywork.salarybill.service.SalaryBillService;
+import me.ywork.suite.api.rpc.IDingAPIRpcService;
+import me.ywork.util.AESUtil;
+
+@Controller
+@RequestMapping(value = { "**/salarybillpcbiz" })
+public class SalaryBillPcController extends
+		RestController<SalaryBillService> {
+
+	private static Logger logger = LoggerFactory.getLogger(SalaryBillPcController.class);
+
+	private static final String PC_TOKEN = "salarymanager";
+	
+	private static final String AES_KEY = "c5a1149f163dd7a072e235ccc2566c98";
+
+	@Autowired
+	protected SalaryBillPwdSetService salaryBillPwdSetService;
+	
+	private IDingAPIRpcService dingAPIRpcService;
+	
+	private IDingAPIRpcService getDingAPIRpcService() {
+		if (dingAPIRpcService == null) {
+			dingAPIRpcService = (IDingAPIRpcService) AppContext.getBean("dingAPIRpcService");
+		}
+		return dingAPIRpcService;
+	}
+	
+	@Autowired
+	protected SalaryBillService salaryBillService;
+	
+	@Autowired
+	protected SalaryBillLogService salaryBillLogService;
+	
+	
+	/**
+	 * 进入主页面
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/test**" }, method = RequestMethod.GET)
+	public void test(HttpServletRequest request, HttpServletResponse response)
+			throws Exception {
+		String cid = request.getParameter("cid");
+	}
+
+
+	/**
+	 * 进入主页面
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/index**" }, method = RequestMethod.GET)
+	public void index(HttpServletRequest request, HttpServletResponse response)
+			throws Exception {
+		String code = request.getParameter("code");
+		String cookieValue = getUserCookie(request, response);
+		String corpId ="";
+		String userName = "";
+		String userId = "";
+		JSONObject jo = null;
+		
+		boolean isReLogin = false;
+
+		// 判断code是否为空，为空则取cookie里的用户信息
+		if (StringUtils.isBlank(code) && StringUtils.isBlank(cookieValue)) {
+			isReLogin = true;
+		}else{
+			JSONObject adminInfo = null;
+			try {
+				adminInfo = getDingAPIRpcService().getPcAdminInfo(code);
+			} catch (Exception e) {
+				logger.error("PC后台免登发生错误", e);
+			}
+			if (adminInfo != null) {
+				JSONObject obj = adminInfo.getJSONObject("corp_info");
+				if (obj != null) {
+					corpId = obj.getString("corpid");
+				}
+				JSONObject userinfo = adminInfo.getJSONObject("user_info");
+				if (userinfo != null) {
+					userName = userinfo.getString("name");
+					userId = userinfo.getString("userid");
+				}
+				jo = new JSONObject();
+				jo.put("corpId", corpId);
+				jo.put("userName", userName);
+				jo.put("userId", userId);
+				String cookie = AESUtil.encrypt(jo.toJSONString(),AES_KEY);
+				Cookie TOKEN = new Cookie(PC_TOKEN, cookie);
+				TOKEN.setPath("/");
+				TOKEN.setMaxAge(30 * 60 * 6);
+				response.addCookie(TOKEN);
+			}
+		}
+
+		String domainName = request.getServerName();
+		if (StringUtils.isBlank(domainName)) {
+			domainName = SalaryBillConfigure.domainName;
+		}
+
+		if (isReLogin) {
+			response.sendRedirect("//"+domainName + "/yw/pc/notify/web/" + "/relogin.html");
+			return;
+		}
+		
+		response.sendRedirect("//"+domainName + "/yw/pc/notify/web/index.html?corpid="+corpId);
+		return;
+	}
+
+
+
+	/**
+	 * 下载模板
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/download**" }, method = RequestMethod.GET)
+	public void download(HttpServletRequest request, HttpServletResponse response)
+			throws Exception {
+		try{
+			response.setContentType("application/vnd.ms-excel;charset=UTF-8");
+			response.setHeader("Content-disposition",
+					"attachment; filename=temple.xls");
+			
+			String cookieValue = getUserCookie(request, response);
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			//获取该公司的员工信息
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			HSSFWorkbook wb = salaryBillService.exportToExcel(companyId);
+			
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			wb.write(out);
+			InputStream inputStream = new ByteArrayInputStream(out.toByteArray());
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMM");
+			String fileId = companyId+"/"+sdf.format(new Date());
+			
+			String buckname = "alidsalarybill";
+			
+			OSSObjectService.uploadExcelFile(buckname,fileId, inputStream);
+			
+			String fileUrl = OSSObjectService.getFileUrl(buckname, fileId);
+	
+			if(inputStream!=null){
+				inputStream.close();
+			}
+			if(wb!=null){
+				wb.close();
+			}
+			this.writeSuccessJsonToClient(response, fileUrl);
+		}catch(Exception e){
+			logger.error("download", e);
+			this.writeFailJsonToClient(response);
+		}
+
+	}
+	
+	/**
+	 * 上传信息
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/upload**" }, method = RequestMethod.GET)
+	public void upload(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("fileid") String fileId)
+			throws Exception {
+		
+		fileId = URLDecoder.decode(fileId);
+		String cookieValue = getUserCookie(request, response);
+		String companyId ="";
+		String userId = "";
+		JSONObject jo = null;
+		
+		if(StringUtils.isNotBlank(cookieValue)){
+			jo = JSONObject.parseObject(cookieValue);
+			companyId = jo.getString("corpId");
+			userId = jo.getString("userId");
+		}
+		
+		//获取该公司的员工信息
+		if(StringUtils.isBlank(companyId)){
+			this.writeFailJsonToClient(response);
+			return ;
+		}
+		try{
+			CacheSalaryModel cacheSalaryModel = salaryBillService.parserExcel(request.getServerName(),companyId,userId,"alidsalarybill",fileId);
+			//err
+			List<SalaryBillModel> errorSalaryBills = cacheSalaryModel.getErrorSalaryBills();
+			int errCount = errorSalaryBills == null ? 0 : errorSalaryBills.size();
+			cacheSalaryModel.setErrorCount(errCount);
+			//succ
+			List<SalaryBillModel> successSalaryBills = cacheSalaryModel.getSuccessSalaryBills();
+			int successCount = successSalaryBills == null ? 0 : successSalaryBills.size();
+			cacheSalaryModel.setSuccessCount(successCount);
+			//50一页
+			int pageSize = 50;
+			if(errCount+successCount>pageSize){
+				cacheSalaryModel.setHasNext(true);
+			}else{
+				cacheSalaryModel.setHasNext(false);
+			}
+			
+			//取50 model
+			List<SalaryBillModel> salarys = new ArrayList<SalaryBillModel>();
+			
+			int count = errCount+successCount > pageSize ? pageSize : errCount+successCount;
+			for(int i = 0 ; i < count ; i ++){
+				if(i<errCount){
+					salarys.add(errorSalaryBills.get(i));
+				}else{
+					salarys.add(successSalaryBills.get(i-errCount));
+				}
+			}
+			
+			cacheSalaryModel.setErrorSalaryBills(null);
+			cacheSalaryModel.setSuccessSalaryBills(null);
+			cacheSalaryModel.setSalaryBills(salarys);
+			
+			//获取模板类型
+//			Map<Short,String> templateTypeMap = SalaryTemplateType.getAllType();
+//			cacheSalaryModel.setTemplateType(templateTypeMap);
+			this.writeSuccessJsonToClient(response, cacheSalaryModel);
+		}catch(Exception e){
+			logger.error("upload", e);
+			this.writeFailJsonToClient(response);
+		}
+
+	}
+	
+	@RequestMapping(value = { "/nextrecord**" }, method = RequestMethod.GET)
+	public void nextRecord(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("cachekey") String cachekey,@RequestParam("page") int page)
+			throws Exception {
+		String cookieValue = getUserCookie(request, response);
+		String companyId ="";
+		JSONObject jo = null;
+		if(StringUtils.isNotBlank(cookieValue)){
+			jo = JSONObject.parseObject(cookieValue);
+			companyId = jo.getString("corpId");
+		}
+		if(StringUtils.isBlank(companyId)){
+			this.writeFailJsonToClient(response);
+			return ;
+		}
+		try{
+			CacheSalaryModel cacheSalaryModel = (CacheSalaryModel) this.cacheableService.getRawObjectFromCache(cachekey);
+			//err
+			List<SalaryBillModel> errorSalaryBills = cacheSalaryModel.getErrorSalaryBills();
+			int errCount = errorSalaryBills == null ? 0 : errorSalaryBills.size();
+			cacheSalaryModel.setErrorCount(errCount);
+			//succ
+			List<SalaryBillModel> successSalaryBills = cacheSalaryModel.getSuccessSalaryBills();
+			int successCount = successSalaryBills == null ? 0 : successSalaryBills.size();
+			cacheSalaryModel.setSuccessCount(successCount);
+			
+			
+			//50一页
+			int pageSize = 50;
+			if(errCount+successCount > page*pageSize){
+				cacheSalaryModel.setHasNext(true);
+			}else{
+				cacheSalaryModel.setHasNext(false);
+			}
+			
+			//取50 model
+			List<SalaryBillModel> salarys = new ArrayList<SalaryBillModel>();
+			
+			int start = pageSize*(page-1);
+			
+			int count = errCount+successCount > start+pageSize ? start+pageSize : errCount+successCount;
+			
+			for(int i = start ; i < count ; i ++){
+				if(i<errCount){
+					salarys.add(errorSalaryBills.get(i));
+				}else{
+					salarys.add(successSalaryBills.get(i-errCount));
+				}
+			}
+			cacheSalaryModel.setErrorSalaryBills(null);
+			cacheSalaryModel.setSuccessSalaryBills(null);
+			cacheSalaryModel.setSalaryBills(salarys);
+			this.writeSuccessJsonToClient(response, cacheSalaryModel);
+		}catch(Exception e){
+			logger.error("nextrecord", e);
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+	// 缓存机制
+	@Autowired
+	private CacheableService cacheableService;
+	
+	
+	/**
+	 * 数据提交
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/commit**" }, method = RequestMethod.POST)
+	public void commit(HttpServletRequest request, HttpServletResponse response
+			)throws Exception {
+		String cookieValue = getUserCookie(request, response);
+		String companyId ="";
+		String userName = "";
+		String userId = "";
+		JSONObject jo = null;
+		if(StringUtils.isNotBlank(cookieValue)){
+			jo = JSONObject.parseObject(cookieValue);
+			companyId = jo.getString("corpId");
+			userName = jo.getString("userName");
+			userId = jo.getString("userId");
+		}
+		
+		if(StringUtils.isBlank(companyId)){
+			this.writeFailJsonToClient(response);
+			return ;
+		}
+		
+		SalaryBillCommitModel salaryBillCommitModel = this.fromInputJson(request,SalaryBillCommitModel.class);
+		
+		salaryBillCommitModel.setUserId(userId);
+		salaryBillCommitModel.setUserName(userName);
+		salaryBillCommitModel.setCompanyId(companyId);
+		//String template = param.getString("template");
+		//String title = param.getString("title");
+		try{
+			boolean flag = salaryBillService.commitData("https://"+request.getServerName(),salaryBillCommitModel);
+	
+			this.writeSuccessJsonToClient(response, flag);
+		}catch(Exception e){
+			logger.error("commit", e);
+			this.writeFailJsonToClient(response);
+		}
+
+	}
+	
+
+	
+	/**
+	 * 用户是否设置密码
+	 * 
+	 * @param request
+	 * @param voteModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="001")
+//	@RestDoc(description = "公司是否设置密码", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "eversetpwd")
+	@RequestMapping(value = { "/eversetpwd**" }, method = RequestMethod.GET)
+	public void eversetpwd(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			//System.err.println("cookie2:"+cookieValue);
+			String companyId ="";
+			String userId = "";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+				userId = jo.getString("userId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			Boolean result = salaryBillPwdSetService.evensetpwd(companyId,userId,SalaryPwdType.Manager.getCode());
+			// 向客户端返回，结束请求
+			this.writeSuccessJsonToClient(response, result);
+			
+		} catch (Exception e) {
+			logger.error("setuserpwd", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	/**
+	 * 设置后台密码
+	 * 
+	 * @param request
+	 * @param voteModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="002")
+//	@RestDoc(description = "设置后台密码", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "setuserpwd")
+	@RequestMapping(value = { "/setuserpwd**" }, method = RequestMethod.POST)
+	public void setuserpwd(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			String userId = "";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+				userId = jo.getString("userId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			SalaryBillPwdSetModel salaryBillPwdSetModel = this.fromInputJson(request, SalaryBillPwdSetModel.class);
+			
+			Boolean result = salaryBillPwdSetService.setUserPwd(companyId,userId,SalaryPwdType.Manager.getCode(),
+					salaryBillPwdSetModel);
+			
+			// 向客户端返回，结束请求
+			this.writeSuccessJsonToClient(response, result);
+			
+		} catch (Exception e) {
+			logger.error("setuserpwd", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	/**
+	 * 用户重设置密码
+	 * 
+	 * @param request
+	 * @param voteModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="003")
+//	@RestDoc(description = "用户重设置密码", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "resetuserpwd")
+	@RequestMapping(value = { "/resetuserpwd**" }, method = RequestMethod.POST)
+	public void resetuserpwd(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			String companyId ="";
+			String userId = "";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+				userId = jo.getString("userId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			SalaryBillPwdSetModel salaryBillPwdSetModel = this.fromInputJson(request, SalaryBillPwdSetModel.class);
+			salaryBillPwdSetModel.setPasswordType(SalaryPwdType.Manager.getCode());
+			String result = salaryBillPwdSetService.resetUserPwd(companyId,userId,SalaryPwdType.Manager.getCode(),
+					salaryBillPwdSetModel);
+			JSONObject rejson = new JSONObject();
+			if(StringUtils.isBlank(result)){
+				rejson.put("update", true);
+			}else{
+				rejson.put("update", false);
+				rejson.put("mess", result);
+			}
+			this.writeSuccessJsonToClient(response,rejson);
+		} catch (Exception e) {
+			logger.error("resetuserpwd", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	/**
+	 * 用户密码校验
+	 * 
+	 * @param request
+	 * @param salaryBillPwdSetModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="004")
+//	@RestDoc(description = "用户密码校验", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "comparepwd")
+	@RequestMapping(value = { "/comparepwd**" }, method = RequestMethod.POST)
+	public void comparepwd(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			String companyId ="";
+			String userId = "";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+				userId = jo.getString("userId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			SalaryBillPwdSetModel salaryBillPwdSetModel = this.fromInputJson(request, SalaryBillPwdSetModel.class);
+			
+			salaryBillPwdSetModel.setPasswordType(SalaryPwdType.Manager.getCode());
+			
+			PwdCheckResult pwdCheckResult = salaryBillPwdSetService.comparePwd(companyId,userId,
+					salaryBillPwdSetModel);
+			
+			this.writeSuccessJsonToClient(response, pwdCheckResult);
+		} catch (Exception e) {
+			logger.error("comparepwd", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	
+	public String getUserCookie(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		String cookieToken = "";
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if (PC_TOKEN.equals(cookie.getName())) {
+					cookieToken = AESUtil.decrypt(cookie.getValue(), AES_KEY);//(,AES_KEY);
+					break;
+				}
+			}
+		}
+		return cookieToken;
+	}
+	
+	
+	/**
+	 * 以分页方式返回阅读记录
+	 * @param pageable     分页信息
+	 * @return
+	 */
+//	@RestDocExport(exportNo="005")
+//	@RestDoc(description = "以分页方式返回阅读记录", returnMethodName = "",
+//	smapleClassName = "", pageable = true,
+//		restRequestParams = {@RestRequestParam(paramName = "", sampleValue = "", description = "")})
+	@RequestMapping(value = { "/getDetails**" }, method = RequestMethod.GET)
+	public void getSalaryBillReadRecord(
+			HttpServletRequest request, HttpServletResponse response,
+			//@PageableDefaults Pageable pageable,
+			@RequestParam("pageSize") int pageSize,
+			@RequestParam("pageNo") int pageNo,
+			@RequestParam(required = false, defaultValue = "0") long totalCount,
+			@RequestParam("id") String logid,@RequestParam("total") long total) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			Pageable pageable = new PageRequest(pageNo,pageSize,totalCount);
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return;
+			}
+			pageable.setTotalCount(total);
+			
+			PageData<SalaryBillReadRecordModel> pageData = this.salaryBillLogService
+					.getReadRecord(companyId, logid,pageable);
+			
+			this.writeSuccessJsonToClient(response, pageData);
+		} catch (Exception e) {
+			logger.error("latest/page", e);
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+	
+	/**
+	 * 以分页方式返回操作记录
+	 * @param pageable     分页信息
+	 * @return
+	 */
+	@RequestMapping(value = { "/latest/page**" }, method = RequestMethod.GET)
+	public void getSalaryBillLog(
+			HttpServletRequest request, HttpServletResponse response,
+		//	@PageableDefaults Pageable pageable
+			@RequestParam("pageSize") int pageSize,
+			@RequestParam("pageNo") int pageNo,
+			@RequestParam(required = false, defaultValue = "0") long totalCount
+			) {
+		try {
+			Pageable pageable = new PageRequest(pageNo,pageSize,totalCount);
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return;
+			}
+			
+			PageData<SalaryBillLogModel> pageData = this.salaryBillLogService
+					.getSalaryBillLog(companyId, pageable);
+			
+			this.writeSuccessJsonToClient(response, pageData);
+		} catch (Exception e) {
+			logger.error("latest/page", e);
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+	
+	/**
+	 * 用户设置密码
+	 * 
+	 * @param request
+	 * @param voteModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="006")
+//	@RestDoc(description = "删除操作记录", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "dellog")
+	@RequestMapping(value = { "/dellog**" }, method = RequestMethod.GET)
+	public void dellog(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("logid") String logid) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			Boolean result = salaryBillLogService.delLog(companyId,logid);
+			
+			// 向客户端返回，结束请求
+			this.writeSuccessJsonToClient(response, result);
+			
+		} catch (Exception e) {
+			logger.error("dellog", e);
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+	/**
+	 * 用户忘记密码
+	 * 
+	 * @param request
+	 * @param voteModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="007")
+//	@RestDoc(description = "忘记密码", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "forgetpwd")
+	@RequestMapping(value = { "/forgetpwd**" }, method = RequestMethod.GET)
+	public void forgetpwd(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			String userName = salaryBillPwdSetService.forgetPwd("https://"+request.getServerName(), companyId, "",SalaryPwdType.Manager.getCode());
+			
+			// 向客户端返回，结束请求
+			this.writeSuccessJsonToClient(response, userName);
+			
+		} catch (Exception e) {
+			logger.error("forgetpwd", e);
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+	/**
+	 * 验证随机码
+	 * 
+	 * @param request
+	 * @param voteModel
+	 *            客户端上传的投票内容
+	 * @return 创建成功后的ID值
+	 */
+//	@RestDocExport(exportNo="007")
+//	@RestDoc(description = "验证随机码", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "checkrandom")
+	@RequestMapping(value = { "/checkrandom**" }, method = RequestMethod.POST)
+	public void checkrandom(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			SalaryBillPwdSetModel salaryBillPwdSetModel = this.fromInputJson(request, SalaryBillPwdSetModel.class);
+			
+			Boolean result = salaryBillPwdSetService.checkRandom(companyId, salaryBillPwdSetModel.getPassword());
+			
+			// 向客户端返回，结束请求
+			this.writeSuccessJsonToClient(response, result);
+			
+		} catch (Exception e) {
+			logger.error("checkrandom", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	
+	
+	
+	/**
+	 * 下载模板
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/logfile**" }, method = RequestMethod.GET)
+	public void logfile(HttpServletRequest request, HttpServletResponse response,@RequestParam("logid") String logid)
+			throws Exception {
+		response.setContentType("application/vnd.ms-excel;charset=UTF-8");
+		response.setHeader("Content-disposition",
+				"attachment; filename=temple.xls");
+		try{
+			String cookieValue = getUserCookie(request, response);
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			//获取该公司的员工信息
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			String buckname = "alidsalarybill";
+			
+			String fileId = salaryBillLogService.getFileIdByLogId(companyId, logid);
+	
+			String fileUrl = "";
+			if(StringUtils.isNotBlank(fileId)){
+				fileUrl = OSSObjectService.getFileUrl(buckname, fileId);
+			}
+	
+			this.writeSuccessJsonToClient(response, fileUrl);
+		}catch(Exception e){
+			logger.error("logfile", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	
+	/**
+	 * pc后台密码重置 用户查询
+	 * 
+	 * @param request
+	 * 
+	 * @return
+	 */
+//	@RestDocExport(exportNo="005")
+//	@RestDoc(description = "用户查询", returnMethodName = "",
+//	smapleClassName = "",requestBodyMethodName = "findUserForPwd")
+	@RequestMapping(value = { "/finduserforpwd**" }, method = RequestMethod.POST)
+	public void findUserForPwd(HttpServletRequest request, HttpServletResponse response
+			) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			SearchUserModel searchUserModel = this.fromInputJson(request, SearchUserModel.class);
+			String searchkey = searchUserModel.getSearchkey();
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			List<UserModel> salaryPwdPersonModel = null;
+			if(StringUtils.isBlank(searchkey)){
+				salaryPwdPersonModel = new ArrayList<UserModel>();
+			}else{
+				salaryPwdPersonModel = salaryBillPwdSetService.findSalaryPwdModelBySerach(companyId,searchkey);
+			}
+			
+			// 向客户端返回，结束请求
+			this.writeSuccessJsonToClient(response, salaryPwdPersonModel);
+			
+		} catch (Exception e) {
+			logger.error("checkrandom", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	/**
+	 * 管理员清空用户密码
+	 * 
+	 * @param request
+	 * @return
+	 */
+//	@RestDocExport(exportNo="006")
+//	@RestDoc(description = "管理员清空用户密码", returnMethodName = "",
+//	smapleClassName = "",requestBodyMethodName = "")
+	@RequestMapping(value = { "/clearpwd**" }, method = RequestMethod.GET)
+	public void resetuserpwd(HttpServletRequest request, HttpServletResponse response
+			,@RequestParam("userid") String userId) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			Boolean result = salaryBillPwdSetService.clearUserPwd("https://"+request.getServerName(),companyId,userId,SalaryPwdType.User.getCode());
+			this.writeSuccessJsonToClient(response,result);
+		} catch (Exception e) {
+			logger.error("resetuserpwd", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	/**
+	 * 公司模板列表
+	 * 
+	 * @param request
+	 * @return
+	 */
+//	@RestDocExport(exportNo="007")
+//	@RestDoc(description = "公司模板列表", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "")
+	@RequestMapping(value = { "/mytemplate**" }, method = RequestMethod.GET)
+	public void mytemplate(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			
+			List<SalaryBillTemplateModel> m  = salaryBillService.myTemplates(companyId);
+			
+			this.writeSuccessJsonToClient(response,m);
+		} catch (Exception e) {
+			logger.error("resetuserpwd", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+
+	
+
+	/**
+	 * 该部门下的子部门信息
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = { "/getChildDepts**" }, method = RequestMethod.GET)
+	public void findOrgTree(HttpServletRequest request, HttpServletResponse response,
+							@RequestParam(required = false) String id) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			String companyId = "";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			companyId = "ding2585e7fd381d17fe";
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			OrgTreeModel m = new OrgTreeModel();
+			if(StringUtils.isBlank(id)){
+				id = "1";
+				//根据company查公司名
+				String name = salaryBillService.getCorpName(companyId);
+				m.setName(name);
+			}
+			List<OrgTreeModel> orgDeptModels  = salaryBillService.getOrgSubDetpByDeptId(companyId,id);
+			m.setId(id);
+			m.setDatas(orgDeptModels);
+			
+			this.writeSuccessJsonToClient(response,m);
+		} catch (Exception e) {
+			logger.error("findOrgTree", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	/**
+	 * 该部门下的员工信息
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = { "/getChildUsers**" }, method = RequestMethod.GET)
+	public void getChildUsers(HttpServletRequest request, HttpServletResponse response,
+							@RequestParam(required = false) String id) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			String companyId = "";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			companyId = "ding2585e7fd381d17fe";
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			OrgTreeModel m = new OrgTreeModel();
+			if(StringUtils.isBlank(id)){
+				id = "1";
+				//根据company查公司名
+				String name = salaryBillService.getCorpName(companyId);
+				m.setName(name);
+			}
+			
+			List<OrgTreeModel> orgDeptModels  = salaryBillService.getOrgUserByDeptId(companyId,id);
+			m.setId(id);
+			m.setDatas(orgDeptModels);
+			
+			this.writeSuccessJsonToClient(response,m);
+		} catch (Exception e) {
+			logger.error("findOrgTree", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+
+	
+	/**
+	 * 查询已经设置不需要密码的人员和部门
+	 * @param request
+	 * @param response
+	 */
+//	@RestDoc(description = "查询设置无需密码的人员和部门", returnMethodName = "",smapleClassName = "",requestBodyMethodName = "")
+	@RequestMapping(value = { "/findNoneedPwdItems**" }, method = RequestMethod.GET)
+	public void findNoneedPwdItems(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			companyId = "ding2585e7fd381d17fe";
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			List<SalaryBillNoPwdSelectedItemViewMode> itemLists =salaryBillPwdSetService.findNoneedPwdItems(companyId);
+			this.writeSuccessJsonToClient(response,itemLists);
+		} catch (Exception e) {
+			logger.error("findNoneedPwdItems", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	
+	/**
+	 * 保存选择的部门或人员查看数据时不需要密码
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/saveNoneedPwdItems**" }, method = RequestMethod.POST)
+	public void saveNoneedPwdItems(HttpServletRequest request, HttpServletResponse response)throws Exception {
+		String cookieValue = getUserCookie(request, response);
+		String companyId ="";
+		String userId = "";
+		JSONObject jo = null;
+		if(StringUtils.isNotBlank(cookieValue)){
+			jo = JSONObject.parseObject(cookieValue);
+			companyId = jo.getString("corpId");
+			userId = jo.getString("userId");
+		}
+		companyId = "ding2585e7fd381d17fe";
+		if(StringUtils.isBlank(companyId)){
+			this.writeFailJsonToClient(response);
+			return ;
+		}
+		
+		List<OrgDataModel> orgDataModels = this.fromInputJsonToList(request,OrgDataModel.class);
+		OrgItemResult orgItemResult =salaryBillPwdSetService.saveNoneedPwdItems(orgDataModels,companyId,userId);
+		this.writeSuccessJsonToClient(response,orgItemResult);
+		try{
+		}catch(Exception e){
+			logger.error("saveNoneedPwdItems", e);
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	
+	/**
+	 * 全部恢复
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = { "/doReset**" }, method = RequestMethod.GET)
+	public void doReset(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(required = false) String id,
+			@RequestParam(required = false) String type
+			) {
+		try {
+			String cookieValue = getUserCookie(request, response);
+			String companyId ="";
+			JSONObject jo = null;
+			if(StringUtils.isNotBlank(cookieValue)){
+				jo = JSONObject.parseObject(cookieValue);
+				companyId = jo.getString("corpId");
+			}
+			companyId = "ding2585e7fd381d17fe";
+			if(StringUtils.isBlank(companyId)){
+				this.writeFailJsonToClient(response);
+				return ;
+			}
+			OrgItemResult orgItemResult =salaryBillPwdSetService.doReset(companyId, id,type);
+			this.writeSuccessJsonToClient(response,orgItemResult);
+		} catch (Exception e) {
+			logger.error("findNoneedPwdItems", e);
+			this.writeFailJsonToClient(response);
+			return;
+		}
+	}
+	
+	@Override
+	protected String getHomePageUrl(String param) {
+		return null;
+	}
+
+
+	@Override
+	protected SalaryBillService getService() {
+		return null;
+	}
+	
+	
+//	/**
+//	 * 发调查接口
+//	 *
+//	 * @param request
+//	 * @return
+//	 */
+//	@RestDocExport(exportNo="007")
+//	@RestDoc(description = "发调查接口", returnMethodName = "",
+//	smapleClassName = "",
+//		requestBodyMethodName = "")
+//	@RequestMapping(value = { "/sendVote**" }, method = RequestMethod.GET)
+//	public void sendVote(HttpServletRequest request, HttpServletResponse response) {
+//		try {
+//			String appid = "263";
+//			String appid2 = "339";
+//			List<String> appids = new ArrayList<String>();
+//			appids.add(appid);
+//			appids.add(appid2);
+//
+//			salaryBillService.sendVote(appids);
+//
+//		} catch (Exception e) {
+//			logger.error("resetuserpwd", e);
+//			this.writeFailJsonToClient(response);
+//			return;
+//		}
+//	}
+
+}

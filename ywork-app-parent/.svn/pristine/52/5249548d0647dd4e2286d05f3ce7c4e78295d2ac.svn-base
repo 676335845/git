@@ -1,0 +1,89 @@
+package me.ywork.salarybill.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+/**
+ * 
+ * @author kezm
+ *
+ *         2016年1月20日
+ */
+public class SalaryBillNoPwdSelectedItemViewMode implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3713921217921787889L;
+
+	private String orgType;
+
+	private String name;
+
+	private String corpId;
+
+	private String selectedId;
+
+	private String hierarchy;
+
+	private String createUserId;
+
+	private Date createTime;
+
+	public String getOrgType() {
+		return orgType;
+	}
+
+	public void setOrgType(String orgType) {
+		this.orgType = orgType;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getCorpId() {
+		return corpId;
+	}
+
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+
+	public String getSelectedId() {
+		return selectedId;
+	}
+
+	public void setSelectedId(String selectedId) {
+		this.selectedId = selectedId;
+	}
+
+	public String getHierarchy() {
+		return hierarchy;
+	}
+
+	public void setHierarchy(String hierarchy) {
+		this.hierarchy = hierarchy;
+	}
+
+	public String getCreateUserId() {
+		return createUserId;
+	}
+
+	public void setCreateUserId(String createUserId) {
+		this.createUserId = createUserId;
+	}
+
+	public Date getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+
+}

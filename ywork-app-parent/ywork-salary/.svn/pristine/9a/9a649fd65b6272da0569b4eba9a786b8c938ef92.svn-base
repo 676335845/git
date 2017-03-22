@@ -1,0 +1,44 @@
+package me.ywork.salary.entity;
+
+import java.io.Serializable;
+
+public class SalCorpInfoEntity  implements Serializable{
+	/**
+	 * 企业ID
+	 */
+	private String corpId;
+	/**
+	 * 企业的密码锁开启状态
+	 */
+	private Short passState;
+	/**
+	 * 钉钉企业ID
+	 */
+	private String dingCorpId;
+	
+	
+	public SalCorpInfoEntity() {
+		super();
+	}
+	public String getCorpId() {
+		return corpId;
+	}
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+	public Short getPassState() {
+		return passState;
+	}
+	public void setPassState(Short passState) {
+		this.passState = passState;
+	}
+	public String getDingCorpId() {
+		return dingCorpId;
+	}
+	public void setDingCorpId(String dingCorpId) {
+		this.dingCorpId = dingCorpId;
+	}
+	
+	
+
+}

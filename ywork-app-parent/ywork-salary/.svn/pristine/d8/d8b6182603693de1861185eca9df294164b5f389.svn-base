@@ -1,0 +1,133 @@
+package me.ywork.salary.controller;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import me.ywork.context.CallContext;
+import me.ywork.controller.RestController;
+import me.ywork.page.PageData;
+import me.ywork.page.PageRequest;
+import me.ywork.salary.model.SalCorpMbSalListModel;
+import me.ywork.salary.model.SalCorpReportModel;
+import me.ywork.salary.model.SalStaffMbSalInfoModel;
+import me.ywork.salary.model.SalStaffSalReportModel;
+import me.ywork.salary.service.SalInfoService;
+import me.ywork.salary.service.SalReportService;
+/**
+ * 手机端界面
+ * 
+ */
+@Controller
+@RequestMapping(value = { "**/app/calsalary/mobile" })
+public class SalMbController extends RestController<SalInfoService> {
+
+	@Autowired
+	private SalReportService salReportService;
+	
+	@Override
+	protected String getHomePageUrl(String param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected SalInfoService getService() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+    /**
+     *  获取员工所有工资月份
+     *  
+     * @param request
+     * @param response
+     */
+	@RequestMapping(value = "/getUserSalDates**" , method = RequestMethod.GET)
+	public void getUserSalDates(HttpServletRequest request, HttpServletResponse response){
+		CallContext callContext = this.getCallContext(request);
+		String staffId = callContext.getUserId();
+		String corpId = callContext.getCorpId();
+		try{
+		List<SalCorpReportModel> salReportModels = salReportService.getUserSalDates(corpId , staffId);
+		this.writeSuccessJsonToClient(response, salReportModels);
+		}catch(Exception e){
+			this.writeFailJsonToClient(response);
+			e.printStackTrace();
+		}		
+	}
+	 /**
+	  * 获取该月公司员工工资详情
+	  * 
+	  * 
+	  */
+	@RequestMapping(value = "/getUserSalDetail**" , method = RequestMethod.GET)
+	public void getUserSalDetail(HttpServletRequest request, HttpServletResponse response,
+			                                             @RequestParam(value = "reportId")String reportId){
+		CallContext callContext = this.getCallContext(request);
+		String staffId = callContext.getUserId();
+		String corpId =callContext.getCorpId();
+		try{
+			List<SalStaffMbSalInfoModel>  salStaffMbSalInfos =  salReportService.getStaffMbSalInfo(corpId , staffId, reportId);
+			this.writeSuccessJsonToClient(response , salStaffMbSalInfos);
+		}catch(Exception e){
+			this.writeFailJsonToClient(response);
+			e.printStackTrace();
+		}			
+	}
+	
+	/**
+	 * 获取该月份工资详情：根据工资表ID来获得该月的工资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param monthSalId
+	 *            月度工作报表ID
+	 * @param pageable
+	 *            分页插件Pageable
+	 */
+	@RequestMapping(value = "/getUserSalList**", method = RequestMethod.GET)
+	public void getSalaryDatailByMonthId(HttpServletRequest request, HttpServletResponse response,
+			                                                            @RequestParam(value = "reportId") String reportId,
+																		@RequestParam(value = "pageNo") Integer pageNo,
+																		@RequestParam(value = "pageSize") Integer pageSize,
+																		@RequestParam(value ="totalCount") Long totalCount) {
+		PageRequest pageable = new PageRequest(pageNo , pageSize , totalCount);
+		CallContext callContext = this.getCallContext(request);
+		String corpId = callContext.getCorpId();
+		SalCorpReportModel salCorpReportModel =	salReportService.getSalReportByReportId(reportId);
+		try {
+			PageData<SalStaffSalReportModel> monthStaffModels = salReportService.getSalDatailByReportId(reportId,callContext.getCorpId(),
+					pageable);
+			List<SalStaffSalReportModel> datas =monthStaffModels.getDatas();
+		   totalCount = monthStaffModels.getTotalCount();
+		  Integer totalPages = monthStaffModels.getTotalPages();
+		  SalCorpMbSalListModel salCorpMbSalListModel =new SalCorpMbSalListModel();
+		  salCorpMbSalListModel.setCorpId(salCorpMbSalListModel.getCorpId());
+		  salCorpMbSalListModel.setCreateDate(salCorpReportModel.getCreateDate());
+		  salCorpMbSalListModel.setDatas(datas);
+		  salCorpMbSalListModel.setFileUrl(salCorpReportModel.getFileUrl());
+		  salCorpMbSalListModel.setId(salCorpReportModel.getId());
+		  salCorpMbSalListModel.setInsuranceSal(salCorpReportModel.getInsuranceSal());
+		  salCorpMbSalListModel.setModifiedDate(salCorpReportModel.getModifiedDate());
+		  salCorpMbSalListModel.setMonthTime(salCorpReportModel.getMonthTime());
+		  salCorpMbSalListModel.setStaffCost(salCorpReportModel.getStaffCost());
+		  salCorpMbSalListModel.setPageNo(pageNo);
+		  salCorpMbSalListModel.setPageSize(pageSize);
+		  salCorpMbSalListModel.setTotalCount(totalCount);
+		  salCorpMbSalListModel.setTotalPages(totalPages);
+			this.writeSuccessJsonToClient(response, salCorpMbSalListModel);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+}

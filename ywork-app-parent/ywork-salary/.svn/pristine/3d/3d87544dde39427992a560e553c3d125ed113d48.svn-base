@@ -1,0 +1,30 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+import me.ywork.salary.model.StaffBaseInfoModel;
+
+/**
+ *  企业的管理员可以配置在打开算工资应用时要密码还是不用密码才能进去
+ *
+ * Created by xiaobai on 2017/1/11.
+ */
+public interface SalPassService extends BizService {
+    /**
+     * 得到企业密码锁开启的状态
+     *
+     * @param corpId
+     * @return
+     */
+     Short getCorpPasswordOpenStatus(String corpId);
+
+    /**
+     * 根据员工的信息去模糊查询员工的信息
+     */
+    StaffBaseInfoModel getStaffInfoByKeyword(String keyword);
+
+    /**
+     *  对员工的密码进行重置
+     */
+    Boolean resetStaffPassword(String staffId);
+
+}

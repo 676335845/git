@@ -1,0 +1,52 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.salary.model.SalRuleDetailModel;
+import me.ywork.salary.model.SalRuleModel;
+import me.ywork.salary.repository.SalaryReportRepository;
+import me.ywork.salary.repository.SalaryRuleRepository;
+import me.ywork.salary.service.CalcuSalRulesService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class CalcuSalRulesServiceImpl implements CalcuSalRulesService{
+	@Autowired
+	private SalaryRuleRepository salaryRuleRepository;
+    @Override
+    public List<SalRuleModel> getAllSalaryRules(String corpId) {
+        if(StringUtils.isBlank(corpId)){
+            throw new IllegalArgumentException("getAllSalaryRules param corpId is null or empty");
+        }
+        //TODO 得到企业薪资规则的列表
+        List<SalRuleModel> salRuleModels = salaryRuleRepository.getAllSalaryRules(corpId);
+        return salRuleModels;
+    }
+
+    @Override
+    public SalRuleDetailModel getSalaryRuleByRuleId(String ruleId) {
+        if(StringUtils.isBlank(ruleId)){
+            throw new IllegalArgumentException("getSalaryRuleByRuleId param ruleId is null or empty");
+        }
+        SalRuleDetailModel salRuleDetailModel = salaryRuleRepository.getSalaryRuleByRuleId(ruleId);
+        //TODO 得到企业薪资详情
+        return salRuleDetailModel;
+    }
+
+    @Override
+    public Boolean updateSalaryRule(SalRuleDetailModel salaryRule) {
+       if(salaryRule == null){
+           throw new IllegalArgumentException("updateSalaryRule param salaryRule is null");
+       }
+       SalRuleDetailModel salRuleDetailModel = salaryRuleRepository.getSalaryRuleByRuleId(salaryRule.getId());
+       salaryRuleRepository.updateSalaryRule(salRuleDetailModel);
+       //TODO 得到企业薪资规则更新的结果
+       return Boolean.TRUE;
+    }
+}

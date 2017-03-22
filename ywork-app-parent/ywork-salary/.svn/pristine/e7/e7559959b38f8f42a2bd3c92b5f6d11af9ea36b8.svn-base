@@ -1,0 +1,56 @@
+			
+
+            package me.ywork.salary.service;
+			
+			import me.ywork.base.service.BizService;
+			import me.ywork.page.PageData;
+			import me.ywork.page.Pageable;
+			import me.ywork.salary.entity.AttendanceEntity;
+			import me.ywork.salary.model.AttendanceModel;
+			import me.ywork.salary.model.StaffAttendanceModel;
+			
+			import java.util.Date;
+			import java.util.List;
+			
+			/**
+			 * * 由于我们在计算薪资的时候，不能确定那个员工在一个月中，每天都尽职尽责的到公司
+			 *    所以我们要结合员工的考勤的情况来计算该员工的真实的工资
+			 * Created by xiaobai on 2017/1/10.
+			 */
+			public interface AttendanceService extends BizService  {
+			    /**
+			     *  获取所有月份考勤:返回所有月份的的考勤数据
+			     *  
+				 * @param corpId  钉钉企业号
+				 * @param pageable 分页的pageable
+				 * @return  得到分页的结果
+				 */
+			    PageData<AttendanceModel> getAllMonthesAttendanceData(String corpId , Pageable pageable);
+			
+			    /**
+			     *   获取该月人员考勤详情:根据考勤id得到该月所有员工的考勤情况
+			     * 
+			     * @param monthId 月度考勤的标识
+			     * @param pageable 分页的pageable
+			     * @return 得到分页的结果
+			     */
+			    PageData<StaffAttendanceModel> getAllStaffAttendanceByMonthId(String reportId , Pageable pageable);
+			
+			    /**
+			     *  获取选中人员该月考勤详情(编辑考勤):管理员可以选择多个员工和该月考勤的ID来得到这些员工的考勤详情
+			     * 
+			     * @param staffIds 员工Id的集合
+			     * @param monthId 月度考勤的标识
+			     * @return 得到选择人员的考勤的结果
+			     */
+			    List<StaffAttendanceModel> getMutiStaffAttendanceDetail(List<String> staffIds , String reportId);
+			
+			    /**
+			     *  修改某员工的考勤数据后可以保存到数据库
+			     * 
+			     * @param staffAttendances 要修改考勤的集合
+			     * @return 更新的结果
+			     */
+			    Boolean updateMutiStaffAttendance(List<StaffAttendanceModel> staffAttendances);
+			    
+			}

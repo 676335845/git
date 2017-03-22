@@ -1,0 +1,10 @@
+package me.ywork.salary.model;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.service.SalBaseService;
+
+
+public class SalBaseInfoModel{
+
+
+}

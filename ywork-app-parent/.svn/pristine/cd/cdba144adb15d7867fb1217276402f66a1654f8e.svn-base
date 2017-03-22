@@ -1,0 +1,319 @@
+package me.ywork.ticket.suite.service.impl;
+
+import java.security.MessageDigest;
+import java.util.Date;
+import java.util.Formatter;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang.StringUtils;
+import org.redisson.cache.CacheableService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSONObject;
+
+import me.ywork.ticket.api.rpc.SuiteTokenRpcService;
+import me.ywork.ticket.constants.DingConstants;
+import me.ywork.ticket.suite.entity.DingSuiteMain;
+import me.ywork.ticket.suite.entity.DingSuiteThirdMain;
+import me.ywork.ticket.suite.service.DingSuiteMainService;
+import me.ywork.ticket.suite.service.DingSuiteThirdAppService;
+import me.ywork.ticket.suite.service.DingSuiteThirdMainService;
+import me.ywork.ticket.suite.service.IAccessTokenService;
+import me.ywork.ticket.suite.service.IDingApiService;
+import me.ywork.ticket.util.DingAPIHttpUtil;
+
+@Service
+public class AccessTokenServiceImpl implements IAccessTokenService, SuiteTokenRpcService {
+
+	@Autowired
+	private IDingApiService dingApiService;
+	
+	@Autowired
+	private DingSuiteMainService suiteMainService;
+	
+	@Autowired
+	private DingSuiteThirdAppService suiteThirdAppService;
+	
+	@Autowired
+	private DingSuiteThirdMainService suiteThirdMainRepository;
+	
+	@Autowired
+	private CacheableService cacheableService;
+	
+	
+	private static final Map<String, Object> lockMap = new ConcurrentHashMap<String, Object>();
+	
+
+	private static Logger logger = LoggerFactory.getLogger(AccessTokenServiceImpl.class);
+
+
+	/**
+	 * 获取jsapi_ticket
+	 */
+	@Override
+	public String getJSAPITicket(DingSuiteThirdMain thirdVo) {
+		String jsapiTicket = "";
+		if (thirdVo != null) {
+			DingSuiteMain suite = suiteMainService.getDingSuiteFromCache(thirdVo.getSuiteId());
+			String key = thirdVo.getCorpId() + suite.getId() + DingConstants.JSAPI_TICKET;
+			Object cache = cacheableService.getRawObjectFromCache(key);
+			if (cache != null) {
+				jsapiTicket = (String) cache;
+			}
+
+			if (StringUtils.isBlank(jsapiTicket)) {
+				String corpAccessToken = this.getAccessToken(thirdVo);
+				String access_token_url = DingConstants.GET_JSAPI_TICKET.replace("ACCESS_TOKEN", corpAccessToken);
+				
+				JSONObject jsonObject = DingAPIHttpUtil.httpRequest(access_token_url, "GET", null);
+				try {
+					jsapiTicket = jsonObject.getString("ticket");
+					int expireIn = jsonObject.getIntValue("expires_in");
+					cacheableService.setRawObjectInCache(key, jsapiTicket, expireIn == 0 ? 6600 : expireIn - 600,TimeUnit.SECONDS);
+				} catch (Exception e) {
+					logger.error("getJSAPITicket error:" + jsonObject);
+				}
+			}
+		}
+		return jsapiTicket;
+	}
+
+	
+	@Override
+	public String getJSAPISignature(String ticket, String nonceStr, long timeStamp, String url, String agentId) {
+		String signature = "";
+		String plain = "jsapi_ticket=" + ticket + "&noncestr=" + nonceStr + "&timestamp=" + String.valueOf(timeStamp)
+				+ "&url=" + url;
+		try {
+			MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+			sha1.reset();
+			sha1.update(plain.getBytes("UTF-8"));
+			signature = bytesToHex(sha1.digest());
+			JSONObject jo = new JSONObject();
+			jo.put("mess", "1");
+			jo.put("nonceStr", nonceStr);
+			jo.put("timeStamp", timeStamp);
+			jo.put("signature", signature);
+			jo.put("agentId", agentId);
+			return jo.toJSONString();
+		} catch (Exception e) {
+			logger.error("获取JSAPI签名异常：{}。", e);
+		}
+		return null;
+	}
+
+	
+
+	private String bytesToHex(byte[] hash) {
+		Formatter formatter = new Formatter();
+		for (byte b : hash) {
+			formatter.format("%02x", b);
+		}
+		String result = formatter.toString();
+		formatter.close();
+		return result;
+	}
+
+//	/**
+//	 * rpc 接口 获取企业token
+//	 */
+//	public String getToken(String corpid, Short corpType) {
+//
+//		DingSuiteThirdMain thirdModel = opPlatformSuiteThirdRepository.findDingSuiteThirdByCorpType(corpid,
+//				corpType);
+//
+//		return getAccessToken(thirdModel);
+//	}
+
+	@Override
+	public String getToken(String corpId, String sid) {
+		DingSuiteThirdMain thirdModel = suiteThirdMainRepository.findDingSuiteThirdByCorpId(corpId,sid);
+		return getAccessToken(thirdModel);
+	}
+
+	
+
+	/**
+	 * rpc 接口 获取企业agentid
+	 */
+	@Override
+	public String getAgentId(String corpid, String suiteid, String appid) {
+		String agentId = suiteThirdAppService.findAgentId(corpid, suiteid, appid);
+		return agentId;
+	}
+
+	/**
+	 * 获取企业token的方法
+	 * 
+	 * @Description
+	 * @return String
+	 */
+	@Override
+	public String getAccessToken(DingSuiteThirdMain thirdVo) {
+		String token = "";
+		if (thirdVo != null) {
+			if (lockMap.get(thirdVo.getId()) == null) {
+				lockMap.put(thirdVo.getId(), new Object());
+			}
+			synchronized (lockMap.get(thirdVo.getId())) { // FIXME
+															// 这地方用synchronized有问题。必须换成分布式锁才能解决同一个企业并发访问的问题
+				DingSuiteMain suite = suiteMainService.getDingSuiteFromCache(thirdVo.getSuiteId());
+				String suiteTicket = null;
+				if (StringUtils.isBlank(suiteTicket)) {
+					Object cache = cacheableService.getRawObjectFromCache(suite.getId() + DingConstants.SUITE_TICKET_KEY);
+					if (cache != null) {
+						suiteTicket = (String) cache;
+					}
+				}
+				// 套件token
+				String suiteToken = getSuiteToken(suite, suiteTicket);
+				// accessToken 企业token
+				token = getCorpAccessToken(thirdVo, suite, suiteToken);
+			}
+
+		}
+		return token;
+	}
+
+	/**
+	 * 获取套件token
+	 * 
+	 * @Description
+	 * @param suiteId
+	 * @param suiteSecret
+	 * @param suiteTicket
+	 * @return
+	 * @return String
+	 */
+	@Override
+	public String getSuiteToken(DingSuiteMain suite, String suiteTicket) {
+		String key = suite.getId() + DingConstants.SUITE_ACCESS_TOKEN_KEY;
+		Object cache = cacheableService.getRawObjectFromCache(key);
+		String suiteToken = "";
+		if (cache != null) {
+			suiteToken = (String) cache;
+		}
+		if (StringUtils.isBlank(suiteToken)) {
+			//从钉钉服务器获取
+			JSONObject jo = null;
+			try{
+				jo = getSuiteTokenFormServer(suite.getSuiteId(), suite.getSecret(), suiteTicket);
+				suiteToken = jo.getString("suite_access_token");
+				int expireIn = jo.getIntValue("expires_in");
+				if (StringUtils.isNotBlank(suiteToken)) {
+					cacheableService.setRawObjectInCache(key, suiteToken, expireIn == 0 ? 6600 : expireIn - 600,TimeUnit.SECONDS);
+				} else {
+					logger.error("服务器获取套件token异常，返回data："+jo.toJSONString());
+				}
+			}catch(Exception e){
+				logger.error("服务器获取套件token异常，返回data："+jo==null?"json is null":jo.toJSONString(),e);
+			}
+		}
+		return suiteToken;
+	}
+
+	/**
+	 * 获取 pc端 access_token
+	 * 
+	 * @Description
+	 * @param corpid
+	 * @param corpsecret
+	 * @return
+	 * @return WeChatToken
+	 */
+	@Override
+	public String getPCAccessToken(String corpid, String corpsecret) {
+		String key = corpid + DingConstants.PC_TOKEN_KEY;
+		Object cache = cacheableService.getRawObjectFromCache(key);
+		String pcToken = "";
+		if (cache != null) {
+			pcToken = (String) cache;
+		}
+		if (StringUtils.isBlank(pcToken)) {
+			String access_token_url = DingConstants.GET_PC_ACCESS_TOKEN.replace("CORPID", corpid).replace("PCSECRET", corpsecret);
+			JSONObject jsonObject = DingAPIHttpUtil.httpRequest(access_token_url, "GET", null);
+			pcToken = jsonObject.getString("access_token");
+			int expireIn = jsonObject.getIntValue("expires_in");
+			cacheableService.setRawObjectInCache(key, pcToken, expireIn == 0 ? 6600 : expireIn - 600,TimeUnit.SECONDS);
+		}
+		return pcToken;
+	}
+
+	
+	/**
+	 * 获取企业token 方法
+	 * 
+	 * @return
+	 */
+	private String getCorpAccessToken(DingSuiteThirdMain third, DingSuiteMain suite, String suiteToken) {
+
+		String suiteId = suite.getId();
+
+		String corpId = third.getCorpId();
+		// 每个套件第三方 不分应用共用一个token
+		String key = corpId + suiteId + DingConstants.TOKEN_KEY;
+
+		Object cache = cacheableService.getRawObjectFromCache(key);
+		String accessToken = "";
+		if (cache != null) {
+			accessToken = (String) cache;
+		}
+		if (StringUtils.isBlank(accessToken)) {
+			JSONObject jo = dingApiService.getCorpToken(corpId, third.getPermanentCode(), suiteToken);
+			logger.info("获取企业（{}）TOKEN返回结果：{}", corpId, jo.toJSONString());
+			accessToken = jo.getString("access_token");
+			int expireIn = jo.getIntValue("expires_in");
+			if (StringUtils.isNotBlank(accessToken)) {
+				cacheableService.setRawObjectInCache(key, accessToken, expireIn == 0 ? 6600 : expireIn - 600,
+						TimeUnit.SECONDS);
+			} else {
+				logger.warn("获取企业Token失败,API返回结果为:{}", jo.toJSONString());
+			}
+		}
+		return accessToken;
+	}
+
+	/**
+	 * 删除缓存SuiteToken
+	 * 
+	 * @return
+	 */
+	@Override
+	public void delSuiteAccessToken(String corpId, String suiteId) {
+		// 每个套件第三方 不分应用共用一个token
+		String key = corpId + suiteId + DingConstants.TOKEN_KEY;
+		cacheableService.deleteRawObjectInCache(key);
+	}
+
+	
+	private static JSONObject getSuiteTokenFormServer(String suiteId, String suiteSecret, String suiteTicket) {
+		JSONObject json = new JSONObject();
+		json.put("suite_key", suiteId);
+		json.put("suite_secret", suiteSecret);
+		json.put("suite_ticket", suiteTicket);
+		String jsonText = json.toJSONString();
+		JSONObject jsonObject = DingAPIHttpUtil.httpRequest(DingConstants.DING_SERVICE_SUITE_ACCESS_TOKEN, "POST", jsonText);
+		logger.info("===getSuiteTokenFormServer===" + new Date() + "===调用钉钉服务器获取套件token,返回:" + jsonObject + "===参数:"+ jsonText);
+		return jsonObject;
+	}
+
+
+	@Override
+	public JSONObject getJSAPITicketForContact(DingSuiteThirdMain third) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public String getJSSdkAuthoritySignature(String ticket, String nonceStr, long timeStamp, String url) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

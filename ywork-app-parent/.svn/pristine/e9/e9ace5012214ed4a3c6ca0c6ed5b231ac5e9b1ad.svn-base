@@ -1,0 +1,54 @@
+package me.ywork.salarybill.model;
+
+import java.io.Serializable;
+
+/**
+ * 
+ * @author kezm
+ *
+ * 2016年1月20日
+ */
+public class OrgTempModel implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5243384535246021220L;
+	private String selectedId;
+	private String type;
+	private String name;
+	private String hirarchyId;
+
+	public String getSelectedId() {
+		return selectedId;
+	}
+
+	public void setSelectedId(String selectedId) {
+		this.selectedId = selectedId;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getHirarchyId() {
+		return hirarchyId;
+	}
+
+	public void setHirarchyId(String hirarchyId) {
+		this.hirarchyId = hirarchyId;
+	}
+
+}

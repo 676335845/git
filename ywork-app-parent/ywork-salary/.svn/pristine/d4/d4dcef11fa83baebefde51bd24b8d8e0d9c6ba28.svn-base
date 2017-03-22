@@ -1,0 +1,71 @@
+package me.ywork.salary.entity;
+
+import me.ywork.base.entity.Entity;
+
+public class SalWhpSalRuleEntity extends Entity{
+	/**
+	 * 缴纳科目标识
+	 */
+	private String subjectId;
+	/**
+	 * 基数下限
+	 */
+	private Integer baseLow;
+	/**
+	 * 基数上限
+	 */
+	private Integer baseHigh;
+	/**
+	 * 公司比例
+	 */
+	private Integer corpPercent;
+	/**
+	 * 个人比例
+	 */
+	private Integer personalPercent;
+	/**
+	 * 钉钉企业标识
+	 */
+	private String corpId;
+	
+	
+	public SalWhpSalRuleEntity() {
+		super();
+	}
+	public String getSubjectId() {
+		return subjectId;
+	}
+	public void setSubjectId(String subjectId) {
+		this.subjectId = subjectId;
+	}
+	public Integer getBaseLow() {
+		return baseLow;
+	}
+	public void setBaseLow(Integer baseLow) {
+		this.baseLow = baseLow;
+	}
+	public Integer getBaseHigh() {
+		return baseHigh;
+	}
+	public void setBaseHigh(Integer baseHigh) {
+		this.baseHigh = baseHigh;
+	}
+	public Integer getCorpPercent() {
+		return corpPercent;
+	}
+	public void setCorpPercent(Integer corpPercent) {
+		this.corpPercent = corpPercent;
+	}
+	public Integer getPersonalPercent() {
+		return personalPercent;
+	}
+	public void setPersonalPercent(Integer personalPercent) {
+		this.personalPercent = personalPercent;
+	}
+	public String getCorpId() {
+		return corpId;
+	}
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+}

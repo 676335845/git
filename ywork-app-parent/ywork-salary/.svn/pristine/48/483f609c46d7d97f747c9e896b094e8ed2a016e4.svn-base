@@ -1,0 +1,8 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+import me.ywork.salary.model.SalBaseInfoModel;
+
+public interface SalBaseService extends BizService{
+	SalBaseInfoModel getStaffBaseInfo(String corpId);
+}

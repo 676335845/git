@@ -1,0 +1,8 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+
+public interface SalCalcuSalService extends BizService {
+   
+	Boolean calcuSalReportAutomatic(String corpId);
+}

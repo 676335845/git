@@ -1,0 +1,85 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+public class StaffSalInfoDetailModel extends StaffBaseInfoModel implements Serializable{
+    /**
+     *  基本工资
+     */
+    private Double baseSalary;
+    /**
+     *  岗位工资
+     */
+    private Double jobSalary;
+    /**
+     *  生活津贴
+     */
+    private Double allowance;
+    /**
+     *  交通补助
+     */
+    private Double travelAssistance;
+    /**
+     * 公积金扣款
+     */
+    private Double  pubFunds;
+    /**
+     *  社保扣款
+     */
+    private Double socialSecurity;
+
+    public Double getBaseSalary() {
+        return baseSalary;
+    }
+
+    public StaffSalInfoDetailModel() {
+         super();
+    }
+
+    public void setBaseSalary(Double baseSalary) {
+        this.baseSalary = baseSalary;
+    }
+
+    public Double getJobSalary() {
+        return jobSalary;
+    }
+
+    public void setJobSalary(Double jobSalary) {
+        this.jobSalary = jobSalary;
+    }
+
+    public Double getAllowance() {
+        return allowance;
+    }
+
+    public void setAllowance(Double allowance) {
+        this.allowance = allowance;
+    }
+
+    public Double getTravelAssistance() {
+        return travelAssistance;
+    }
+
+    public void setTravelAssistance(Double travelAssistance) {
+        this.travelAssistance = travelAssistance;
+    }
+
+    public Double getPubFunds() {
+        return pubFunds;
+    }
+
+    public void setPubFunds(Double pubFunds) {
+        this.pubFunds = pubFunds;
+    }
+
+    public Double getSocialSecurity() {
+        return socialSecurity;
+    }
+
+    public void setSocialSecurity(Double socialSecurity) {
+        this.socialSecurity = socialSecurity;
+    }
+}

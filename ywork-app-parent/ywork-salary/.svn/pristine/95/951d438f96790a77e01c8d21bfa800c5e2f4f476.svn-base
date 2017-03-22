@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.SalStaffBaseInfoRepository">
+
+     <sql id="field_item_field">
+      id,relative_id,item_name,item_value,item_type
+    </sql>
+    <sql id="field_item_value">
+      #{itemId},#{relativeId},#{itemName},#{itemValue},#{itemType}
+    </sql>
+    
+     <!-- 员工薪资情况的大概信息 -->
+    <resultMap id="StaffSalaryInfoMap" type="me.ywork.salary.model.SalStaffBaseInfoModel">
+        <id column="id" property="id"/>
+        <result column="ding_staffid" property="dingsalStaffId"/>
+        <result column="sal_rule" property="salRule"/>
+        <result column="should_pay_sal" property="shouldPaySal"/>
+        <result column="staff_name" property="staffName"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+     </resultMap>
+     
+     <!-- 薪资规则、参与社保公积金、参与 个人所得税的信息-->
+     <resultMap type="me.ywork.salary.model.SalStaffBaseInfoModel" id="StaffRulePubMap">
+       <id column="id" property="staffId"/>
+       <result column="ding_staffid" property="dingStaffId" />
+       <result column="sal_rule" property="salRule"/>
+       <result column="atten_social" property="attenSocial"/>
+       <result column="atten_personal_tax" property="attenPersonalTax"/>
+       <result column="corp_id" property="corpId"/>
+       <result column="staff_pass" property="staffPass"/>
+       <result column="fd_name" property="staffName"/>
+     </resultMap>
+
+     
+     <!-- 薪资字段的详细信息 -->
+     <resultMap type="me.ywork.salary.model.SalFieldItemModel" id="ItemMap">
+        <id column="id" property="itemId"/>
+        <result column="relative_id" property="relativeId"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_value" property="itemValue"/>
+        <result column="item_type" property="itemType"/>
+     </resultMap>
+        <!-- 薪资字段的详细信息 -->
+     <resultMap type="me.ywork.salary.entity.SalFieldItemEntity" id="ItemEntityMap">
+        <id column="id" property="id"/>
+        <result column="relative_id" property="relativeId"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_value" property="itemValue"/>
+        <result column="item_type" property="itemType"/>
+     </resultMap>
+ 
+   	<!-- 得到分页的员工薪资信息 -->
+	<select id = "getStaffSalaryInfos" resultType= "me.ywork.salary.model.SalStaffBaseInfoModel">
+	    	select e.fd_name as staffName,			          
+	           pe.fd_name as deptName,
+	           staffInfo.sal_rule as salRule,
+	           staffInfo.should_pay_sal as ShouldPaySal 	                     	           
+		     from 
+		          dingsal_staff_info staffInfo,
+		          ding_org_element e INNER JOIN ding_org_element as pe
+		          on e.fd_parentid = pe.fd_id	  
+			  where 
+			        staffInfo.corp_id=#{corpId} and 
+					staffInfo.ding_staffid =e.fd_dingid   
+			        limit #{beginNum},#{endNum}
+	</select>
+	
+	<!--   根据请求的薪资规则类型得到与之匹配的人员-->
+	<select id="getStafiesByRuleType" resultMap="StaffRulePubMap">
+	     select 
+	         staffInfo.id,
+	         staffInfo.sal_rule,
+	         staffInfo.corp_id,
+	         staffInfo.staff_pass,
+	         staffInfo.ding_staffid,
+	         staffInfo.atten_social,
+	         staffInfo.atten_personal_tax,
+	         e.fd_name
+	          from dingsal_staff_info staffInfo,
+	               ding_org_element e
+	               where 
+	                  staffInfo.ding_staffid =e.fd_dingid and	                  	                  
+	                  e.fd_org_type = 64 and 
+	                  corp_id = #{corpId} and
+		               <if test="salRuleHandleType == 0">
+	                    sal_rule = #{salBaseRule}
+	                   </if> 
+	                   <if test="salRuleHandleType == 1">
+	                    atten_social = 1
+	                   </if>                
+	                   <if test="salRuleHandleType == 2">
+	                    atten_personal_tax = 1
+	                   </if>                           
+	   </select>
+	
+	<!-- 更新企业人员对应的基本薪资规则  -->
+	<update id="updateSalRuleStaffies" parameterType="me.ywork.salary.model.SalStaffBaseInfoModel">
+	    update dingsal_staff_info 
+           <set>
+	             <if test="salRule !=null">
+                   sal_rule = #{salRule},
+                 </if> 
+                 <if test="attenSocial !=null">
+                    atten_social = #{attenSocial},
+                 </if>                
+                 <if test="attenPersonalTax !=null">
+                    atten_personal_tax = #{attenPersonalTax}
+                 </if>
+	          </set>
+           where 
+             corp_id = #{corpId} and 
+             ding_staffid in 
+               <foreach collection="staffIds" item="staffId" index="i" open="("
+												 separator="," close=")">
+											#{staffId}
+				</foreach> 
+	</update>
+	
+	<!-- 删除企业员工的基本薪资规则 -->
+	<update id="deleteStaffSalRule" parameterType="me.ywork.salary.model.SalStaffBaseInfoModel">
+	    update dingsal_staff_info
+	           <set>
+	             <if test="salRuleHandleType == 0">
+                    sal_rule = null,
+                 </if> 
+                 <if test="salRuleHandleType == 1">
+                    atten_social = 0,
+                 </if>                
+                 <if test="salRuleHandleType == 2">
+                    atten_personal_tax = 0
+                 </if>
+	          </set>
+	          where corp_id = #{corpId} and 
+	                 ding_staffid = #{dingStaffId} 
+	</update>
+	
+
+	<!-- 新增字段 -->
+	<insert id="addNewField" parameterType="me.ywork.salary.model.SalFieldItemModel">
+	   insert into dingsal_field_item (
+	      <include refid="field_item_field"></include>
+	   )
+	   values(
+	   <include refid="field_item_value"></include>
+	   )	   
+	</insert>
+	
+	<!-- 修改字段 -->
+	<update id="updateField" parameterType="me.ywork.salary.model.SalFieldItemModel">
+	  update dingsal_field_item 
+	     set
+	       item_name = #{itemName},
+	       item_value = #{itemValue},
+	       item_type = #{itemType}
+	       where id = #{itemId}
+	</update>
+	
+	<!-- 根据字段ID去查找字段的model信息 -->
+	<select id="getItemModel" resultMap="ItemMap">
+	   select *from dingsal_field_item where id=#{itemId}
+	</select>
+	
+	<!-- 根据字段ID去查找字段的实体类信息 -->
+	<select id="getItemEntity" resultMap="ItemEntityMap">
+	  slect *from dingsal_field_item where id="itemId"
+	</select>
+	
+	<!--  -->
+	<select id="getStaffFieldItems" resultMap="ItemMap">
+	   select *from dingsal_field_item where relative_id=#{relativeId}
+	</select>
+</mapper>

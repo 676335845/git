@@ -1,0 +1,21 @@
+package me.ywork.salary.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Created by xiaobai on 2017/1/13.
+ */
+
+@Controller
+@RequestMapping("/salary")
+public class SalaryController{
+    @RequestMapping("/abc")
+    public void test(HttpServletRequest request , HttpServletResponse response){
+        System.out.println("你好啊！");
+    }
+
+}

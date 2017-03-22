@@ -1,0 +1,55 @@
+package me.ywork.salary.model;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+public class StaffBaseInfoModel {
+	/**
+	 * 员工的id
+	 */
+	private String staffId;
+	/**
+	 * 员工的姓名
+	 */
+	private String staffName;
+	/**
+	 * 员工所属企业的Id
+	 */
+	private String corpId;
+	/**
+	 * 部门的名字
+	 */
+	private String deptName;
+
+	public String getStaffId() {
+		return staffId;
+	}
+
+	public void setStaffId(String staffId) {
+		this.staffId = staffId;
+	}
+
+	public String getStaffName() {
+		return staffName;
+	}
+
+	public void setStaffName(String staffName) {
+		this.staffName = staffName;
+	}
+
+	public String getDeptName() {
+		return deptName;
+	}
+
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+
+	public String getCorpId() {
+		return corpId;
+	}
+
+	public void setCorpId(String corpId) {
+		this.corpId = corpId;
+	}
+}

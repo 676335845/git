@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.SalRuleRepository">
+   <!--所有字段列表 -->
+    <sql id="fields">
+       id,sal_rule_id,sal_rule_des, cal_sal_days,fit_nums,late_early_deduct_type,late_early_deduct,
+       serious_late_deduct,corp_id,
+       stay_away_deduct,sal_rule_name
+    </sql>
+
+    <!--从实体中取值 -->
+    <sql id="values">
+	   #{id},
+	   #{salRuleName},
+	   #{salRuleId},
+	   #{salRuleDes},
+       #{calSalDays},
+       #{fitNums},
+       #{lateEarlyDeductType},
+       #{lateEarlyDeduct},
+       #{corpId},
+       #{seriousLateDeduct},
+       #{stayAwayDeduct}    
+    </sql>
+    <!-- 员工薪资情况的大概信息 -->
+    <resultMap id="SalaryRuleMap" type="me.ywork.salary.model.SalRuleDetailModel">
+        <id column="id" property="corpSalRuleId"/>
+        <result column="sal_rule_name" property="salRuleName"/>
+        <result column="sal_rule_des" property="salRuleDes"/>
+        <result column="sal_rule_type" property="salRuleType"/>
+        <result column="fit_nums" property="fitNums"/>
+	    <result column="cal_sal_days" property="calSalDays"/>
+	    <result column="late_early_deduct_type" property="lateEarlyDeductType"/>
+	    <result column="late_early_deduct" property="lateEarlyDeduct"/>
+	    <result column="serious_late_deduct" property="seriousLateDeduct"/>
+	    <result column="stay_away_deduct" property="stayAwayDeduct"/>
+	    <result column="corp_id" property="corpId"/>
+     </resultMap>
+     
+     <resultMap id="SalCwhpRuleMap" type="me.ywork.salary.model.SalCwhpRuleModel">
+        <id column="id" property="id"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="item_name" property="subjectName"/>
+        <result column="base_low" property="baseLow"/>
+        <result column="base_high" property="baseHigh"/>
+        <result column="corp_percent" property="corpPercent"/>
+        <result column="personal_percent" property="personalPercent"/>
+        <result column="corp_id" property="corpId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+     </resultMap>
+     
+     <resultMap id="SalCwhpRuleEntityMap" type="me.ywork.salary.entity.SalCwhpRuleEntity">
+        <id column="id" property="id"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="base_low" property="baseLow"/>
+        <result column="base_high" property="baseHigh"/>
+        <result column="corp_percent" property="corpPercent"/>
+        <result column="personal_percent" property="personalPercent"/>
+        <result column="corp_id" property="corpId"/>
+        <result column="create_time" property="createDate"/>
+        <result column="update_time" property="modifiedDate"/>
+     </resultMap>
+     
+    
+    <!-- 获取算工资应用的所有的记薪规则 -->
+   <select id="getAllSalRules" resultMap="SalaryRuleMap">
+     select 
+       corpRule.id,
+       salRule.sal_rule_name,
+       salRule.sal_rule_des,
+       salRule.sal_rule_type,
+       corpRule.cal_sal_days,
+       corpRule.fit_nums
+       from 
+          dingsal_corpsal_rule corpRule,
+          dingsal_sal_rule salRule
+          where corpRule.sal_rule_id = salRule.id and
+                corpRule.corp_id=#{corpId}          
+   </select>
+   <!--  获取规则详情 -->
+   <select id="getSalRuleByRuleId" resultType="me.ywork.salary.model.SalRuleDetailModel">
+      select 
+         corpRule.id,
+         salRule.sal_rule_name as salRuleName,
+         salRule.sal_rule_des as salRuleDes,
+         salRule.sal_rule_type as salRuleType,
+         corpRule.cal_sal_days as calSalDays,
+         corpRule.fit_nums as fitNums
+         from 
+            dingsal_corpsal_rule corpRule,
+            dingsal_sal_rule salRule
+               where corpRule.sal_rule_id = salRule.id and
+                corpRule.id=#{ruleId}    
+   </select>
+   
+   <!-- 保存计薪规则 -->
+	<update id="updateSalRule" parameterType="me.ywork.salary.model.SalRuleDetailModel">
+	     update dingsal_corpsal_rule
+	       set	        	 
+      	     cal_sal_days = #{calSalDays},
+      	     late_early_deduct_type = #{lateEarlyDeductType},
+	         late_early_deduct = #{lateEarlyDeduct}, 
+	         serious_late_deduct = #{seriousLateDeduct},
+	         stay_away_deduct = #{stayAwayDeduct}
+			 where 
+			   id = #{corpSalRuleId}
+    </update> 
+    
+    <!-- 根据企业计薪规则ID得到企业的 计薪规则-->
+    <select id = "getCorpSalRuleByRuleid" resultMap="SalaryRuleMap">
+        select  
+            id,
+            sal_rule_id,
+            cal_sal_days,
+     	    fit_nums,
+     	    late_early_deduct_type,
+	        late_early_deduct, 
+	        serious_late_deduct,
+	        stay_away_deduct,
+	        corp_id
+	        from dingsal_corpsal_rule corpRule
+	        where
+	          corpRule.id=#{ruleId}    
+    </select>
+    
+    <!-- 得到企业代缴代扣规则列表 -->
+    <select id="getCwhpRuleList" resultMap="SalCwhpRuleMap">
+        select 
+           salRule.id,
+           salRule.subject_Id,
+           fieldItem.item_name,
+           salRule.base_low,
+           salRule.base_high,
+           salRule.corp_percent,
+           salRule.personal_percent,
+           salRule.corp_id,
+           salRule.create_time,
+           salRule.update_time
+           from dingsal_withhold_pay_salrule salRule,
+                dingsal_field_item fieldItem
+                where
+                   salRule.subject_id = fieldItem.id and
+                   salRule.corp_id = #{corpId}                         
+    </select>
+    <!-- 更新企业代缴代扣规则 -->
+    <select id="getCwhpRuleEntity" resultMap="SalCwhpRuleEntityMap">
+      select *from dingsal_withhold_pay_salrule where id=#{id}
+    </select>
+    <update id="updateCwhpRuleList" parameterType="me.ywork.salary.model.SalCwhpRuleModel">
+         update dingsal_withhold_pay_salrule
+           <set>
+	           base_low = #{baseLow},
+	           base_high = #{baseHigh},
+	           corp_percent = #{corpPercent},
+	           personal_percent = #{personalPercent}
+           </set>
+           <where>
+                id= #{id}
+           </where>
+           
+    </update>
+
+</mapper>

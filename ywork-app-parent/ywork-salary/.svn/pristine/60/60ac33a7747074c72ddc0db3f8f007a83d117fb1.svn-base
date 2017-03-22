@@ -1,0 +1,263 @@
+package me.ywork.salary.controller;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFDataFormatter;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+
+import me.ywork.context.CallContext;
+import me.ywork.controller.RestController;
+import me.ywork.oss.OSSObjectService;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.PageRequest;
+import me.ywork.salary.model.SalStaffSalReportDetailModel;
+import me.ywork.salary.model.SalStaffSalReportModel;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.model.SalMutiStaffInfoModel;
+import me.ywork.salary.model.SalStaffAttendanceModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.enumeration.ExcelTimeType;
+import me.ywork.salary.enumeration.OptPersonType;
+import me.ywork.salary.enumeration.SalDetailShowType;
+import me.ywork.salary.model.SalCorpReportModel;
+import me.ywork.salary.model.SalInfoDetailModel;
+import me.ywork.salary.model.SalUpdateMutiStaffModel;
+import me.ywork.salary.service.SalInfoService;
+import me.ywork.salary.service.SalReportService;
+
+/**
+ *  工资报表的控制器
+ *
+ **/
+@Controller
+@RequestMapping(value = { "**/app/calsalary/salreport" })
+public class SalReportController extends RestController<SalReportService> {
+
+	
+	@Autowired
+	private SalReportService salReportService;
+	@Autowired
+	private SalInfoService salInfoService;
+	private static final Logger logger = LoggerFactory.getLogger(SalAttendanceController.class);
+	/**
+	 * 获取所有月份的工资报表
+	 * 
+	 * @param request
+	 * @param response
+	 * @param corpId  钉钉企业号
+	 */
+	@RequestMapping(value = "/getAllSalReports**", method = RequestMethod.GET)
+	public void getAllSalReports(HttpServletRequest request, HttpServletResponse response) {
+		CallContext callContext = this.getCallContext(request);
+		String corpId = callContext.getCorpId();
+		try {
+			logger.info("开始获得钉钉企业号为：".concat(corpId).concat("的所有月份的工资报表"));
+			List<SalCorpReportModel> salReportModels = salReportService.getAllSalReports(corpId);
+			Double actualPaySal=null;
+			Double insuranceSal=null;
+			Double shouldPaySal=null;
+			Double staffPay=null;
+			for(SalCorpReportModel salCorpReportModel:salReportModels){
+				actualPaySal = salCorpReportModel.getActualPaySal();
+				insuranceSal = salCorpReportModel.getInsuranceSal();
+				shouldPaySal = salCorpReportModel.getShouldPaySal();
+				staffPay = salCorpReportModel.getStaffCost();
+				if(actualPaySal!=null){
+			    	salCorpReportModel.setActualPaySal(actualPaySal/100);
+				}
+				if(insuranceSal !=null){
+				   salCorpReportModel.setInsuranceSal(insuranceSal/100);
+				}
+				if(shouldPaySal !=null){
+				   salCorpReportModel.setShouldPaySal(shouldPaySal/100);
+				}
+				if(staffPay != null){
+					salCorpReportModel.setStaffCost(staffPay/100);
+				}
+			}
+			logger.debug("钉钉号为:{}返回{}个月份的数据");
+			this.writeSuccessJsonToClient(response, salReportModels);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 计算该月企业的薪资
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	public void caculateCorpSal(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("corpId") String corpId) {
+
+	}
+	
+
+	/**
+	 * 获取该月份工资详情：根据工资表ID来获得该月的工资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param monthSalId
+	 *            月度工作报表ID
+	 * @param pageable
+	 *            分页插件Pageable
+	 */
+	@RequestMapping(value = "/getUserSalList**", method = RequestMethod.GET)
+	public void getSalaryDatailByMonthId(HttpServletRequest request, HttpServletResponse response,
+			                                                            @RequestParam(value = "reportId") String reportId,
+																		@RequestParam(value = "pageNo") Integer pageNo,
+																		@RequestParam(value = "pageSize") Integer pageSize,
+																		@RequestParam(value ="totalCount") Integer totalCount) {
+		PageRequest pageable = new PageRequest(pageNo , pageSize , totalCount);
+		CallContext callContext = this.getCallContext(request);
+		String corpId = callContext.getCorpId();
+		PageData<SalStaffSalReportModel> monthStaffModelNew =null;
+		try {
+			PageData<SalStaffSalReportModel> monthStaffModels = salReportService.getSalDatailByReportId(reportId,callContext.getCorpId(),
+					pageable);
+			Double actualSal=null;
+			Double replaceDeduct=null;
+			Double shouldPaySal=null;
+			Double salDeduct=null;
+			List<SalStaffSalReportModel> datas= monthStaffModels.getDatas();
+			for(SalStaffSalReportModel salStaffSalReportModel:datas){
+				actualSal =salStaffSalReportModel.getActualSal();
+				replaceDeduct=salStaffSalReportModel.getReplaceDeduct();
+				shouldPaySal = salStaffSalReportModel.getShouldPaySal();
+				salDeduct = salStaffSalReportModel.getSalDeduct();
+				if(actualSal!=null){
+				   salStaffSalReportModel.setActualSal(actualSal/100);
+				}
+				if(replaceDeduct!=null){
+				   salStaffSalReportModel.setReplaceDeduct(replaceDeduct/100);
+				}
+				if(shouldPaySal!=null){
+				   salStaffSalReportModel.setShouldPaySal(shouldPaySal/100l);
+				}
+				if(salDeduct!=null){
+				   salStaffSalReportModel.setSalDeduct(salDeduct/100);
+				}
+			    monthStaffModelNew =new PageDataImpl<>(datas,monthStaffModels.getPageable());
+			}
+			this.writeSuccessJsonToClient(response, monthStaffModelNew);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 锁定该月工资表：根据工资表ID来锁定该工资表
+	 * 
+	 * @param request
+	 * @param response
+	 * @param 工资报表主键
+	 * @param reportState
+	 *            更新的状态
+	 */
+	@RequestMapping(value = "/lockSalReportById**", method = RequestMethod.POST)
+	public void lockSalReportById(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			SalCorpReportModel salReportModel = this.fromInputJson(request , SalCorpReportModel.class);
+			Boolean updateRs = salReportService.lockSalReportById(salReportModel.getId(), salReportModel.getSalReportState());
+			this.writeSuccessJsonToClient(response, updateRs);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 获取员工薪资详情:通过员工ID来获取该员工的薪资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param id
+	 *            员工ID
+	 */
+	@RequestMapping(value = "/getStaffMonthSalInfos**", method = RequestMethod.GET)
+	public void getSalaryInfosByStaffId(HttpServletRequest request, HttpServletResponse response,
+																	@RequestParam(value = "staffId") String dingStaffId,
+																	@RequestParam(value="reportId")String reportId) {
+		CallContext callContext = this.getCallContext(request);
+		String corpId = callContext.getCorpId();
+		Short showTyppe=SalDetailShowType.MonthSalType.getCode();
+		try {
+			SalInfoDetailModel staffSalInfoDetailModel = salInfoService.getSalInfosByStaffId(corpId ,reportId,showTyppe, dingStaffId);
+			double itemValue =0.0;
+			List<SalSysFieldItemModel> sysFieldItemList  = staffSalInfoDetailModel.getItemModels();
+			for(SalSysFieldItemModel salSysFieldItem:sysFieldItemList){//循环将员工工资组成部分除以100
+				itemValue = salSysFieldItem.getItemValue();;
+				salSysFieldItem.setItemValue(itemValue/100);
+			}
+			staffSalInfoDetailModel.setItemModels(sysFieldItemList);
+			this.writeSuccessJsonToClient(response, staffSalInfoDetailModel.getItemModels());
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+			
+		}
+	}
+	/**
+	 * 保存修改:具体员工的工资情况可以修改,向后台传递的是修改后的工资数据
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/updateSalsOnStaffes**", method = RequestMethod.POST)
+	public void updateSalariesOnStaffes(HttpServletRequest request, HttpServletResponse response) {
+		SalUpdateMutiStaffModel updateMutiStaffAttendanceModel = this.fromInputJson(request,
+				SalUpdateMutiStaffModel.class);
+		CallContext callContext = this.getCallContext(request);
+		String corpId = callContext.getCorpId();
+		try {
+			Boolean updateRs = null;
+			if (updateMutiStaffAttendanceModel != null) {		
+				updateRs = salReportService.updateSalsOnStaffes(corpId,updateMutiStaffAttendanceModel.getMonthStaffSalDetailModels());
+			}
+			this.writeSuccessJsonToClient(response, updateRs);
+		} catch (Exception e) {
+			this.writeFailJsonToClient(response);
+			e.printStackTrace();
+		}
+	}
+	
+
+	@Override
+	protected String getHomePageUrl(String param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected SalReportService getService() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

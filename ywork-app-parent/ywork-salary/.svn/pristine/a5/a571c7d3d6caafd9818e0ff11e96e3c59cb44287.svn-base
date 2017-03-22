@@ -1,0 +1,36 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+public class StaffSalInfoModel extends StaffBaseInfoModel implements Serializable {
+
+	/**
+	 * 薪资计算规则
+	 */
+	private Short salRule;
+	/**
+	 * 工资合计
+	 */
+	private Long ShouldPaySal;
+
+	public Short getSalRule() {
+		return salRule;
+	}
+
+	public void setSalRule(Short salRule) {
+		this.salRule = salRule;
+	}
+
+	public Long getShouldPaySal() {
+		return ShouldPaySal;
+	}
+
+	public void setShouldPaySal(Long shouldPaySal) {
+		ShouldPaySal = shouldPaySal;
+	}
+
+}

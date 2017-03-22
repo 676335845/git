@@ -1,0 +1,23 @@
+package me.ywork.salary.util;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class DateUtils {
+	
+	/**
+	 *   将时间戳转化为Date类型
+	 * @param monthId 时间戳
+	 * @return 转化后的Date类型
+	 * @throws ParseException 抛出转化异常
+	 */
+	public static Date   formatTimeStampToDate(Long monthId) throws ParseException{
+		    SimpleDateFormat format =  new SimpleDateFormat("yyyy-MM-dd");  
+			String d =format.format(monthId);
+			Date date = null;
+			date = format.parse(d);
+	        return date;
+	}
+
+}

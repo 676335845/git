@@ -1,0 +1,7 @@
+package me.ywork.salary.entity;
+
+import me.ywork.base.entity.Entity;
+
+public class SalCorpBaseInfoEntity extends Entity {
+
+}

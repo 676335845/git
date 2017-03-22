@@ -1,0 +1,308 @@
+package me.ywork.salary.controller;
+
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import me.ywork.controller.RestController;
+import me.ywork.page.PageData;
+import me.ywork.page.PageRequest;
+import me.ywork.salary.model.SalMutiStaffInfoModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.model.SalInfoDetailModel;
+import me.ywork.salary.model.SalUpdateMutiStaffModel;
+import me.ywork.salary.service.SalInfoService;
+
+/**
+ * 员工薪资信息模块的控制器
+ *
+ **/
+@Controller
+@RequestMapping(value = { "**/app/calsalary/salInfo" })
+public class SalInfoController extends RestController<SalInfoService> {
+
+	@Autowired
+	private SalInfoService staffSalInfoService;
+
+	/**
+	 * 获取员工薪详情:获取所有员工的薪资详情，要分页
+	 * 
+	 * @param request
+	 * @param response
+	 * @param corpId
+	 *            钉钉企业号
+	 */
+	@RequestMapping(value = "/getStaffSalInfos**", method = RequestMethod.GET)
+	public void getStaffSalaryInfos(HttpServletRequest request, HttpServletResponse response,
+															@RequestParam(value = "corpId") String corpId,
+															@RequestParam(value = "pageNo")Integer pageNo,
+															@RequestParam(value = "pageSize") Integer pageSize,
+															@RequestParam(value = "totalCount") Long totalCount) {
+		try {
+			PageRequest pageable = new PageRequest(pageNo, pageSize,totalCount );
+			PageData<SalStaffBaseInfoModel> staffSalInfoModels = staffSalInfoService.getStaffSalInfos(corpId, pageable);
+			this.writeSuccessJsonToClient(response, staffSalInfoModels);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 获取员工薪资详情:通过员工ID来获取该员工的薪资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param id
+	 *            员工ID
+	 */
+	@RequestMapping(value = "/getSalInfosByStaffId**", method = RequestMethod.GET)
+	public void getSalaryInfosByStaffId(HttpServletRequest request, HttpServletResponse response,
+																	@RequestParam(value = "corpId") String corpId,
+																	@RequestParam(value = "staffId") String dingStaffId) {
+		try {
+			SalInfoDetailModel staffSalInfoDetailModel = staffSalInfoService.getSalInfosByStaffId(corpId , dingStaffId);
+			this.writeSuccessJsonToClient(response, staffSalInfoDetailModel.getItemModels());
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+			
+		}
+	}
+
+	/**
+	 * 获取选中人员工资详情:通过编辑可以获取多个人的薪资详情
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/getMutiStaffSalInfosDetail**", method = RequestMethod.POST)
+	public void getMutiStaffSalaryInfosDetail(HttpServletRequest request, HttpServletResponse response) {
+		SalMutiStaffInfoModel mutiStaffInfoModel = this.fromInputJson(request, SalMutiStaffInfoModel.class);
+		try {
+			List<SalInfoDetailModel> staffSalInfoDetailModels = staffSalInfoService
+					.getMutiStaffSalInfosDetail(mutiStaffInfoModel.getCorpId(), mutiStaffInfoModel.getStaffIds());
+			this.writeSuccessJsonToClient(response, staffSalInfoDetailModels);
+		} catch (Exception e) {
+			this.writeFailJsonToClient(response);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 提交编辑数据:批量修改多个人的薪资
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/updateMutiStaffInfos**", method = RequestMethod.POST)
+	public void updateMutiStaffInfos(HttpServletRequest request, HttpServletResponse response) {
+		SalUpdateMutiStaffModel updateMutiStaffAttendanceModel = this.fromInputJson(request,
+				SalUpdateMutiStaffModel.class);
+		try {
+			List<SalInfoDetailModel> salInfos = updateMutiStaffAttendanceModel.getStaffSalInfoDetailModels();
+			Boolean updateRs = staffSalInfoService.updateMutiStaffInfos(salInfos);
+			this.writeSuccessJsonToClient(response, updateRs);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+	
+	/**
+	 *   计算未设置薪资详情的人数
+	 *   
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/calcuUnSetSalStaffNum**",method = RequestMethod.GET)
+	public void calcuUnSetSalStaffNum(HttpServletRequest request, HttpServletResponse response,
+			                                                           @RequestParam(value="corpId") String corpId
+			){
+		 try{
+			Integer unsetNum = staffSalInfoService.calcuUnSetSalStaffNum(corpId);
+			this.writeSuccessJsonToClient(response , unsetNum);
+		 }catch(Exception e){
+			 e.printStackTrace();
+		 }
+	}
+
+	/**
+	 * 下载薪资模板
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/downloadSalTemplet**", method = RequestMethod.GET)
+	public void downloadSalaryTemplet(HttpServletRequest request, HttpServletResponse response) {
+		// try{
+		//
+		// staffSalInfoService.downloadSalaryTemplet();
+		// }catch(Exception e){
+		// this.writeFailJsonToClient(response);
+		// }
+		try {
+			response.setContentType("application/vnd.ms-excel;charset=UTF-8");
+			response.setHeader("Content-disposition", "attachment; filename=temple.xls");
+			// String cookieValue = getUserCookie(request,
+			// response);//?得到cookie的值
+			//
+			// HSSFWorkbook wb = salaryBillService.exportToExcel(companyId);//得到
+			// ByteArrayOutputStream out = new ByteArrayOutputStream();
+			// wb.write(out);
+			// InputStream inputStream = new
+			// ByteArrayInputStream(out.toByteArray());
+			// SimpleDateFormat sdf = new SimpleDateFormat("yyyyMM");
+			// String fileId = companyId+"/"+sdf.format(new Date());
+			//
+			// String buckname = "alidsalarybill";
+			//
+			// OSSObjectService.uploadExcelFile(buckname,fileId, inputStream);
+			//
+			// String fileUrl = OSSObjectService.getFileUrl(buckname, fileId);
+			//
+			// if(inputStream!=null){
+			// inputStream.close();
+			// }
+			// if(wb!=null){
+			// wb.close();
+			// }
+			// this.writeSuccessJsonToClient(response, fileUrl);
+		} catch (Exception e) {
+
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 上传薪资模板
+	 * 
+	 * @param request
+	 * @param response
+	 * @param fileKey
+	 */
+	@RequestMapping(value = "/uploadSalTemplet**", method = RequestMethod.POST)
+	public void uploadSalaryTemplet(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "fileKey") String fileKey) {
+		// try{
+		// staffSalInfoService.uploadSalaryTemplet(fileKey);
+		// }catch(Exception e){
+		// e.printStackTrace();
+		// this.writeFailJsonToClient(response);
+		// }
+		// fileId = URLDecoder.decode(fileId);
+		// String cookieValue = getUserCookie(request, response);
+		// String companyId ="";
+		// String userId = "";
+		// JSONObject jo = null;
+		//
+		// if(StringUtils.isNotBlank(cookieValue)){
+		// jo = JSONObject.parseObject(cookieValue);
+		// companyId = jo.getString("corpId");
+		// userId = jo.getString("userId");
+		// }
+		//
+		// //获取该公司的员工信息
+		// if(StringUtils.isBlank(companyId)){
+		// this.writeFailJsonToClient(response);
+		// return ;
+		// }
+		// try{
+		// CacheSalaryModel cacheSalaryModel =
+		// salaryBillService.parserExcel(request.getServerName(),companyId,userId,"alidsalarybill",fileId);
+		// //err
+		// List<SalaryBillModel> errorSalaryBills =
+		// cacheSalaryModel.getErrorSalaryBills();
+		// int errCount = errorSalaryBills == null ? 0 :
+		// errorSalaryBills.size();
+		// cacheSalaryModel.setErrorCount(errCount);
+		// //succ
+		// List<SalaryBillModel> successSalaryBills =
+		// cacheSalaryModel.getSuccessSalaryBills();
+		// int successCount = successSalaryBills == null ? 0 :
+		// successSalaryBills.size();
+		// cacheSalaryModel.setSuccessCount(successCount);
+		// //50一页
+		// int pageSize = 50;
+		// if(errCount+successCount>pageSize){
+		// cacheSalaryModel.setHasNext(true);
+		// }else{
+		// cacheSalaryModel.setHasNext(false);
+		// }
+		//
+		// //取50 model
+		// List<SalaryBillModel> salarys = new ArrayList<SalaryBillModel>();
+		//
+		// int count = errCount+successCount > pageSize ? pageSize :
+		// errCount+successCount;
+		// for(int i = 0 ; i < count ; i ++){
+		// if(i<errCount){
+		// salarys.add(errorSalaryBills.get(i));
+		// }else{
+		// salarys.add(successSalaryBills.get(i-errCount));
+		// }
+		// }
+		//
+		// cacheSalaryModel.setErrorSalaryBills(null);
+		// cacheSalaryModel.setSuccessSalaryBills(null);
+		// cacheSalaryModel.setSalaryBills(salarys);
+		//
+		// //获取模板类型
+		//// Map<Short,String> templateTypeMap =
+		// SalaryTemplateType.getAllType();
+		//// cacheSalaryModel.setTemplateType(templateTypeMap);
+		// System.out.println("upload info:"+cacheSalaryModel.getTips());
+		// this.writeSuccessJsonToClient(response, cacheSalaryModel);
+		// }catch(Exception e){
+		// logger.error("upload", e);
+		// this.writeFailJsonToClient(response);
+		// }
+	}
+
+	/**
+	 * 预览上传的薪资数据
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	public void previewUData(HttpServletRequest request, HttpServletResponse response) {
+		/**
+		 * 第一步：获取刚刚上传的数据,并解析成model形式
+		 */
+		/**
+		 * 第二步：把数据发送到浏览器进行显示
+		 */
+		Object object = new Object();
+		this.writeSuccessJsonToClient(response, object);
+	}
+
+	/**
+	 * 确认上传的薪资数据
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public void confirmUData(HttpServletRequest request, HttpServletResponse response) {
+		/**
+		 * 将上传的数据进行确认，保存到企业员工的薪资信息表中
+		 */
+
+	}
+
+	@Override
+	protected String getHomePageUrl(String param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected SalInfoService getService() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

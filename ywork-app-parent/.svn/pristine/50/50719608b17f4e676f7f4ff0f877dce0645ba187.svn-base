@@ -1,0 +1,21 @@
+package me.ywork.ticket.api.rpc;
+
+
+
+public interface SuiteTokenRpcService {
+    
+  //  public String getToken(String corpId,Short corpType);
+    
+    /**
+     * pc后台获取管理员免登token
+     * @param corpId
+     * @param secret
+     * @return
+     */
+    public String getPCAccessToken(String corpId,String secret);
+    
+    public String getToken(String corpId,String suiteId);
+    
+    public String getAgentId(String corpId,String suiteId,String appId);
+
+}

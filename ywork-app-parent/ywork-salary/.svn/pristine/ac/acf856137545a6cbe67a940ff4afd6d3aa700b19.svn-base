@@ -1,0 +1,37 @@
+			
+
+            package me.ywork.salary.model;
+			
+			import java.util.List;
+			
+			public class UpdateMutiStaffAttendanceModel {
+				 private List<StaffAttendanceModel> staffAttendances;
+				 private List<MonthStaffSalDetailModel> monthStaffSalDetailModels;
+				 private List<StaffSalInfoDetailModel> staffSalInfoDetailModels;
+				public List<StaffAttendanceModel> getStaffAttendances() {
+					return staffAttendances;
+				}
+			
+				public void setStaffAttendances(List<StaffAttendanceModel> staffAttendances) {
+					this.staffAttendances = staffAttendances;
+				}
+
+				public List<MonthStaffSalDetailModel> getMonthStaffSalDetailModels() {
+					return monthStaffSalDetailModels;
+				}
+
+				public void setMonthStaffSalDetailModels(List<MonthStaffSalDetailModel> monthStaffSalDetailModels) {
+					this.monthStaffSalDetailModels = monthStaffSalDetailModels;
+				}
+
+				public List<StaffSalInfoDetailModel> getStaffSalInfoDetailModels() {
+					return staffSalInfoDetailModels;
+				}
+
+				public void setStaffSalInfoDetailModels(List<StaffSalInfoDetailModel> staffSalInfoDetailModels) {
+					this.staffSalInfoDetailModels = staffSalInfoDetailModels;
+				}
+				
+				
+				 
+			}

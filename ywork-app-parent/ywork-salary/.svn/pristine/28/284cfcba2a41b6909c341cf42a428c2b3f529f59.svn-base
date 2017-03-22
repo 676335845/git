@@ -1,0 +1,58 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+import me.ywork.salary.model.SalRuleDetailModel;
+import me.ywork.salary.model.SalRuleModel;
+import me.ywork.salary.model.StaffBaseInfoModel;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+/**
+ * 计算薪资正算和反算的规则，可以自定义每个员工的规则
+ *
+ * Created by xiaobai on 2017/1/10.
+ */
+public interface SalRuleService extends BizService {
+		/**
+		 * 获取规则列表:获取算工资应用的所有的记薪规则
+		 * 
+		 * @param corpId
+		 *            钉钉企业号
+		 * @return 得到的所有的薪资规则
+		 */
+		List<SalRuleModel> getAllSalRules(String corpId);
+	
+		/**
+		 * 获取规则详情
+		 * 
+		 * @param ruleId
+		 *            薪资规则的ID
+		 * @return 获取薪资规则的结果
+		 */
+		SalRuleDetailModel getSalRuleByRuleId(String ruleId);
+	
+		/**
+		 * 保存计薪规则
+		 * 
+		 * @param salaryRule
+		 * @return 保存薪资规则的结果
+		 */
+		Boolean updateSalRule(SalRuleDetailModel salaryRule);
+		   /**
+		    * 根据企业薪资规则的主键得到与之匹配的人员
+		    * 
+		    * @param ruleId 企业薪资规则的Id
+		    * @return 选择该薪资规则的人员列表
+		    */
+		List<StaffBaseInfoModel>getStafiesByCopSalRuleId(String ruleId);
+		
+		/**
+		 * 更新基本薪资规则下的与之匹配的人员
+		 * 
+		 * @param staffBaseInfoModels
+		 * @return 更新的结果
+		 */
+		Boolean updateBaseSalRuleStaffies(StaffBaseInfoModel staffBaseInfoModels);
+}

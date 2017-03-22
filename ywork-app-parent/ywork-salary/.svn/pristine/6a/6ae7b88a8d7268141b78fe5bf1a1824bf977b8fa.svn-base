@@ -1,0 +1,97 @@
+package me.ywork.salary.service;
+
+import me.ywork.base.service.BizService;
+import me.ywork.salary.model.SalCorpWhpRuleModel;
+import me.ywork.salary.model.SalCorpBaseSalRuleModel;
+import me.ywork.salary.model.SalSysRuleModel;
+import me.ywork.salary.model.SalUpdateStaffesModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.web.bind.annotation.RequestParam;
+
+/**
+ * 计算薪资正算和反算的规则，可以自定义每个员工的规则
+ *
+ * Created by xiaobai on 2017/1/10.
+ */
+public interface SalRuleService extends BizService {
+		/**
+		 * 获取规则列表:获取算工资应用的所有的记薪规则
+		 * 
+		 * @param corpId 钉钉企业号
+		 * @return 得到的所有的薪资规则
+		 */
+		List<SalCorpBaseSalRuleModel> getAllSalRules(String corpId);
+	
+		/**
+		 * 获取规则详情
+		 * 
+		 * @param corpId 钉钉企业标识
+		 * @param ruleId  薪资规则的ID
+		 * @return 获取薪资规则的结果
+		 */
+		SalCorpBaseSalRuleModel getSalRuleByRuleId(String corpId , String ruleId);
+	
+		/**
+		 * 保存计薪规则
+		 * 
+		 * @param salaryRule 
+		 * @return 保存薪资规则的结果
+		 */
+		Boolean updateSalRule(String corpId , SalCorpBaseSalRuleModel salaryRule);
+		   /**
+		    * 根据企业薪资规则的主键得到与之匹配的人员
+		    * 
+		    * @param ruleId 企业薪资规则的Id
+		    * @return 选择该薪资规则的人员列表
+		    */
+		List<SalStaffBaseInfoModel> getStafiesByCRI(String corpRuleId);
+		
+		/**
+		 *  根据薪资社保或规则类型得到与之匹配的人员
+		 *  
+		 * @param corpId
+		 * @param whpRuleType
+		 * @return
+		 */
+		List<SalStaffBaseInfoModel> getStafiesByWhpRule(String corpId , Short whpRuleType);
+		
+		/**
+		 * 更新基本薪资规则下的与之匹配的人员
+		 * 
+		 * @param staffBaseInfoModels
+		 * @return 更新的结果
+		 */
+		Boolean updateSalRuleStaffies(SalUpdateStaffesModel model,String corpId);
+		
+		/**
+		 * 删除企业员工的基本薪资规则
+		 * @param staffBaseInfoModels
+		 * @return  删除的结果
+		 */
+		Boolean deleteStaffSalRule(String corpId ,SalStaffBaseInfoModel salStaffBaseInfoModel);
+		
+		/**
+		 * 更新企业代缴代扣规则
+		 * 
+		 * @param salCwhpRuleModels 代缴代扣列表
+		 * @return  更新的结果
+		 */
+		Boolean updateCwhpRuleList(String corpId ,List<SalCorpWhpRuleModel>  salCwhpRuleModels);
+		
+		/**
+		 *   得到企业代缴代扣规则
+		 *   
+		 * @param corpId  企业标识
+		 * @return  得到企业代缴代扣的列表
+		 */
+		List<SalCorpWhpRuleModel> getCwhpRuleList(String corpId);
+		
+		/**
+		 * 测试接口：得到地址本选中的人员或者部门
+		 */
+		List<SalStaffBaseInfoModel> getStaffAddress(String corpId , String ruleId ,Short type);
+}

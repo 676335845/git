@@ -1,0 +1,59 @@
+package com.heyi.framework.messagebus.kafka;
+
+public enum KafkaTopics {
+	
+	/**
+	 * 任务调度系统应该实时监控此频道，其他系统可以在此频道发布任务，任务调度系统会将发过来的任务保存到数据库.\n其他系统取消某一个任务也发消息在此频道
+	 */
+	TIMEDTASK_RECEIVER("pub_timedtask_receiver","任务调度系统应该实时监控此频道，其他系统可以在此频道发布任务，任务调度系统会将发过来的任务保存到数据库.\n其他系统取消某一个任务也发消息在此频道"),
+	
+	/**
+	 * 其他系统应该监控此频道，任务调度系统一旦发现某个定时任务达到运行时机，就会将任务发布在此频道，其他系统接收到之后，应该执行相关动作
+	 */
+	TIMEDTASK_NOTIFY("pub_timedtask_notify","其他系统应该监控此频道，任务调度系统一旦发现某个定时任务达到运行时机，就会将任务发布在此频道，其他系统接收到之后，应该执行相关动作"),
+	
+	WORKFLOW_RECEIVER("pub_workflow_receiver","Workflow公共消息频道，接收流程消息"),
+	
+	PUB_WORKFLOW_NOTIFY("pub_workflow_notify","Workflow公共消息频道，发布流程事件，比如流程节点事件，流程通过事件，通过消息广播给流程所有方"),
+	
+	ERP_DEFAULT_CHANNEL("pub_erp_notify","ERP公共消息频道"),
+	
+	TRACE_RECEIVER("pub_trace_receiver","追溯信息频道"),
+	
+	STOCKLOG_CHANNEL("pub_stocklog_channel","库存及相关 日志记录 频道"),
+		
+	PROVIDER_CHANNEL("pub_provider_channel","供应商公共频道"),
+
+	ESHOP_TRADE_CHANNEL("pub_trade_channel","订单交易相关的公共消息频道"),
+		
+	PRINT_CENTER_CHANNEL("pub_print_center","集中打印频道,通过此频道控制中心仓库打印机进行二维码打印"),	
+	
+	FRESH_PREPARE_CHANNEL("pub_fresh_prepare","销区生鲜备货频道"),
+	
+	ERPINSTANT_TODO_CHANNEL("pub_erpinstant_notify","ERP即时消息频道"),
+	
+	PLATFORM_NOTIFY("pub_smsinfo_channel","平台通知频道"),
+	
+	EPC_CHANNEL("pub_epc_channel","Epc事件频道"),
+	
+	PLATFORM_EVENT_CHANNEL("pub_platformevent_channel","平台公共事件频道"),
+
+	;
+	
+	private final String topic;
+	private final String description;
+	
+	KafkaTopics(String name,String desc) {
+		this.topic = name;
+		this.description = desc;
+	}
+
+	public String getTopic() {
+		return topic;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+	
+}

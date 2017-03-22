@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.StaffSalInfoRepository">
+   <!--所有字段列表 -->
+    <sql id="fields">
+    id,staff_id,sal_rule,should_pay_sal,sal_effect_time,
+          base_salary, job_salary,allowance,
+		travel_assistance,pub_funds,social_security
+    </sql>
+
+    <!--从实体中取值 -->
+    <sql id="values">
+       #{id},#{staffId},#{salRule},#{ShouldPaySal},#{salEffectTime},
+          #{baseSal}, #{jobSal},#{allowance},
+		#{travelAssistance},#{pubFunds},#{socialSecurity}
+    </sql>
+    
+     <!-- 员工薪资情况的大概信息 -->
+    <resultMap id="StaffSalaryInfoMap" type="me.ywork.salary.model.StaffSalInfoModel">
+        <id column="id" property="id"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="sal_rule" property="salRule"/>
+        <result column="should_pay_sal" property="shouldPaySal"/>
+        <result column="staff_name" property="staffName"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="sal_effect_time" property="salEffectTime"/>
+     </resultMap>
+
+    <!-- 员工薪资情况的详细信息 -->
+   	<resultMap id="StaffSalaryDetailInfoMap" type="me.ywork.salary.model.StaffSalInfoDetailModel">
+        <id column="id" property="id"/>
+        <result column="staff_id" property="staffId"/>
+        <result column="sal_rule" property="salRule"/>
+        <result column="total_sal" property="totalSal"/>
+        <result column="sal_effect_time" property="salEffectTime"/>
+        <result column="base_sal" property="baseSal"/>
+        <result column="job_sal" property="jobSal"/>
+        <result column="allowance" property="allowance"/>
+        <result column="travel_assistance" property="travelAssistance"/>
+        <result column="pub_funds" property="pubFunds"/>
+        <result column="social_security" property="socialSecurity"/>
+     </resultMap>
+ 
+   	<!-- 得到分页的员工薪资信息 -->
+	<select id = "getStaffSalaryInfos" resultType= "me.ywork.salary.model.StaffSalInfoModel">
+	    select staffInfo.staff_name as staffName,			          
+	           deptInfo.dept_name as deptName,
+	           staffInfo.sal_rule as salRule,
+	           salInfo.should_pay_sal as ShouldPaySal,
+	           salInfo.sal_effect_time as salEffectTime		            	           
+		     from staff_sal_info salInfo, 
+		          staff_baseinfo staffInfo,
+		          dept_info deptInfo
+		     where      
+			     salInfo.staff_id = staffInfo.id and 
+			     staffInfo.dept_id = deptInfo.id and
+			     staffInfo.corp_id = #{corpId}
+			     limit #{pageable.pageNo},#{pageable.pageSize}
+	</select>
+	
+	<!-- 通过员工ID来获取该员工的薪资详情 -->
+	<select id="getSalaryInfosByStaffId" resultMap = "StaffSalaryDetailInfoMap">
+	    select 
+	       salInfo.id,
+           salInfo.base_sal,
+           salInfo.job_sal,
+           salInfo.allowance,
+           salInfo.travel_assistance,
+           salInfo.pub_funds,
+           salInfo.social_security
+	       from staff_sal_info salInfo,
+	            staff_baseinfo baseInfo
+	       where 
+	           salInfo.staff_id = baseInfo.id and
+		       baseInfo.corp_id=#{corpId} and
+		       salInfo.staff_id=#{staffId}
+	</select>
+	
+	<!-- 获取选中人员工资详情(编辑规则):通过编辑可以获取多个人的薪资详情-->
+	<select id="getMutiStaffSalaryInfosDetail" resultMap = "StaffSalaryDetailInfoMap">
+	    select 
+           salInfo.id,
+           salInfo.staff_id,
+           salInfo.sal_rule,
+           salInfo.should_pay_sal,
+           salInfo.sal_effect_time,
+           salInfo.base_sal,
+           salInfo.job_sal,
+           salInfo.allowance,
+           salInfo.travel_assistance,
+           salInfo.pub_funds,
+           salInfo.social_security
+	        from staff_sal_info salInfo,
+	             staff_baseinfo baseInfo
+	        where 
+	           salInfo.staff_id = baseInfo.id and
+		       baseInfo.corp_id=#{corpId} and
+                     salInfo.staff_id in           
+	                 <foreach collection="staffIds" item="staffId" index="i" open="("
+													 separator="," close=")">
+												#{staffId}
+					</foreach>            
+	</select>
+	
+	<!-- 提交编辑数据:批量修改多个人的薪资 -->
+	<update id="updateStaffInfo">
+	     update staff_sal_info
+	       set	        	 
+       	     staff_id = #{staffSalInfo.staffId},
+       	     sal_rule = #{staffSalInfo.salRule},
+       	     should_pay_sal = #{staffSalInfo.ShouldPaySal},
+       	     sal_effect_time = #{staffSalInfo.salEffectTime},
+	         base_sal = #{staffSalInfo.baseSal}, 
+	         job_sal = #{staffSalInfo.jobSal},
+	         staff_id =#{staffSalInfo.staffId}
+	         allowance = #{staffSalInfo.allowance},
+			 travel_assistance = #{staffSalInfo.travelAssistance},
+			 pub_funds = #{staffSalInfo.pubFunds},
+			 social_security =#{staffSalInfo.socialSecurity}
+			 where 
+			   id = #{staffSalInfo.id}
+	</update> 
+	
+	
+</mapper>

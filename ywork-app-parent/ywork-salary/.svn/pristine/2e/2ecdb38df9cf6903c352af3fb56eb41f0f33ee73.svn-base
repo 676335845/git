@@ -1,0 +1,52 @@
+			
+
+           package me.ywork.salary.model;
+			
+			import java.io.Serializable;
+			import java.util.Date;
+			
+			/**
+			 * Created by xiaobai on 2017/1/11.
+			 */
+			public class StaffSalInfoModel extends StaffBaseInfoModel  implements Serializable{
+			
+			    /**
+			     *  薪资计算规则
+			     */
+			    private Short salaryRule;
+			    /**
+			     *  工资合计
+			     */
+			    private Double totalSal;
+			
+			    /**
+			     *  薪资生效时间
+			     */
+			    private Date  salaryEffectTime;
+			
+			    public Short getSalaryRule() {
+			        return salaryRule;
+			    }
+			
+			    public void setSalaryRule(Short salaryRule) {
+			        this.salaryRule = salaryRule;
+			    }
+			
+			   
+			
+			    public Double getTotalSal() {
+					return totalSal;
+				}
+			
+				public void setTotalSal(Double totalSal) {
+					this.totalSal = totalSal;
+				}
+			
+				public Date getSalaryEffectTime() {
+			        return salaryEffectTime;
+			    }
+			
+			    public void setSalaryEffectTime(Date salaryEffectTime) {
+			        this.salaryEffectTime = salaryEffectTime;
+			    }
+			}

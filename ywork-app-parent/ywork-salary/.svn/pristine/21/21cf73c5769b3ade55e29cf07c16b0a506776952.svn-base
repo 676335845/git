@@ -1,0 +1,43 @@
+			
+
+            package me.ywork.salary.model;
+			
+			import java.util.List;
+			
+			
+			
+			public class MutiStaffInfoModel {
+					/**
+					 * 人员id的集合
+					 */
+			      private List<String> staffIds ;
+			      /**
+			       *  时间戳
+			       */
+			      private  Long monthId;
+			      /**
+			       *  钉钉企业号
+			       */
+			      private String corpId;
+			      
+				  public List<String> getStaffIds() {
+					return staffIds;
+					}
+					public void setStaffIds(List<String> staffIds) {
+						this.staffIds = staffIds;
+					}
+			       
+					public Long getMonthId() {
+						return monthId;
+					}
+					public void setMonthId(Long monthId) {
+						this.monthId = monthId;
+					}
+					public String getCorpId() {
+						return corpId;
+					}
+					public void setCorpId(String corpId) {
+						this.corpId = corpId;
+					}   
+					
+			}

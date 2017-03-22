@@ -1,0 +1,56 @@
+	  /*==============================================================*/
+	 /* Table: corp_baseinfo 企业基本信息表                                                                                  */
+	/*==============================================================*/
+	CREATE TABLE `corp_baseinfo` (
+	  `id` varchar(32) NOT NULL comment '企业基本信息的标识 --id',
+	  `corp_name` varchar(32) NOT NULL comment '企业的名字 -- corpName',
+	  `pass_state` int(11) DEFAULT '0' comment '企业密码锁开启的状态 -- passState',
+	  PRIMARY KEY (`id`)  
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+      /*==============================================================*/
+	 /* Table: dept_info 创建企业部门表                                                                                  */
+	/*==============================================================*/
+	 CREATE TABLE `dept_info` (
+	  `id` varchar(32) NOT NULL comment '部门表的Id -- id',
+	  `dept_name` varchar(32) NOT NULL comment '部门名字 -- deptName',
+	  PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+	   
+      /*==============================================================*/
+	 /* Table: staff_baseinfo 创建员工基本信息表                                                           */
+	/*==============================================================*/
+     CREATE TABLE `staff_baseinfo` (
+	  `id` varchar(32) NOT NULL,
+	  `staff_name` varchar(32) NOT NULL comment '员工的名字--staffName',
+	  `corp_id` varchar(32) NOT NULL comment '企业标识 -- corpId',
+	  `dept_id` varchar(32) NOT NULL comment '部门标识 -- deptId',
+	  `sal_rule` int(11) DEFAULT '1' comment '薪资规则 -- salRule',
+	  `staff_pass` varchar(30) DEFAULT NULL comment '员工密码锁密码 -- staffPass',
+	  PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
+	
+	
+	
+	--	
+--    <!--插入企业的基本信息-->
+--    insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time)values("123456","1111",1,10000,"20170101");
+--    <!-- 增加企业密码锁开启的状态的字段-->
+--    alter table corp_baseinfo add column pass_state Integer default 0;
+
+	--
+--	    <!--插入部门的基本信息-->
+--	    insert into dept_info(id,dept_name)values("5555","产品部");
+
+--	    <!--插入员工基本信息-->
+--		insert into staff_baseinfo(id,staff_name,corp_id,dept_id) values ("12354621","大侠","1111","5555");
+--        
+--		<!--员工基本信息表新增薪资规则字段-->
+--		alter table staff_baseinfo change sal_rule sal_rule Integer default 1;
+--		
+--		<!--新增员工密码字段-->
+--		alter table staff_baseinfo add column staff_pass varchar(30);
+--		
+--		<!--更新员工基本信息表的密码字段为123-->
+--		update staff_baseinfo set staff_pass="123";

@@ -1,0 +1,38 @@
+package me.ywork.salarybill.model;
+
+import java.io.Serializable;
+import java.util.List;
+/**
+ * 
+ * @author kezm
+ *
+ * 2016年1月20日
+ */
+public class OrgDataModel implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3586355931477484013L;
+
+	private String compayId;
+
+	private List<OrgTempModel> orgData;
+
+	public String getCompayId() {
+		return compayId;
+	}
+
+	public void setCompayId(String compayId) {
+		this.compayId = compayId;
+	}
+
+	public List<OrgTempModel> getOrgData() {
+		return orgData;
+	}
+
+	public void setOrgData(List<OrgTempModel> orgData) {
+		this.orgData = orgData;
+	}
+
+}

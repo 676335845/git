@@ -1,0 +1,90 @@
+			
+
+           package me.ywork.salary.model;
+			
+			import java.io.Serializable;
+			import java.util.Date;
+			
+			/**
+			 *  月度工资报表
+			 *
+			 * Created by xiaobai on 2017/1/11.
+			 */
+			public class SalaryReportModel implements Serializable{
+			    /*
+			     * 月度工资报表Id
+			     */
+			    private String monthSalId;
+			    /**
+			     * 工资报表产生时间
+			     */
+			    private Date createTime;
+			    /**
+			     * 工资报表的状态
+			     */
+			    private Short salaryReportState;
+			    /**
+			     *  应发工资
+			     */
+			    private Double totalSalary;
+			    /**
+			     *  公司交金
+			     */
+			    private Double insuranceSalary;
+			    /**
+			     * 员工成本
+			     */
+			    private Double staffCost;
+			
+			    public SalaryReportModel() {
+			        super();
+			    }
+			
+			    public String getMonthSalId() {
+			        return monthSalId;
+			    }
+			
+			    public void setMonthSalId(String monthSalId) {
+			        this.monthSalId = monthSalId;
+			    }
+			
+			    public Date getCreateTime() {
+			        return createTime;
+			    }
+			
+			    public void setCreateTime(Date createTime) {
+			        this.createTime = createTime;
+			    }
+			
+			    public Short getSalaryReportState() {
+			        return salaryReportState;
+			    }
+			
+			    public void setSalaryReportState(Short salaryReportState) {
+			        this.salaryReportState = salaryReportState;
+			    }
+			
+			    public Double getTotalSalary() {
+			        return totalSalary;
+			    }
+			
+			    public void setTotalSalary(Double totalSalary) {
+			        this.totalSalary = totalSalary;
+			    }
+			
+			    public Double getInsuranceSalary() {
+			        return insuranceSalary;
+			    }
+			
+			    public void setInsuranceSalary(Double insuranceSalary) {
+			        this.insuranceSalary = insuranceSalary;
+			    }
+			
+			    public Double getStaffCost() {
+			        return staffCost;
+			    }
+			
+			    public void setStaffCost(Double staffCost) {
+			        this.staffCost = staffCost;
+			    }
+			}

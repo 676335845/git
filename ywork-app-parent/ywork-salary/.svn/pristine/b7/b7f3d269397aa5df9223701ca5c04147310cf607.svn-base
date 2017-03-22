@@ -1,0 +1,88 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.model.SalCorpInfoModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.repository.SalPassRepository;
+import me.ywork.salary.service.SalPassService;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class SalPassServiceImpl implements SalPassService {
+	@Autowired
+	private SalPassRepository salPassRepository;
+
+	@Override
+	public Short getCorpPassOpenStatus(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getCorpPasswordOpenStatus param corpId is null or empty");
+		}
+		Short corpPassOpenStatus = null;
+		try {
+			corpPassOpenStatus = salPassRepository.getCorpPasswordOpenStatus(corpId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return corpPassOpenStatus;
+	}
+
+	@Override
+	public List<SalStaffBaseInfoModel> getStaffInfoByKeyword(String corpId, String keyword) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getStaffInfoByKeyword param corpId is null or empty.");
+		}
+		if (StringUtils.isBlank(keyword)) {
+			throw new IllegalArgumentException("getStaffInfoByKeyword param keyword is null or empty.");
+		}
+		List<SalStaffBaseInfoModel> staffBaseInfoModels = null;
+		try {
+			staffBaseInfoModels = salPassRepository.getStaffInfoByKeyword(corpId, keyword);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return staffBaseInfoModels;
+	}
+
+	@Override
+	public Boolean resetStaffPass(String corpId, String staffId) {
+		if (StringUtils.isBlank(staffId)) {
+			throw new IllegalArgumentException("resetStaffPass param staffId is null or empty.");
+		}
+		Integer resetRs = null;
+		try {
+			resetRs = salPassRepository.resetStaffPassword(corpId, staffId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return resetRs == null ? Boolean.FALSE : resetRs > 0;
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Boolean updateCorpPassStatus(SalCorpInfoModel salCorpInfoModel) {
+		if (salCorpInfoModel == null) {
+			throw new IllegalArgumentException("updateCorpPassStatus param salCorpInfoModel is null or empty.");
+		}
+		Integer rs =null;
+		try{
+	    	rs = salPassRepository.updateCorpPassStatus(salCorpInfoModel);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return rs == null?Boolean.FALSE:rs>0;
+	}
+	
+}

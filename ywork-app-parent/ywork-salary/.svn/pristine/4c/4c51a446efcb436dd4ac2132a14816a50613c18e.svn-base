@@ -1,0 +1,25 @@
+package me.ywork.salary.repository;
+
+import me.ywork.base.repository.IRepository;
+import me.ywork.salary.entity.StaffBaseInfoEntity;
+import me.ywork.salary.model.StaffBaseInfoModel;
+
+public interface SalPassRepository extends IRepository<StaffBaseInfoEntity>{
+    /**
+     * 得到企业密码锁开启的状态
+     *
+     * @param corpId
+     * @return
+     */
+     Short getCorpPasswordOpenStatus(String corpId);
+
+    /**
+     * 根据员工的信息去模糊查询员工的信息
+     */
+    StaffBaseInfoModel getStaffInfoByKeyword(String keyword);
+
+    /**
+     *  对员工的密码进行重置
+     */
+    Boolean resetStaffPassword(String staffId);
+}

@@ -1,0 +1,35 @@
+	
+	  /*==============================================================*/
+	 /* Table: attendance           创建员工考勤表                                                     */
+	/*==============================================================*/
+			CREATE TABLE `attendance`(
+			  `id` varchar(32) NOT NULL comment '企业考勤表唯一标识 -- attendanceId',
+			  `attendance_time` date NOT NULL comment '考勤表产生的时间 -- attendanceTime',
+			  `corp_id` varchar(64) NOT NULL comment  '考勤表所属的企业 -- corpId',
+			   PRIMARY KEY (`id`)
+			) 
+		insert into attendance (id,attendance_time,corp_id)values("1254","20160820","ding0902");
+		
+	  /*==============================================================*/
+	 /* Table: staff_attendance 插入员工考勤数据                                                           */
+	/*==============================================================*/
+		
+		CREATE TABLE `staff_attendance` (
+		  `id` varchar(32) NOT NULL comment '员工月度考勤标识 -- staffAttendanceId',
+		  `attendance_day` int(11) NOT NULL comment '考勤天数 -- attendanceDay',
+		  `rest_days` int(11) NOT NULL comment '休息天数 -- restDays',
+		  `work_hours` double DEFAULT '0' comment '工作天数 -- workHours',
+		  `late_hours` double DEFAULT '0' comment '迟到时长 -- lateHours',
+		  `late_times` int(11) DEFAULT '0' comment '迟到次数 -- lateTimes',
+		  `seriouslate_hours` double DEFAULT '0' comment '严重迟到时长  -- seriouslateHours',
+		  `seriouslate_times` int(11) DEFAULT '0' comment '严重迟到次数 -- seriousLateTimes',
+		  `earlyleave_hours` double DEFAULT '0' comment '早退时长 --eLHours',
+		  `earlyleave_times` int(11) DEFAULT '0' comment '早退次数 -- eLTimes',
+		  `workabsence_times` int(11) DEFAULT '0' comment '上班缺卡次数 -- workAbsenceTimes',
+		  `offwork_absence_times` int(11) DEFAULT '0' comment '下班缺卡次数 -- offAbsenceTimes',
+		  `unwork_days` int(11) DEFAULT '0' comment '旷工天数 -- unworkDays',
+		  `unwork_late_days` int(11) DEFAULT '0' comment '旷工迟到天数 -- unworkLateDays',
+		  `corp_id` varchar(64) NOT NULL comment '企业标识 -- corpId',
+		  `staff_id` varchar(32) NOT NULL comment '员工标识 --staffId',
+		  `report_id` varchar(32) DEFAULT NULL comment '月度考勤报表标识 --reportId'
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8 

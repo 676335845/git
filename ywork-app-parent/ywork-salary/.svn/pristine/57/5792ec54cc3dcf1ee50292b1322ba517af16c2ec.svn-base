@@ -1,0 +1,146 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.entity.SalCorpAttenEntity;
+import me.ywork.salary.model.SalCorpAttenModel;
+import me.ywork.salary.model.SalStaffAttendanceModel;
+import me.ywork.salary.repository.SalAttendanceRepository;
+import me.ywork.salary.service.SalAttendanceService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalAttendanceServiceImpl   implements SalAttendanceService {
+
+	@Autowired
+	private SalAttendanceRepository attendanceRepository;
+	private static final Logger logger = LoggerFactory.getLogger(SalAttendanceServiceImpl.class);
+
+	@Override
+	public List<SalCorpAttenModel> getAllMonthesAttendanceData(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getAllMonthesAttendanceData param corpId is null or empty");
+		}	 
+		// 去持久层获得所有月度的考勤数据
+		List<SalCorpAttenModel> attendanceModels  = attendanceRepository.getAllMonthesAttendanceData(corpId);
+		if(attendanceModels == null){//如果公司的考勤数据为空，则返回为空
+			return new ArrayList();
+		}
+//		Long totalCount = attendanceRepository.getAttendanceDataCountByCorpId(corpId);// 得到查询总数
+
+		return attendanceModels;
+	}
+
+	@Override
+	public PageData<SalStaffAttendanceModel> getAllStaffAttendanceByReportId(String reportId, Pageable pageable) {
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException
+			("getAllStaffAttendanceByMonthId param reportId is null or empty");
+		}
+		if (pageable == null) {
+			throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param pageable is null.");
+		}
+
+		List<SalStaffAttendanceModel> staffAttendanceModels = null;
+		// 去持久层获得当月度所有员工分页的考勤数据
+		Integer beginNum = pageable.getPageNo()-1;
+		Integer endNum =pageable.getPageSize();
+		staffAttendanceModels = attendanceRepository.getAllStaffAttendanceByReportId(reportId, beginNum ,endNum);
+		// 去持久层得到当月度所有员工的考勤数据的总数
+		Long staffAttendanceCount = attendanceRepository.getAllStaffAttendanceCountByReportId(reportId);
+		pageable.setTotalCount(staffAttendanceCount);
+		return new PageDataImpl<SalStaffAttendanceModel>(staffAttendanceModels, pageable);
+	}
+
+	@Override
+	public List<SalStaffAttendanceModel> getMutiStaffAttendanceDetail(List<String> staffIds, String reportId) {
+		if (staffIds == null) {
+			throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is null.");
+		}
+		if (staffIds.isEmpty()) {
+			throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is empty.");
+		}
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("getMutiStaffAttendanceDetail param reportId is null.");
+		}
+
+		List<SalStaffAttendanceModel> staffAttendanceModels = null;
+		staffAttendanceModels = attendanceRepository.getMutiStaffAttendanceDetail(staffIds, reportId);
+		return staffAttendanceModels;
+	}
+
+	@Override
+	public Boolean updateMutiStaffAttendance(List<SalStaffAttendanceModel> staffAttendances) {
+		if (staffAttendances == null) {
+			throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is null.");
+		}
+		if (staffAttendances.isEmpty()) {
+			throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is empty.");
+		}
+		int size = 0;
+		SalCorpAttenEntity staffAttendance = null;
+		for (SalStaffAttendanceModel staffAttendanceModel : staffAttendances) {
+			staffAttendance = attendanceRepository.getStaffAttendanceEntityById(staffAttendanceModel.getId());
+			if (staffAttendance != null) {
+				Date nowDate = new Date();
+				staffAttendance.setId(staffAttendanceModel.getId());
+				staffAttendance.setAttendanceDays(staffAttendanceModel.getAttendanceDays());
+				staffAttendance.setEarlyLeaveHours(staffAttendanceModel.getEarlyLeaveHours());
+				staffAttendance.setEarlyLeaveTimes(staffAttendanceModel.getEarlyLeaveTimes());
+				staffAttendance.setLateHours(staffAttendanceModel.getLateHours());
+				staffAttendance.setLateTimes(staffAttendanceModel.getLateTimes());
+				staffAttendance.setRestDays(staffAttendanceModel.getRestDays());
+				staffAttendance.setSeriousLateHours(staffAttendanceModel.getSeriousLateHours());
+				staffAttendance.setWorkAbsenceTimes(staffAttendanceModel.getWorkAbsenceTimes());
+				staffAttendance.setSeriousLateTimes(staffAttendanceModel.getSeriousLateTimes());
+				staffAttendance.setOffWorkAbsenceTimes(staffAttendanceModel.getOffWorkAbsenceTimes());
+				staffAttendance.setWorkHours(staffAttendanceModel.getWorkHours());
+				staffAttendance.setUnWorkDays(staffAttendanceModel.getUnWorkDays());
+				staffAttendance.setUnWorkLateDays(staffAttendanceModel.getUnWorkLateDays());
+				staffAttendance.setOutDays(staffAttendanceModel.getOutDays());
+				staffAttendance.setBusyAwayDays(staffAttendanceModel.getBusyAwayDays());
+				staffAttendance.setAffairLeaveDays(staffAttendanceModel.getAffairLeaveDays());
+				staffAttendance.setSickLeaveDays(staffAttendanceModel.getSickLeaveDays());
+				staffAttendance.setYearLeaveDays(staffAttendanceModel.getYearLeaveDays());
+				staffAttendance.setDayOffDays(staffAttendanceModel.getDayOffDays());
+				staffAttendance.setMarryOffDays(staffAttendanceModel.getMarryOffDays());
+				staffAttendance.setMaternityLeaveDays(staffAttendanceModel.getMaternityLeaveDays());
+				staffAttendance.setAccoMaternityDays(staffAttendanceModel.getAccoMaternityDays());
+				staffAttendance.setJourneyDays(staffAttendanceModel.getJourneyDays());
+				staffAttendance.setOtherDays(staffAttendanceModel.getOtherDays());
+				staffAttendance.setModifiedDate(nowDate);
+			}
+			if (attendanceRepository.updateMutiStaffAttendance(staffAttendance) > 0) {
+				size++;
+			}
+		}
+		if (size == staffAttendances.size()) {
+			return Boolean.TRUE;
+		} else {
+			return Boolean.FALSE;
+		}
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+}

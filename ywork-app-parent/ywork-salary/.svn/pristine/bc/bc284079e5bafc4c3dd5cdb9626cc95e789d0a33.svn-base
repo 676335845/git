@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.SalReportRepository">
+    <!--所有字段列表 -->
+    <sql id="staff_month_sal_field">
+      id,
+      staff_id,
+      sal_report_id,
+      should_pay_sal,
+      sal_deduct,
+      replace_deduct,
+      actual_sal,
+      annual_bonus,
+      month_bonus,
+      other_pretax_sal,
+      other_aftertax_sal,
+      other_pretax_deduct,
+      other_aftertax_deduct
+    </sql>
+    
+    <sql id="">
+      
+    </sql>
+    <!--  -->
+    <sql id="staff_month_sal_values">
+       
+    </sql>
+
+    <!--从实体中取值 -->
+    <sql id="values">
+      
+    </sql>
+    
+    <!--  获取所有月份工资表概要:获取所有月份的工资表，分页展示 -->
+    <select id="getAllMonthSalaryies" resultType="me.ywork.salary.model.SalaryReportModel">
+       select 
+         id as monthSalId,
+	     create_time as createTime,
+		 sal_report_state as salaryReportState,
+	     should_pay_sal as shouldPaySal,
+		 insurance_sal as insuranceSal,
+	     staff_cost as staffCost
+           from dingsal_sal_report
+           where corp_id= #{corpId}
+            limit #{pageable.pageNo},#{pageable.pageSize}
+     </select>
+     <!--   获取所有月份的工资表的总数 -->
+     <select id="getAllMonthSalaryiesCount" resultType="java.lang.Long">
+       select 
+           count(id)
+           from dingsal_sal_report
+            where corp_id= #{corpId}
+     </select>
+    
+    <!--  获取该月份工资详情：根据工资表ID来获得该月的工资详情 -->
+    <select id = "getSalaryDatailByMonthId" resultType="me.ywork.salary.model.MonthStaffSalModel">
+       select 
+           baseInfo.staff_name as staffName,
+           deptInfo.dept_name as deptName,
+           monthSal.should_pay_sal as shouldPaySal,
+           monthSal.sal_deduct as salDeduct,
+           monthSal.replace_deduct as replaceDeduct,
+           monthSal.actual_sal as actualSal
+	          from dingsal_staff_month_sal monthSal,
+	               dingsal_dept_info as deptInfo,
+	               dingsal_staff_info baseInfo
+	          where
+	                monthSal.staff_id = baseInfo.id and
+	                baseInfo.dept_id = deptInfo.id and
+	                monthSal.month_sal_id = #{reportId}
+	                limit #{pageable.pageNo},#{pageable.pageSize}
+    </select>
+ 
+    
+    <!-- 根据工资表ID来锁定该工资表 -->
+    <update id="lockSalaryTablesByMonthId">
+        update dingsal_sal_report
+           set sal_report_state = #{reportState}
+            where id=#{reportId}
+    </update>
+    
+    <!-- 获取选中人员该月工资详情(修改浮动款项):传递工资表ID和多个员工ID去返回多个员工的工资数据 -->
+    <select id="getSelectedStaffSalaryDetail" resultType="me.ywork.salary.model.MonthStaffSalDetailModel">
+      select
+	       sMonthSal.id as staffMonthSalId,
+	       sBaseInfo.staff_name as StaffName,
+	       sMonthSal.annual_bonus as annualBonus,
+		   sMonthSal.month_bonus as monthBonus,
+		   sMonthSal.other_pretax_sal as otherPretaxSal,
+           sMonthSal.other_aftertax_sal as otherAfterPretaxSal,
+           sMonthSal.other_pretax_deduct as otherPretaxDeduct,
+           sMonthSal.other_aftertax_deduct as otherAftertaxDeduct
+            from 
+               dingsal_staff_info sBaseInfo,
+               dingsal_staff_month_sal sMonthSal
+               where sBaseInfo.id = sMonthSal.staff_id and
+                     sMonthSal.month_sal_id = #{reportId} and
+                     staff_id in           
+	                 <foreach collection="staffIds" item="staffId" index="i" open="("
+													 separator="," close=")">
+												#{staffId}
+					</foreach>            
+    </select>
+
+    <!-- 具体员工的工资情况可以修改,向后台传递的是修改后的工资数据 -->
+    <update id="updateStaffSalOnMonth">
+      update dingsal_staff_month_sal 
+            set annual_bonus = #{mStaffSal.annualBonus},
+                month_bonus = #{mStaffSal.monthBonus},
+                other_pretax_sal = #{mStaffSal.otherPretaxSal},
+                other_aftertax_sal = #{mStaffSal.otherAftertaxSal},
+                other_pretax_deduct = #{mStaffSal.otherPretaxdeduct},
+                other_aftertax_deduct = #{mStaffSal.otherAftertaxDeduct}
+                where id=#{mStaffSal.staffMonthSalId}          
+    </update>
+    
+    <select id="getSalaryDatailById" resultType="me.ywork.salary.model.MonthStaffSalDetailModel">
+       select          
+           sMonthSal.id as staffMonthSalId,
+	       sMonthSal.annual_bonus as annualBonus,
+		   sMonthSal.month_bonus as monthBonus,
+		   sMonthSal.other_pretax_sal as otherPretaxSal,
+           sMonthSal.other_aftertax_sal as otherAfterPretaxSal,
+           sMonthSal.other_pretax_deduct as otherPretaxDeduct,
+           sMonthSal.other_aftertax_deduct as otherAftertaxDeduct
+           from dingsal_staff_month_sal sMonthSal
+           where  id = #{salMonthId}
+    </select>
+</mapper>

@@ -1,0 +1,134 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.FieldItemModel;
+import me.ywork.salary.model.StaffSalInfoDetailModel;
+import me.ywork.salary.model.StaffSalInfoModel;
+import me.ywork.salary.repository.StaffSalInfoRepository;
+import me.ywork.salary.service.StaffSalInfoService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+import com.heyi.utils.IdGenerator;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class StaffSalInfoServiceImpl implements StaffSalInfoService {
+	@Autowired
+	private StaffSalInfoRepository staffSalInfoRepository;
+	private static final Logger logger = LoggerFactory.getLogger(StaffSalInfoServiceImpl.class);
+
+	@Override
+	public PageData<StaffSalInfoModel> getStaffSalaryInfos(String corpId, Pageable pageable) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getStaffSalaryInfos param corpId is null or empty.");
+		}
+		List<StaffSalInfoModel> staffSalInfoModels = null;
+		int pageNo = pageable.getPageNo();
+		int pageSize = pageable.getPageSize();
+		try {
+			staffSalInfoModels = staffSalInfoRepository.getStaffSalaryInfos(corpId, (pageNo - 1) * pageSize, pageSize);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new PageDataImpl<StaffSalInfoModel>(staffSalInfoModels, pageable);
+	}
+
+	@Override
+	public StaffSalInfoDetailModel getSalInfosByStaffId(String staffId) {
+		if (StringUtils.isBlank(staffId)) {
+			throw new IllegalArgumentException("getSalaryInfosByStaffId param staffId is null or empty.");
+		}
+		StaffSalInfoDetailModel staffSalInfoDetailModel = new StaffSalInfoDetailModel();
+		try {
+			List<FieldItemModel> fieldItemModels = staffSalInfoRepository.getStaffFieldItems(staffId);
+			staffSalInfoDetailModel.setItemModels(fieldItemModels);
+			logger.info(JSONObject.toJSONString(staffSalInfoDetailModel));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return staffSalInfoDetailModel;
+	}
+
+	@Override
+	public List<StaffSalInfoDetailModel> getMutiStaffSalaryInfosDetail(String corpId, List<String> staffids) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getMutiStaffSalaryInfosDetail param corpId is null or empty.");
+		}
+		List<StaffSalInfoDetailModel> staffSalInfoDetailModels = null;
+		try {
+			staffSalInfoDetailModels = staffSalInfoRepository.getMutiStaffSalaryInfosDetail(corpId, staffids);
+			for (StaffSalInfoDetailModel staffSalInfoDetailModel : staffSalInfoDetailModels) {
+				String staffId = staffSalInfoDetailModel.getId();
+				List<FieldItemModel> fieldItemModels = staffSalInfoRepository.getStaffFieldItems(staffId);
+				staffSalInfoDetailModel.setItemModels(fieldItemModels);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return staffSalInfoDetailModels;
+	}
+
+	@Override
+	public Boolean updateMutiStaffInfos(List<StaffSalInfoDetailModel> staffSaInfos) {
+		if (staffSaInfos == null) {
+			throw new IllegalArgumentException("updateMutiStaffInfos param staffSaInfos is null.");
+		}
+		if (staffSaInfos.isEmpty()) {
+			throw new IllegalStateException("updateMutiStaffInfos param staffSaInfos  is empty.");
+		}
+		int size = 0;
+		try {
+			for (StaffSalInfoDetailModel staffSalInfoDetailModel : staffSaInfos) {
+				for (FieldItemModel fieldItemModel : staffSalInfoDetailModel.getItemModels()) {
+					if (StringUtils.isBlank(fieldItemModel.getItemId())) {
+						fieldItemModel.setItemId(IdGenerator.newId());
+						fieldItemModel.setRelativeId(staffSalInfoDetailModel.getId());
+						// 新增字段
+						staffSalInfoRepository.addNewField(fieldItemModel);
+					} else {
+						// 更新字段
+						staffSalInfoRepository.updateField(fieldItemModel);
+					}
+				}
+				size++;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (size == staffSaInfos.size()) {
+			return Boolean.TRUE;
+		} else {
+			return Boolean.FALSE;
+		}
+	}
+
+	@Override
+	public Object downloadSalaryTemplet() {
+		return null;
+	}
+
+	@Override
+	public Object uploadSalaryTemplet(String fileKey) {
+		return null;
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+}

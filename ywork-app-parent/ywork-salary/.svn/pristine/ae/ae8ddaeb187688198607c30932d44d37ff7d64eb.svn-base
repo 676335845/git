@@ -1,0 +1,97 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.SalaryReportModel;
+import me.ywork.salary.model.MonthStaffSalDetailModel;
+import me.ywork.salary.model.MonthStaffSalModel;
+import me.ywork.salary.model.StaffSalInfoDetailModel;
+import me.ywork.salary.service.CalcuSalService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+import scala.collection.immutable.Page;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class CalcuSalServiceImpl implements CalcuSalService{
+    @Override
+    public PageData<SalaryReportModel> getAllMonthSalaryies(String corpId , Pageable pageable) {
+        if(StringUtils.isBlank(corpId)){
+           throw new IllegalArgumentException("getAllMonthSalaryies param corpId is null or empty.");
+        }
+        //TODO：从持久层得到企业所有薪资月度报表
+        List<SalaryReportModel> salaryReportModels = new ArrayList<>();
+        PageData<SalaryReportModel> salaryReportModels2 = new PageDataImpl<SalaryReportModel>(salaryReportModels , pageable);
+        return salaryReportModels2;
+    }
+
+    @Override
+    public PageData<MonthStaffSalModel> getSalaryDatailByMonthId(String corpId, String monthId , Pageable pageable) {
+        if(StringUtils.isBlank(corpId)){
+            throw new IllegalArgumentException("getSalaryDatailByMonthId param corpId is null or empty.");
+        }
+        if(StringUtils.isBlank(monthId)){
+            throw new IllegalArgumentException("getSalaryDatailByMonthId param monthId is null or empty.");
+        }
+        //TODO:从持久层获得某月的薪资报表
+        List<MonthStaffSalModel> monthStaffSalModels = new ArrayList<>();
+        PageData<MonthStaffSalModel> monthStaffSalModels2 = new PageDataImpl<MonthStaffSalModel>(monthStaffSalModels, pageable);
+        return monthStaffSalModels2;
+    }
+
+    @Override
+    public StaffSalInfoDetailModel getSalaryDatailByStaffId(String staffId) {
+        if(StringUtils.isBlank(staffId)){
+            throw new IllegalArgumentException("getSalaryDatailByStaffId param staffId is null or empty.");
+        }
+        //TODO:从持久层获得某员工的月度薪资数据
+        StaffSalInfoDetailModel staffSalInfoDetailModel = new StaffSalInfoDetailModel();
+        return staffSalInfoDetailModel;
+    }
+
+    @Override
+    public Boolean lockSalaryTablesByMonthId(String corpId, String monthId) {
+        if(StringUtils.isBlank(corpId)){
+            throw new IllegalArgumentException("lockSalaryTablesByMonthId param corpId is null or empty.");
+        }
+        if(StringUtils.isBlank(monthId)){
+            throw new IllegalArgumentException("lockSalaryTablesByMonthId param monthId is null or empty.");
+        }
+        //TODO：获得薪资报表的锁定结果
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<MonthStaffSalDetailModel> getSelectedStaffSalaryDetail(List<String> staffids, String monthId) {
+        if(staffids == null){
+            throw new IllegalArgumentException("getSelectedStaffSalaryDetail param staffids is null");
+        }
+        if(staffids.isEmpty()){
+            throw new IllegalArgumentException("getSelectedStaffSalaryDetail param staffids is empty.");
+        }
+        if(StringUtils.isBlank(monthId)){
+            throw new IllegalArgumentException("getSelectedStaffSalaryDetail param monthId is null or empty.");
+        }
+        //TODO:获得选中员工的当月薪资详情
+        List<MonthStaffSalDetailModel> monthStaffSalDetailModels = new ArrayList<>();
+        return monthStaffSalDetailModels;
+    }
+
+    @Override
+    public Boolean updateSalariesOnStaffes(List<MonthStaffSalDetailModel> monthStaffSalDetailModels) {
+        if(monthStaffSalDetailModels == null){
+            throw new IllegalArgumentException("updateSalariesOnStaffes param monthStaffSalDetailModels is null");
+        }
+        if(monthStaffSalDetailModels.isEmpty()){
+            throw new IllegalArgumentException("updateSalariesOnStaffes param monthStaffSalDetailModels is empty.");
+        }
+        //TODO:提交选中员工修改的结果到持久层，并得到修改的结果
+        return Boolean.TRUE;
+    }
+}

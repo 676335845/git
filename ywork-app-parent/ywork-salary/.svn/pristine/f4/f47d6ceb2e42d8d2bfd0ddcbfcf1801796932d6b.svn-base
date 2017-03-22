@@ -1,0 +1,47 @@
+package me.ywork.salary.service;
+
+import me.ywork.page.PageData;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.StaffSalInfoDetailModel;
+import me.ywork.salary.model.StaffSalInfoModel;
+
+import java.util.List;
+
+/**
+ *  只有在薪资数据获得的情况下，才能进行薪资计算等操作，所以这是第一步
+ *  这里包括通过excel表导入薪资数据、管理每一个员工的薪资规则
+ *
+ * Created by xiaobai on 2017/1/10.
+ */
+public interface StaffSalInfoService {
+    /**
+     *   获取员工薪详情:获取所有员工的薪资规则，要分页
+     */
+    PageData<StaffSalInfoModel> getStaffSalaryInfos(String corpId , Pageable pageable);
+
+    /**
+     *   获取员工规则详情:通过员工ID来获取该员工的薪资规则
+     */
+    StaffSalInfoDetailModel getSalaryInfosByStaffId(String staffId);
+
+    /**
+     *   获取选中人员工资规则详情(编辑规则):通过编辑可以获取多个人的薪资规则
+     */
+    List<StaffSalInfoDetailModel> getMutiStaffSalaryInfosDetail(String corpId , List<String> staffids);
+
+    /**
+     *   提交编辑数据:批量修改多个人的薪资
+     */
+    Boolean updateMutiStaffInfos(List<StaffSalInfoDetailModel> staffRules);
+
+    /**
+     *   下载薪资模板
+     */
+    Object downloadSalaryTemplet();
+
+    /**
+     *   上传薪资模板
+     *   线上文件key：654465465465
+     */
+    Object uploadSalaryTemplet(String fileKey);
+}

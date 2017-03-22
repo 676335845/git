@@ -1,0 +1,21 @@
+package me.ywork.salary.repository;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+
+import me.ywork.base.repository.IRepository;
+import me.ywork.salary.entity.SalCorpAttenEntity;
+import me.ywork.salary.entity.SalStaffBaseInfoEntity;
+
+@Repository
+public interface TestRepository  extends IRepository<SalStaffBaseInfoEntity>{
+	/**
+	 * 更新员工关联的企业
+	 * 
+	 * @param corpId
+	 * @param staffId
+	 * @param deptId
+	 * @return
+	 */
+	Integer updateStaffDepts(@Param("corpId")String corpId , @Param("staffId")String staffId,@Param("deptId")String deptId,@Param("staffName")String staffName);
+}

@@ -1,0 +1,37 @@
+
+	  /*==============================================================*/
+	 /* Table: sal_rule 创建系统薪资规则-                  */
+	/*==============================================================*/
+	CREATE TABLE `sal_rule` (
+	  `id` varchar(32) NOT NULL comment '薪资规则的标识 -- id',
+	  `sal_rule_des` varchar(200) DEFAULT NULL comment '薪资规则描述 -- salRuleDes',
+	  `sal_rule_name` varchar(20) NOT NULL comment '薪资规则的名字 -- salRuleName',
+	  `sal_rule_type` int(11) NOT NULL DEFAULT '0' comment '薪资规则的类型 -- salRuleType',
+	  PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8	    
+	    
+
+	  /*==============================================================*/
+	 /* Table: corp_sal_rule 创建企业薪资规则表-                  */
+	/*==============================================================*/
+	CREATE TABLE `corp_sal_rule` (
+	  `id` varchar(32) NOT NULL comment '具体企业的薪资规则标识 -- id' ,
+	  `sal_rule_id` varchar(32) NOT NULL comment '薪资规则的标识 -- salRuleId',
+	  `cal_sal_days` double NOT NULL DEFAULT '22' comment '计算薪资规则的天数 -- calSalDays',
+	  `fit_nums` int(11) NOT NULL comment '薪资规则的适用人数 -- fit_nums',
+	  `late_early_deduct_type` int(11) NOT NULL comment '迟到早退扣款类型 -- lateEarlyDeductType',
+	  `late_early_educt` double NOT NULL DEFAULT '0' comment '迟到早退扣款 -- lateEarlyEduct',
+	  `serious_late_deduct` double NOT NULL DEFAULT '0' comment '严重迟到扣款 -- seriousLateDeduct',
+	  `stay_away_deduct` double NOT NULL DEFAULT '0' comment '旷工扣款 -- stayAwayDeduct',
+	  `corp_id` varchar(32) NOT NULL comment '企业标识 -- corpId',
+	   PRIMARY KEY (`id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
+	 
+--
+--	           
+--    <!--插入企业的薪资规则-->		     
+--     insert into corp_sal_rule (id,sal_rule_id,cal_sal_days,fit_nums,late_early_deduct_type,late_early_educt,serious_late_deduct,stay_away_deduct)
+--    values("3243546","213446221",22,2134,1,13,23,133);
+--    <!--插入企业的薪资规则-->
+--    insert into corp_sal_rule (id,sal_rule_id,cal_sal_days,fit_nums,late_early_deduct_type,late_early_educt,serious_late_deduct,stay_away_deduct)
+--    values("98543245678","21345564523",22,2134,1,13,23,133);

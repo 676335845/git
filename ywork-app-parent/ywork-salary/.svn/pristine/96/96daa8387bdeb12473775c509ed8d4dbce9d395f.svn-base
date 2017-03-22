@@ -1,0 +1,104 @@
+			
+
+            package me.ywork.salary.entity;
+			
+			import java.util.Date;
+			
+			import me.ywork.base.entity.Entity;
+			
+			public class StaffSalInfoEntity extends Entity{
+			    /**
+			     *  薪资计算规则
+			     */
+			    private Short salaryRule;
+			    /**
+			     *  工资合计
+			     */
+			    private Double totalSalary;
+			
+			    /**
+			     *  薪资生效时间
+			     */
+			    private Date  salaryEffectTime;
+			    
+			    /**
+			     *  基本工资
+			     */
+			    private Double baseSalary;
+			    /**
+			     *  岗位工资
+			     */
+			    private Double jobSalary;
+			    /**
+			     *  生活津贴
+			     */
+			    private Double allowance;
+			    /**
+			     *  交通补助
+			     */
+			    private Double travelAssistance;
+			    /**
+			     * 公积金扣款
+			     */
+			    private Double  pubFunds;
+			    /**
+			     *  社保扣款
+			     */
+			    private Double socialSecurity;
+				public Short getSalaryRule() {
+					return salaryRule;
+				}
+				public void setSalaryRule(Short salaryRule) {
+					this.salaryRule = salaryRule;
+				}
+				public Double getTotalSalary() {
+					return totalSalary;
+				}
+				public void setTotalSalary(Double totalSalary) {
+					this.totalSalary = totalSalary;
+				}
+				public Date getSalaryEffectTime() {
+					return salaryEffectTime;
+				}
+				public void setSalaryEffectTime(Date salaryEffectTime) {
+					this.salaryEffectTime = salaryEffectTime;
+				}
+				public Double getBaseSalary() {
+					return baseSalary;
+				}
+				public void setBaseSalary(Double baseSalary) {
+					this.baseSalary = baseSalary;
+				}
+				public Double getJobSalary() {
+					return jobSalary;
+				}
+				public void setJobSalary(Double jobSalary) {
+					this.jobSalary = jobSalary;
+				}
+				public Double getAllowance() {
+					return allowance;
+				}
+				public void setAllowance(Double allowance) {
+					this.allowance = allowance;
+				}
+				public Double getTravelAssistance() {
+					return travelAssistance;
+				}
+				public void setTravelAssistance(Double travelAssistance) {
+					this.travelAssistance = travelAssistance;
+				}
+				public Double getPubFunds() {
+					return pubFunds;
+				}
+				public void setPubFunds(Double pubFunds) {
+					this.pubFunds = pubFunds;
+				}
+				public Double getSocialSecurity() {
+					return socialSecurity;
+				}
+				public void setSocialSecurity(Double socialSecurity) {
+					this.socialSecurity = socialSecurity;
+				}
+			    
+			    
+			}

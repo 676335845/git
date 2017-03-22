@@ -1,0 +1,91 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+public class SalUpdateMutiStaffModel  implements Serializable{
+	private List<SalStaffAttendanceModel> staffAttendances;
+	private List<SalStaffSalReportDetailModel> monthStaffSalDetailModels;
+	private List<SalInfoDetailModel> staffSalInfoDetailModels;
+	private List<SalStaffBaseInfoModel> staffBaseInfoModels;
+	private List<SalCorpWhpRuleModel> SalCwhpRuleModels;
+	private List<SalCorpDeductModel> salDeductList;
+	private  SalCorpDeductModel salDeduct;
+	private List<SalSysFieldItemModel>  saFieldList;
+	
+
+	public SalUpdateMutiStaffModel() {
+		super();
+	}
+
+	public List<SalStaffAttendanceModel> getStaffAttendances() {
+		return staffAttendances;
+	}
+
+	public void setStaffAttendances(List<SalStaffAttendanceModel> staffAttendances) {
+		this.staffAttendances = staffAttendances;
+	}
+
+	public List<SalStaffSalReportDetailModel> getMonthStaffSalDetailModels() {
+		return monthStaffSalDetailModels;
+	}
+
+	public void setMonthStaffSalDetailModels(List<SalStaffSalReportDetailModel> monthStaffSalDetailModels) {
+		this.monthStaffSalDetailModels = monthStaffSalDetailModels;
+	}
+
+	public List<SalInfoDetailModel> getStaffSalInfoDetailModels() {
+		return staffSalInfoDetailModels;
+	}
+
+	public void setStaffSalInfoDetailModels(List<SalInfoDetailModel> staffSalInfoDetailModels) {
+		this.staffSalInfoDetailModels = staffSalInfoDetailModels;
+	}
+
+	public List<SalStaffBaseInfoModel> getStaffBaseInfoModels() {
+		return staffBaseInfoModels;
+	}
+
+	public void setStaffBaseInfoModels(List<SalStaffBaseInfoModel> staffBaseInfoModels) {
+		this.staffBaseInfoModels = staffBaseInfoModels;
+	}
+
+	public List<SalCorpWhpRuleModel> getSalCwhpRuleModels() {
+		return SalCwhpRuleModels;
+	}
+
+	public void setSalCwhpRuleModels(List<SalCorpWhpRuleModel> salCwhpRuleModels) {
+		SalCwhpRuleModels = salCwhpRuleModels;
+	}
+
+	public List<SalCorpDeductModel> getSalDeductList() {
+		return salDeductList;
+	}
+
+	public void setSalDeductList(List<SalCorpDeductModel> salDeductList) {
+		this.salDeductList = salDeductList;
+	}
+
+	public List<SalSysFieldItemModel> getSaFieldList() {
+		return saFieldList;
+	}
+
+	public void setSaFieldList(List<SalSysFieldItemModel> saFieldList) {
+		this.saFieldList = saFieldList;
+	}
+
+	public SalCorpDeductModel getSalDeduct() {
+		return salDeduct;
+	}
+
+	public void setSalDeduct(SalCorpDeductModel salDeduct) {
+		this.salDeduct = salDeduct;
+	}
+	
+	
+	
+	
+	
+	
+	
+}

@@ -1,0 +1,632 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.oss.OSSObjectService;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.entity.SalCorpAttenEntity;
+import me.ywork.salary.entity.SalCorpDeductEntity;
+import me.ywork.salary.entity.SalStaffAttenDayEntity;
+import me.ywork.salary.enumeration.ExcelTimeType;
+import me.ywork.salary.enumeration.LackDeductType;
+import me.ywork.salary.enumeration.LateEarlyDeductType;
+import me.ywork.salary.enumeration.SalStateType;
+import me.ywork.salary.enumeration.StayAwayDeductType;
+import me.ywork.salary.exception.StaffExistException;
+import me.ywork.salary.exception.StaffNotExistException;
+import me.ywork.salary.model.SalAttenExcelModel;
+import me.ywork.salary.model.SalCorpAttenModel;
+import me.ywork.salary.model.SalCorpDeductModel;
+import me.ywork.salary.model.SalCustomizedAttenFieldModel;
+import me.ywork.salary.model.SalStaffAttenDayModel;
+import me.ywork.salary.model.SalStaffAttendanceModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.model.SalUpdateMutiStaffModel;
+import me.ywork.salary.repository.SalAttendanceRepository;
+import me.ywork.salary.repository.SalRuleRepository;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.repository.SalSynCorpInfoRepository;
+import me.ywork.salary.service.SalAttendanceService;
+import me.ywork.salary.service.SalCalcuSalService;
+import me.ywork.salary.util.DateUtils;
+import me.ywork.salary.util.WorkBookUtil;
+import scala.util.parsing.json.JSON;
+import sun.java2d.loops.DrawGlyphListAA.General;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.redisson.cache.CacheableService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+import com.heyi.utils.IdGenerator;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalAttendanceServiceImpl   implements SalAttendanceService {
+
+	@Autowired
+	private SalAttendanceRepository attendanceRepository;
+	@Autowired
+	private SalStaffBaseInfoRepository salStaffBaseInfoRepository;
+	@Autowired
+	private SalRuleRepository salRuleRepository;
+	@Autowired
+	private SalSynCorpInfoRepository salSynCorpInfo;
+	@Autowired 
+	private WorkBookUtil workBookUtil;
+	// 缓存机制
+	@Autowired
+	private CacheableService cacheableService;
+	@Autowired
+	private SalCalcuSalService saCalcuSalService;
+	private static final Logger logger = LoggerFactory.getLogger(SalAttendanceServiceImpl.class);
+
+	@Override
+	public List<SalCorpAttenModel> getAllMonthesAttendanceData(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getAllMonthesAttendanceData param corpId is null or empty");
+		}	 
+		// 去持久层获得所有月度的考勤数据
+		List<SalCorpAttenModel> attendanceModels  = attendanceRepository.getAllMonthesAttendanceData(corpId);
+		if(attendanceModels == null){//如果公司的考勤数据为空，则返回为空
+			return new ArrayList();
+		}
+//		Long totalCount = attendanceRepository.getAttendanceDataCountByCorpId(corpId);// 得到查询总数
+
+		return attendanceModels;
+	}
+
+	@Override
+	public SalAttenExcelModel getAllStaffAttendanceByReportId(String corpId ,String reportId, Pageable pageable) {
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException
+			("getAllStaffAttendanceByMonthId param reportId is null or empty");
+		}
+		if (pageable == null) {
+			throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param pageable is null.");
+		}
+       SalAttenExcelModel salAttenExcelModel =new SalAttenExcelModel();
+       List<String> attenTitles=new ArrayList<>();
+		List<SalStaffAttendanceModel> staffAttendanceModels = null;
+		// 去持久层获得当月度所有员工分页的考勤数据
+		Integer pageSize = pageable.getPageSize();
+		Integer pageNo = pageable.getPageNo();
+		Integer totalCount =0;
+		Integer beginNum = (pageNo-1)*pageSize;
+		Integer endNum =pageSize;
+		List<SalSysFieldItemModel> salSysFieldItemModels = salStaffBaseInfoRepository.getCorpVacations(corpId);//得到企业所有的假期
+		for(SalSysFieldItemModel salModel:salSysFieldItemModels){
+			attenTitles.add(salModel.getItemName());
+		}
+		List<SalSysFieldItemModel> salStaffFields =null;
+		staffAttendanceModels = attendanceRepository.getAllStaffAttendanceByReportId(reportId, beginNum ,endNum);
+		List<SalCustomizedAttenFieldModel> attenDays =null;
+		SalCustomizedAttenFieldModel salCustomizedAttenFieldModel = null;
+		for(SalStaffAttendanceModel attenModel:staffAttendanceModels){
+			String staffId = attenModel.getDingStaffId();
+			salStaffFields = salSysFieldItemModels;
+			//得到员工所有的假期
+			List<SalStaffAttenDayModel> salStaffAttenDayModels = attendanceRepository.getSalStaffAttenDayInfos(corpId, reportId, staffId);
+			for(SalSysFieldItemModel m:salStaffFields ){
+				for(SalStaffAttenDayModel day:salStaffAttenDayModels){
+					if(m.getItemId().equals(day.getFieldId())){
+						m.setAttenDay(day.getFieldDay());
+					}
+				}
+			}
+			attenDays = new ArrayList<SalCustomizedAttenFieldModel>();
+			for(SalSysFieldItemModel m:salStaffFields){
+				salCustomizedAttenFieldModel = new SalCustomizedAttenFieldModel();
+				salCustomizedAttenFieldModel.setFieldDay(m.getAttenDay());
+				attenDays.add(salCustomizedAttenFieldModel);
+			}
+			attenModel.setDetails(attenDays);
+			String staffName = "";
+			//找到该人员对应的所有的部门
+			List<String> deptNames = salStaffBaseInfoRepository.getStaffAllDeptName(corpId, staffId);
+			for(String s:deptNames){			
+				  staffName +=s+"  ";			
+			}
+			if("".equals(staffName)){
+				staffName ="无部门";
+			}
+			attenModel.setDeptName(staffName);
+		}
+		// 去持久层得到当月度所有员工的考勤数据的总数
+		 totalCount = attendanceRepository.getAllStaffAttendanceCountByReportId(reportId);
+		salAttenExcelModel.setDetailTitle(attenTitles);
+		salAttenExcelModel.setStaffAttens(staffAttendanceModels);
+        salAttenExcelModel.setTotalCount(totalCount);
+        salAttenExcelModel.setPageSize(pageable.getPageSize());
+        salAttenExcelModel.setPageNo(pageable.getPageNo());
+        if(totalCount<pageSize&&totalCount>0){
+	    	  salAttenExcelModel.setTotalPages(1);
+	    }else{
+	    	  salAttenExcelModel.setTotalPages(totalCount/pageSize+1);
+	    }
+		return salAttenExcelModel;
+	}
+
+	@Override
+	public List<SalStaffAttendanceModel> getMutiStaffAttendanceDetail(List<String> staffIds, String reportId) {
+		if (staffIds == null) {
+			throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is null.");
+		}
+		if (staffIds.isEmpty()) {
+			throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is empty.");
+		}
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("getMutiStaffAttendanceDetail param reportId is null.");
+		}
+
+		List<SalStaffAttendanceModel> staffAttendanceModels = null;
+		staffAttendanceModels = attendanceRepository.getMutiStaffAttendanceDetail(staffIds, reportId);
+		return staffAttendanceModels;
+	}
+
+	@Override
+	public Boolean updateMutiStaffAttendance(List<SalStaffAttendanceModel> staffAttendances) {
+		if (staffAttendances == null) {
+			throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is null.");
+		}
+		if (staffAttendances.isEmpty()) {
+			throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is empty.");
+		}
+		int size = 0;
+		SalCorpAttenEntity staffAttendance = null;
+		for (SalStaffAttendanceModel staffAttendanceModel : staffAttendances) {
+			staffAttendance = attendanceRepository.getStaffAttendanceEntityById(staffAttendanceModel.getId());
+			if (staffAttendance != null) {
+				Date nowDate = new Date();
+				staffAttendance.setId(staffAttendanceModel.getId());
+				staffAttendance.setAttendanceDays(staffAttendanceModel.getAttendanceDays());
+				staffAttendance.setEarlyLeaveHours(staffAttendanceModel.getEarlyLeaveHours());
+				staffAttendance.setEarlyLeaveTimes(staffAttendanceModel.getEarlyLeaveTimes());
+				staffAttendance.setLateHours(staffAttendanceModel.getLateHours());
+				staffAttendance.setLateTimes(staffAttendanceModel.getLateTimes());
+				staffAttendance.setRestDays(staffAttendanceModel.getRestDays());
+				staffAttendance.setSeriousLateHours(staffAttendanceModel.getSeriousLateHours());
+				staffAttendance.setWorkAbsenceTimes(staffAttendanceModel.getWorkAbsenceTimes());
+				staffAttendance.setSeriousLateTimes(staffAttendanceModel.getSeriousLateTimes());
+				staffAttendance.setOffWorkAbsenceTimes(staffAttendanceModel.getOffWorkAbsenceTimes());
+				staffAttendance.setWorkHours(staffAttendanceModel.getWorkHours());
+				staffAttendance.setUnWorkDays(staffAttendanceModel.getUnWorkDays());
+				staffAttendance.setUnWorkLateDays(staffAttendanceModel.getUnWorkLateDays());
+	            /**
+	             * 给员工增加自定义的请假字段
+	             */
+			}
+			if (attendanceRepository.updateMutiStaffAttendance(staffAttendance) > 0) {
+				size++;
+			}
+		}
+		if (size == staffAttendances.size()) {
+			return Boolean.TRUE;
+		} else {
+			return Boolean.FALSE;
+		}
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public SalAttenExcelModel parseAttenExcel(CallContext callContext , String fileId) {
+	      String corpId = callContext.getCorpId();
+	      String userId = callContext.getUserId();
+			if(StringUtils.isBlank(fileId)){
+				throw new IllegalArgumentException();
+			}
+			if(StringUtils.isBlank(corpId)){
+				throw new IllegalArgumentException();
+			}
+			if(StringUtils.isBlank(userId)){
+				throw new IllegalArgumentException();				
+			}
+			Date monthTime = null;//考勤报表的月份
+			Workbook wb = null;
+			  try {
+					InputStream instream = OSSObjectService.getObject("alidsalarybill", fileId);		
+					if(fileId.endsWith(".xlsx")){
+						try{
+							wb = new XSSFWorkbook(instream);
+						}catch(Exception e){
+							wb = new HSSFWorkbook(instream);
+						}
+					}else{
+						try{
+							wb = new HSSFWorkbook(instream);
+						}catch(Exception e){
+							wb = new XSSFWorkbook(instream);
+						}
+					}}catch(Exception e){
+						e.printStackTrace();
+					}
+				List<SalStaffAttendanceModel> staffAttendanceModels = new ArrayList<SalStaffAttendanceModel>();
+				List<SalCustomizedAttenFieldModel> salCustomizedFields =null;
+				SalStaffAttendanceModel attendance = null;
+				//得到企业的请假类型
+				//TODO
+				List<String> sysFieldItems=new ArrayList<String>();
+				//待要加入企业请假字段的集合
+				List<String> corpNeedAddField =new ArrayList<String>();
+				List<String> cellNames =new ArrayList<String>();
+				Integer successCount =0;
+				Integer failCount =0;
+				Integer j=0;
+				Map<String,Integer> titleAddress=new HashMap<String,Integer>();
+				Row titleRow = null;
+				Integer vocationDayIndex=null;//请假字段所在的下标值
+				Set<String> staffIdSet = new HashSet<String>();
+				for(int i=0;i<wb.getNumberOfSheets();i++){
+					if(i>0){
+						break;
+					}
+					System.out.println(wb.getSheetName(i));//得到下标为0的表格
+					Sheet sheet = wb.getSheetAt(i);
+					int rowNum = sheet.getLastRowNum();
+
+					for( j=0;j<=rowNum;j++){
+							if(j<=3){
+								if(j==1){
+									Row row0 = sheet.getRow(j);								
+									String cellName=workBookUtil.getCellValue(row0.getCell(0));
+									String dateValue = cellName.substring(5, 15);
+									monthTime =DateUtils.parseDate(dateValue);			                        
+								}
+								if(j==2){
+									Row theSecondRow =sheet.getRow(2);
+									Iterator<Cell> cellIterator = theSecondRow.cellIterator();
+									   int beginNum=0;
+									    while(cellIterator.hasNext()){
+											Cell cell = cellIterator.next();
+											String cellTitle =workBookUtil.getCellValue(cell);
+											titleAddress.put(cellTitle , beginNum);
+											if("请假".equals(cellTitle)){
+												vocationDayIndex =beginNum;
+											}
+											beginNum++;
+									    }
+								}
+								if(j==3){
+									titleRow=sheet.getRow(j);
+									Iterator<Cell> cellIterator = titleRow.cellIterator();
+								    int beginNum=0;
+								    while(cellIterator.hasNext()){
+										Cell cell = cellIterator.next();
+										String cellTitle = workBookUtil.getCellValue(cell);
+										titleAddress.put(cellTitle , beginNum);
+									   beginNum++;
+								   }
+									for(int z=48;z<titleRow.getLastCellNum();z++){
+										String cellName=workBookUtil.getCellValue(titleRow.getCell(z));
+										cellNames.add(cellName);//得到名字
+									}					
+								}
+								continue;
+							}
+							Row row = sheet.getRow(j);				
+							if(row==null){
+								break;
+							}
+							SalStaffBaseInfoModel salStaff = null;
+							String staffId =null;
+							try{			
+								attendance = new SalStaffAttendanceModel();
+									staffId = workBookUtil.getCellValue(row.getCell(titleAddress.get("userId")));
+									salStaff =salStaffBaseInfoRepository.getOrgStaffInfo(corpId, staffId);
+					               if(salStaff ==null){
+										throw new StaffNotExistException();
+									}
+					               if(staffIdSet.contains(staffId)){
+					            	   throw new StaffExistException();
+					               }else{
+					                  staffIdSet.add(staffId);
+					               }
+									attendance.setStaffName(workBookUtil.getCellValue(row.getCell(titleAddress.get("姓名"))));
+									attendance.setDeptName(workBookUtil.getCellValue(row.getCell(titleAddress.get("部门"))));
+									attendance.setAttendanceDays(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("出勤天数"))),ExcelTimeType.DOUBLE.getCode()));//出勤天数			
+									attendance.setRestDays(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("休息天数"))),ExcelTimeType.DOUBLE.getCode()));//休息天数
+									attendance.setWorkHours(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("工作时长"))),ExcelTimeType.HOURMINUTE.getCode()));
+									attendance.setLateTimes(Integer.parseInt(workBookUtil.getCellValue(row.getCell(titleAddress.get("迟到(次)")))));//迟到次数
+									attendance.setLateHours(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("迟到时长"))),ExcelTimeType.HOURMINUTE.getCode()));//迟到时长
+									attendance.setSeriousLateTimes(Integer.parseInt(workBookUtil.getCellValue(row.getCell(titleAddress.get("严重迟到(次)")))));//严重迟到次数
+									attendance.setSeriousLateHours(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("严重迟到时长"))),ExcelTimeType.HOURMINUTE.getCode()));//严重迟到时长
+									attendance.setEarlyLeaveTimes(Integer.parseInt(workBookUtil.getCellValue(row.getCell(titleAddress.get("早退(次)")))));//早退次数
+									attendance.setEarlyLeaveHours(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("早退时长"))),ExcelTimeType.HOURMINUTE.getCode()));//早退时长
+									attendance.setWorkAbsenceTimes(Integer.parseInt(workBookUtil.getCellValue(row.getCell(titleAddress.get("上班缺卡")))));//上班缺卡次数
+									attendance.setOffWorkAbsenceTimes(Integer.parseInt(workBookUtil.getCellValue(row.getCell(titleAddress.get("下班缺卡")))));//下班缺卡次数
+									attendance.setUnWorkDays(Integer.parseInt(workBookUtil.getCellValue(row.getCell(titleAddress.get("一天未打卡")))));//一天未打卡次数
+									Integer unWorkLateDayIndex=titleAddress.get("旷工迟到");
+									attendance.setUnWorkLateDays(Integer.parseInt(workBookUtil.getCellValue(row.getCell(unWorkLateDayIndex))));//旷工迟到次数
+									attendance.setCorpId(corpId);
+									attendance.setDingStaffId(staffId);							
+									attendance.setJobNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("工号"))));
+									salCustomizedFields = new ArrayList<SalCustomizedAttenFieldModel>();
+									SalCustomizedAttenFieldModel salCus =null;			
+									for(int u =vocationDayIndex;u<row.getLastCellNum();u++){
+										salCus= new SalCustomizedAttenFieldModel();
+										salCus.setFieldDay(workBookUtil.getIntegerNum(workBookUtil.getCellValue(row.getCell(u)),ExcelTimeType.DAY.getCode()));//得到天数	
+										salCus.setFieldName(workBookUtil.getCellValue(sheet.getRow(3).getCell(u)));
+										salCustomizedFields.add(salCus);
+									}
+							}
+							catch(StaffNotExistException e){
+								attendance.setFailReason("该人员不在组织架构！");
+								failCount++;
+							}
+							catch(StaffExistException e){
+  					           attendance.setFailReason("导入了"+salStaff.getStaffName()+"的重复数据！");
+							   failCount++;
+							}
+							catch(Exception e){
+								e.printStackTrace();
+								attendance.setFailReason("字段的单位不符合规定！");
+								attendance.setIsUploadSuccess(Boolean.FALSE);
+								failCount++;
+							}
+							if(salCustomizedFields!=null){
+							   attendance.setDetails(salCustomizedFields);
+							}
+							staffAttendanceModels.add(attendance);
+					}
+				}
+				//待要加入企业请假字段的集合
+				 //TODO 待要加入企业请假字段的集合
+				
+				SalAttenExcelModel salAttenExcelModel =new SalAttenExcelModel();
+				salAttenExcelModel.setDetailTitle(cellNames);
+				salAttenExcelModel.setStaffAttens(staffAttendanceModels);
+			    salAttenExcelModel.setFailCount(failCount);
+			    successCount = j-failCount-4;
+			    Integer   totalCount = successCount + failCount;
+			    salAttenExcelModel.setSuccessCount(successCount);
+			    String  cachekey = corpId+userId+System.currentTimeMillis();
+			    salAttenExcelModel.setCacheKey(cachekey);
+			    salAttenExcelModel.setPageSize(50);
+			    salAttenExcelModel.setPageNo(1);
+			    salAttenExcelModel.setTotalCount(totalCount);
+			    if(totalCount<50&&totalCount>0){
+			    	  salAttenExcelModel.setTotalPages(1);
+			    }else{
+			    	  salAttenExcelModel.setTotalPages(totalCount/50+1);
+			    }
+			  
+			    //去数据库查询是否存在该月的考勤数据
+			    SalCorpAttenModel  attenRs = attendanceRepository.getAttenByMonthTime(corpId  , monthTime);
+			    salAttenExcelModel.setIsExist(attenRs == null?Boolean.FALSE:Boolean.TRUE);
+			    if(attenRs != null){
+			    	String reportId = attenRs.getId();
+			    	salAttenExcelModel.setReportId(reportId);
+			    }
+			    salAttenExcelModel.setMonthTime(monthTime);
+				//存缓存
+				if(StringUtils.isNotBlank(salAttenExcelModel.getCacheKey())){
+					 salAttenExcelModel.setStaffAttens(staffAttendanceModels);
+					cacheableService.setRawObjectInCache(cachekey , salAttenExcelModel, 1, TimeUnit.DAYS);
+					logger.info("save cache success,cahcekey:"+salAttenExcelModel.getCacheKey());
+				}
+			    if(totalCount>50){
+			  	  staffAttendanceModels = salAttenExcelModel.getStaffAttens().subList(0, 50);
+			  	  salAttenExcelModel.setStaffAttens(staffAttendanceModels);
+			    }
+	        	return salAttenExcelModel;
+		  }
+
+	@Override
+	public Boolean commitAttenExcel(CallContext callContext, String cacheKey) {
+		String corpId = callContext.getCorpId();
+		SalAttenExcelModel salAttenExcelModel = (SalAttenExcelModel) cacheableService.getRawObjectFromCache(cacheKey);
+		Date monthTime =salAttenExcelModel.getMonthTime();
+		List<SalStaffAttendanceModel> staffAttens = salAttenExcelModel.getStaffAttens();
+		String reportId=salAttenExcelModel.getReportId();
+		Boolean isExist=salAttenExcelModel.getIsExist();
+		//如果已经存在，则把以前的数据给清除
+		if(isExist){
+			attendanceRepository.deleteAttenday(reportId);
+			attendanceRepository.deleteStaffAttence(reportId);
+			attendanceRepository.deleteCorpMonthAtten(reportId);
+		}
+			//执行插入企业报表的操作
+		    SalCorpAttenModel salCorpAttenModel =new SalCorpAttenModel();
+		    reportId = IdGenerator.newId();
+		    Date nowDate = new Date();
+		    salCorpAttenModel.setCorpId(corpId);
+		    salCorpAttenModel.setCreateDate(nowDate);
+		    salCorpAttenModel.setModifiedDate(nowDate);
+		    salCorpAttenModel.setMonthTime(salAttenExcelModel.getMonthTime());
+		    salCorpAttenModel.setId(reportId);
+		    SalCorpAttenEntity salCorpAttenEntity =null;
+    	    if(attendanceRepository.insertCorpAttenReportData(salCorpAttenModel)>0){
+		    //得到detailTitle
+		    List<String> detailTitles = salAttenExcelModel.getDetailTitle();//员工的请假字段
+		    //去数据库查询该企业相关的请假类型
+		    List<SalSysFieldItemModel> corpTitles = salStaffBaseInfoRepository.getCorpVacations(corpId);
+		    List<String> titles = new ArrayList<String>();
+		    Map<String,String> titleMap =new HashMap<String,String>();
+		    for(SalSysFieldItemModel salSysFieldItemModel:corpTitles){
+		    	String itemName =salSysFieldItemModel.getItemName();
+		    	titles.add(itemName);
+		    	titleMap.put(itemName, salSysFieldItemModel.getItemId());
+		    }
+		    HashSet<String> hashNotExistSets=new HashSet<String>();
+		    Map<String,String> existMaps=new HashMap<String,String>();
+		    for(String s :detailTitles){
+		    	if(!titles.contains(s)){//判断员工的请假类型是否在企业的请假类型中存在
+		    		hashNotExistSets.add(s);
+		    	}else{
+		    		existMaps.put(s, titleMap.get(s));
+		    	}
+		    }           
+//			    System.out.println(JSONObject.toJSONString(corpTitles));
+//			    System.out.println(JSONObject.toJSONString(hashNotExistSets));
+			   SalSysFieldItemModel salSysFieldItemModel = null;
+			    if(hashNotExistSets.isEmpty()==Boolean.FALSE){//如果存在新增的请假类型
+			    Iterator<String> iterator=	hashNotExistSets.iterator();
+			    	while(iterator.hasNext()){
+			         	String itemName =	iterator.next();
+			        	//向企业自定义的字段中增加请假类型的字段
+				    	salSysFieldItemModel =new SalSysFieldItemModel();
+				    	String fieldId=IdGenerator.newId();
+				    	salSysFieldItemModel.setItemId(fieldId);
+				    	salSysFieldItemModel.setItemName(itemName);
+				    	salSysFieldItemModel.setCreateDate(nowDate);
+				    	salSysFieldItemModel.setModifiedDate(nowDate);
+				    	salSysFieldItemModel.setCorpId(corpId);
+				    	if(salStaffBaseInfoRepository.addNewAttendanceVacationField(salSysFieldItemModel)>0)//增加字段 
+				    	{
+				    		existMaps.put(itemName, fieldId);
+				    	}
+			    	}
+			    }
+			    SalStaffAttenDayEntity salStaffAttenDay = null;
+		    	for(SalStaffAttendanceModel staffAtten:staffAttens){
+		    		if(staffAtten.getFailReason() !=null){
+		    			continue;
+		    		}
+		    		String dingStaffId=staffAtten.getDingStaffId();
+		    		salCorpAttenEntity = new SalCorpAttenEntity();
+		    		salCorpAttenEntity.setId(IdGenerator.newId());
+		    		salCorpAttenEntity.setAttendanceDays(staffAtten.getAttendanceDays());
+		    		salCorpAttenEntity.setEarlyLeaveHours(staffAtten.getEarlyLeaveHours());
+		    		salCorpAttenEntity.setEarlyLeaveTimes(staffAtten.getEarlyLeaveTimes());
+		    		salCorpAttenEntity.setLateHours(staffAtten.getLateHours());
+		    		salCorpAttenEntity.setLateTimes(staffAtten.getLateTimes());
+		    		salCorpAttenEntity.setRestDays(staffAtten.getRestDays());
+		    		salCorpAttenEntity.setSeriousLateHours(staffAtten.getSeriousLateHours());
+		    		salCorpAttenEntity.setWorkAbsenceTimes(staffAtten.getWorkAbsenceTimes());
+		    		salCorpAttenEntity.setSeriousLateTimes(staffAtten.getSeriousLateTimes());
+		    		salCorpAttenEntity.setOffWorkAbsenceTimes(staffAtten.getOffWorkAbsenceTimes());
+		    		salCorpAttenEntity.setWorkHours(staffAtten.getWorkHours());
+		    		salCorpAttenEntity.setUnWorkDays(staffAtten.getUnWorkDays());
+		    		salCorpAttenEntity.setUnWorkLateDays(staffAtten.getUnWorkLateDays());
+		    		salCorpAttenEntity.setMonthTime(monthTime);
+		    		salCorpAttenEntity.setModifiedDate(nowDate);
+		    		salCorpAttenEntity.setCreateDate(nowDate);
+		    		salCorpAttenEntity.setAttenReportId(reportId);
+		    		salCorpAttenEntity.setDingStaffId(dingStaffId);
+		    		List<SalCustomizedAttenFieldModel>  salCustomizedAttenFieldModels =staffAtten.getDetails();//给员工考勤请假类型的字段赋值
+		    		if(salCustomizedAttenFieldModels!=null){
+			    		for(int i=0;i<salCustomizedAttenFieldModels.size();i++){
+			    			SalCustomizedAttenFieldModel  salCustomizedAttenFieldModel =	salCustomizedAttenFieldModels.get(i);
+			    			String fieldId = existMaps.get(salCustomizedAttenFieldModel.getFieldName());//得到企业请假字段的主键
+			    			//增加企业员工的考勤请假字段的天数值
+			    			salStaffAttenDay = new SalStaffAttenDayEntity();
+			    			salStaffAttenDay.setId(IdGenerator.newId());
+			    			salStaffAttenDay.setModifiedDate(nowDate);
+			    			salStaffAttenDay.setCorpId(corpId);
+			    			salStaffAttenDay.setCreateDate(nowDate);
+			    			salStaffAttenDay.setDingStaffId(dingStaffId);
+			    			salStaffAttenDay.setFieldId(fieldId);
+			    			salStaffAttenDay.setFieldDay(salCustomizedAttenFieldModel.getFieldDay());
+			    			salStaffAttenDay.setAttenReportId(reportId);
+	//		    			System.out.println(JSONObject.toJSONString(salStaffAttenDay));
+	       	    			attendanceRepository.insertStaffAttenDay(salStaffAttenDay);
+			    		}
+		    		}
+		  	      attendanceRepository.insertStaffAttenData(salCorpAttenEntity);
+		    	}
+		    }
+    	    /**
+			 * 重新计算企业员工的工资和薪资报表的总工资
+			 */		
+			saCalcuSalService.calcuSalReportAutomatic(corpId);    
+	   return Boolean.TRUE;
+	}
+
+	@Override
+	public SalUpdateMutiStaffModel getCorpApproveFieldList(String corpId) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getCorpApproveFieldList param corpId is null or empty!");
+		}
+		Date nowDate =new Date();
+		SalCorpDeductModel salCorpDeduct=salRuleRepository.getCorpdeductRule(corpId);
+		SalCorpDeductEntity 	salCorpDeductEntity =null ;
+		if(salCorpDeduct == null){
+			salCorpDeductEntity =new SalCorpDeductEntity();
+			salCorpDeductEntity.setModifiedDate(nowDate);
+			salCorpDeductEntity.setCreateDate(nowDate);
+			salCorpDeductEntity.setId(IdGenerator.newId());
+			salCorpDeductEntity.setCorpId(corpId);
+			salCorpDeductEntity.setLackDeduct(0);
+			salCorpDeductEntity.setLackDeductType(LackDeductType.FIXED.getCode());
+			salCorpDeductEntity.setLateEarlyDeduct(0);
+			salCorpDeductEntity.setLateEarlyDeductType(LateEarlyDeductType.Duration.getCode());
+			salCorpDeductEntity.setSeriousLateDeduct(0);
+			salCorpDeductEntity.setStayAwayDeduct(0);
+			salCorpDeductEntity.setStayAwayDeductType(StayAwayDeductType.FIXED.getCode());
+			salSynCorpInfo.synchCorpDeductRule(salCorpDeductEntity);
+			salCorpDeduct =salRuleRepository.getCorpdeductRule(corpId);
+		}
+		List<SalSysFieldItemModel>  saList = salStaffBaseInfoRepository.getCorpVacations(corpId);
+		SalUpdateMutiStaffModel salCorpApproveList = new SalUpdateMutiStaffModel();
+		salCorpApproveList.setSaFieldList(saList);
+		salCorpApproveList.setSalDeduct(salCorpDeduct);
+		return salCorpApproveList;
+	}
+
+	@Override
+	public Boolean updateCorpApproveField(String corpId ,SalUpdateMutiStaffModel salUpdateMutiStaffModel) {
+		SalCorpDeductModel corpDeduct =	salUpdateMutiStaffModel.getSalDeduct();
+		SalCorpDeductModel  salCorpDeductModel=	salRuleRepository.getCorpdeductRule(corpId);
+		Boolean updateCorpDeductRs =null;
+		Date nowDate=new Date();
+		if(salCorpDeductModel!=null){
+			Short hasSet =salCorpDeductModel.getHasSet();
+			corpDeduct.setLackDeduct(corpDeduct.getLackDeduct()*100);
+			corpDeduct.setLateEarlyDeduct(corpDeduct.getLateEarlyDeduct()*100);
+			corpDeduct.setStayAwayDeduct(corpDeduct.getStayAwayDeduct()*100);
+			corpDeduct.setSeriousLateDeduct(corpDeduct.getSeriousLateDeduct()*100);
+			corpDeduct.setModifiedDate(nowDate);
+			corpDeduct.setHasSet(hasSet);
+			updateCorpDeductRs =salRuleRepository.updateCorpDeductRule(corpDeduct)>0.;
+		}
+		
+		List<SalSysFieldItemModel> salSysFields = salUpdateMutiStaffModel.getSaFieldList();
+		int updateSalFieldRs=0;
+		for(SalSysFieldItemModel salField:salSysFields){
+			salField.setItemValue(salField.getItemValue()*100);
+			salField.setModifiedDate(nowDate);
+			if(salStaffBaseInfoRepository.updateField(salField)>0){
+				updateSalFieldRs++;
+			}
+		}
+		if(updateCorpDeductRs == Boolean.TRUE){//如果保存成功，则要更新预估状态下的月度工资表
+			/**
+			 * 重新计算企业员工的工资和薪资报表的总工资
+			 */		
+			saCalcuSalService.calcuSalReportAutomatic(corpId);
+		}
+		return updateCorpDeductRs==Boolean.TRUE&&updateSalFieldRs==salSysFields.size();
+	}
+}

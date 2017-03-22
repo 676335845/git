@@ -1,0 +1,39 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+public class StaffSalInfoDetailModel extends StaffSalInfoModel implements Serializable {
+	/**
+	 * 员工薪资信息的标识
+	 */
+	private String id;
+	/**
+	 * 管理员对该员工自定义的字段模型列表
+	 */
+	private List<FieldItemModel> itemModels;
+
+	public StaffSalInfoDetailModel() {
+		super();
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public List<FieldItemModel> getItemModels() {
+		return itemModels;
+	}
+
+	public void setItemModels(List<FieldItemModel> itemModels) {
+		this.itemModels = itemModels;
+	}
+
+}

@@ -1,0 +1,650 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.SalCorpAttenModel;
+import me.ywork.salary.model.SalCorpBaseSalRuleModel;
+import me.ywork.salary.model.SalCorpDeductModel;
+import me.ywork.salary.model.SalCorpReportModel;
+import me.ywork.salary.model.SalCorpWhpRuleModel;
+import me.ywork.salary.model.SalDeptInfoModel;
+import me.ywork.salary.model.SalStaffAttenDayModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.entity.SalCorpAttenEntity;
+import me.ywork.salary.entity.SalReportEntity;
+import me.ywork.salary.entity.SalStaffBaseInfoEntity;
+import me.ywork.salary.entity.SalStaffSalReportEntity;
+import me.ywork.salary.enumeration.DeductType;
+import me.ywork.salary.enumeration.LackDeductType;
+import me.ywork.salary.enumeration.LateEarlyDeductType;
+import me.ywork.salary.enumeration.OptPersonType;
+import me.ywork.salary.enumeration.SalCalRuleType;
+import me.ywork.salary.enumeration.StaffDeptType;
+import me.ywork.salary.enumeration.StayAwayDeductType;
+import me.ywork.salary.model.SalStaffSalReportDetailModel;
+import me.ywork.salary.model.SalStaffSalReportModel;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.model.SalSysRuleModel;
+import me.ywork.salary.model.SalStaffMbSalInfoModel;
+import me.ywork.salary.repository.SalReportRepository;
+import me.ywork.salary.repository.SalRuleRepository;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.repository.SalSynCorpInfoRepository;
+import me.ywork.salary.repository.SalAttendanceRepository;
+import me.ywork.salary.repository.SalInfoRepository;
+import me.ywork.salary.service.SalCalcuSalService;
+import me.ywork.salary.service.SalReportService;
+import me.ywork.salary.service.SalRuleService;
+import me.ywork.salary.util.PersonalTaxUtils;
+import sun.org.mozilla.javascript.internal.IdFunctionCall;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+import com.heyi.utils.IdGenerator;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalReportServiceImpl implements SalReportService {
+	@Autowired
+	private SalReportRepository salReportRepository;
+	@Autowired
+	private SalInfoRepository staffSalInfoRepository;
+	@Autowired
+	private SalAttendanceRepository salAttendanceRepository;
+	@Autowired
+	private SalSynCorpInfoRepository salSynCorpInfo;
+	@Autowired
+	private SalStaffBaseInfoRepository staffBaseInfoRepository;
+	@Autowired
+	private SalRuleRepository salRuleRepository;
+	@Autowired
+	private SalRuleService salRuleService;
+	@Autowired
+	private SalCalcuSalService saCalcuSalService;
+
+	private static final Logger logger = LoggerFactory.getLogger(SalAttendanceServiceImpl.class);
+
+	@Override
+	public List<SalCorpReportModel> getAllSalReports(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getAllMonthSalaryies param corpId is null or empty.");
+		}
+		List<SalCorpReportModel> salReportModels = salReportRepository.getAllSalReports(corpId);
+        if(salReportModels.isEmpty()){//如果工资报表为空
+        	//有多少张考勤表则生成多少份工资报表
+        	//先生成工资报表
+    		SalReportEntity salReportEntity =null;
+    		Integer initNum=0;
+    		Date nowDate =new Date();
+    		Date monthTime = null;
+    		
+    		String staffId  = null;
+    		String attenReportId =null;
+        	List<SalCorpAttenModel> corpAttenModels = salAttendanceRepository.getAllMonthesAttendanceData(corpId);
+        	/**
+        	 * 得到企业的考勤请假字段的扣款信息
+        	 */
+        	List<SalSysFieldItemModel>  approveVactionDeductList = staffBaseInfoRepository.getCorpVacations(corpId);
+        	/**
+        	 * 得到企业基本考勤的扣款信息
+        	 */
+        	SalCorpDeductModel  salCorpDeduct =salRuleRepository.getCorpdeductRule(corpId);
+        	
+        	/**
+        	 * 得到企业所有的计薪规则的列表
+        	 */
+        	List<SalCorpBaseSalRuleModel> salSysRuleList = salRuleRepository.getAllSalRules(corpId);
+        	Map<String,SalCorpBaseSalRuleModel> salCorpBaseSalRulMap= new HashMap<String,SalCorpBaseSalRuleModel>();//存储基本计薪规则的HashMap
+        	
+        	/**
+        	 * 得到企业社保和公积金的扣款规则
+        	 */
+        	List<SalCorpWhpRuleModel> salCwhpRuleList=	salRuleService.getCwhpRuleList(corpId);
+        	SalStaffSalReportEntity salStaffSalReportEntity = null;
+        	for(SalCorpBaseSalRuleModel salSysRuleModel:salSysRuleList){
+        		salCorpBaseSalRulMap.put(salSysRuleModel.getId(), salSysRuleModel);
+        	}
+        	String salReportId =null;
+        	for(SalCorpAttenModel salCorpAttenModel:corpAttenModels){      		
+        		attenReportId =salCorpAttenModel.getId();
+        		 monthTime=salCorpAttenModel.getMonthTime();
+        		salReportEntity =new SalReportEntity();
+        		salReportId = IdGenerator.newId();
+        		salReportEntity.setId(salReportId);
+        		salReportEntity.setCorpId(corpId);
+        		salReportEntity.setMonthTime(monthTime);
+        		salReportEntity.setCreateDate(nowDate);
+        		salReportEntity.setModifiedDate(nowDate);
+        		Double corpShoudPaySal = 0.0;
+        		Double corpActualPaySal = 0.0;
+        		Double corpSocialPaySal = 0.0;
+        		Double corpStaffPay = 0.0;
+        		if(salSynCorpInfo.addCorpSalReport(salReportEntity)>0)
+        		{
+        			initNum++;//将初始化薪资报表的数据量+1
+        			/**
+        			 * 生成员工的月度薪资  
+        			 */
+        			//计算员工的实发工资：实发工资=基本工资+考勤扣款+浮动款项
+        			//基本工资：
+        			List<SalStaffBaseInfoEntity> staffSalInfos = staffSalInfoRepository.getAllStaffSalInfo(corpId);
+        			System.out.println(JSONObject.toJSONString(staffSalInfos));
+        			for(SalStaffBaseInfoEntity salStaffBaseInfoEntity:staffSalInfos){
+        				System.out.println(JSONObject.toJSONString(salStaffBaseInfoEntity));
+        				/**
+        				 * 得到该员工的计薪规则
+        				 */
+        				staffId = salStaffBaseInfoEntity.getDingStaffId();
+        				String corpBsRuleId =salStaffBaseInfoEntity.getCorpBaseRuleId();
+        				Double actualSal = 0.0;
+        				Double attendanceDeduct =0.0;
+        				Double replaceDeduct=0.0;
+        				Double corpStaffSocialSal =0.0;
+        				Double shouldPaySalDouble =0.0;
+        				Double shouldPaySal = 0.0;
+        				if(corpBsRuleId != null){//若指定了基本薪资规则，也参与薪资计算
+        					//判断该薪资规则是正算还是反算
+        					Short salRuleType = salRuleRepository.getRuleTypeByCorpBsRuleId(corpBsRuleId);
+		        				/**
+		        				 * 得到该员工的参与社保和公积金的状态
+		        				 */
+		        				Integer attenSocialStatus = salStaffBaseInfoEntity.getAttenSocial();
+		        				/**
+		        				 * 得到该员工的参与个人所得税的状态
+		        				 */
+		        				Integer attenPersonTax = salStaffBaseInfoEntity.getAttenPersonalTax();
+		        				staffId = salStaffBaseInfoEntity.getDingStaffId();
+		        				if(StringUtils.isBlank(staffId)){       				
+		        					continue;
+		        				}
+		        				shouldPaySal = salStaffBaseInfoEntity.getShouldPaySal();//基本工资
+		        				if(shouldPaySal == null){
+		        					continue;
+		        				}
+		        				//计算该员工的日薪
+		        				Double calSalDays = salCorpBaseSalRulMap.get(corpBsRuleId).getCalSalDays();
+		        				shouldPaySalDouble = shouldPaySal;
+		        			    double daySal =  shouldPaySalDouble/calSalDays;
+		        				/**
+		        				 * 查询该员工的基本考勤信息
+		        				 */
+		        				SalCorpAttenEntity  salStaffAttenEntity = salAttendanceRepository.getStaffAttendanceByMonthTime(corpId, staffId, monthTime);
+		        				if(salStaffAttenEntity == null){
+		            				salStaffSalReportEntity = new SalStaffSalReportEntity();
+		            				salStaffSalReportEntity.setId(IdGenerator.newId());
+		            				salStaffSalReportEntity.setActualSal(0.0);
+		            				salStaffSalReportEntity.setShouldPaySal(0.0);
+		            				salStaffSalReportEntity.setDingStaffId(staffId);
+		            				salStaffSalReportEntity.setCreateDate(nowDate);
+		            				salStaffSalReportEntity.setModifiedDate(nowDate);
+		            				salStaffSalReportEntity.setSalReportId(salReportId);
+		            				salStaffSalReportEntity.setMonthTime(monthTime);
+		            				salStaffSalReportEntity.setSalDeduct(0.0);
+		            				salStaffSalReportEntity.setReplaceDeduct(0.0);
+		            				salSynCorpInfo.addStaffMonthSal(salStaffSalReportEntity);  			
+		        					continue;
+		        				}
+		        				/**
+		        				 * 得到员工的出勤天数
+		        				 */
+		        				Integer attendanceDay = salStaffAttenEntity.getAttendanceDays();		        				
+		        				double voctionDeduct = 0.0;
+           				      if(salRuleType  == SalCalRuleType.OPPOSITE.getCode()){//如果该计算规则是反算,则从总工资中减去请假的天数
+ 	        					        //shouldPaySal =(long)Math.round ((calSalDays- attendanceDay)*daySal*100);//反算规则下的月度基本工资
+				        				/**
+				        				 * 查询该员工的请假的扣款天数
+				        				 */
+				        				List<SalStaffAttenDayModel> salStaffAttenDayModels = salAttendanceRepository.getSalStaffAttenDayInfos(corpId, attenReportId, staffId);
+				        				/**
+				        				 * 计算该员工该月的考勤请假的扣款金额
+				        				 */				        			
+				        				for(SalStaffAttenDayModel salStaffAttenDay:salStaffAttenDayModels){
+				        					String vactionId=salStaffAttenDay.getFieldId();
+				        					for(SalSysFieldItemModel salSysFieldItem:approveVactionDeductList){
+				            					if(salSysFieldItem.getItemId().equals(vactionId)){
+				            						Short deductType = salSysFieldItem.getDeductType();
+				            						double deductValue=salSysFieldItem.getItemValue();
+				            						if(deductType == DeductType.FIXED.getCode()){//如果扣款类型是固定类型
+				            							voctionDeduct +=salStaffAttenDay.getFieldDay()/100*deductValue/100;
+				            						}else if(deductType == DeductType.PERCENT.getCode()){
+				            							voctionDeduct +=daySal*salStaffAttenDay.getFieldDay()/100*deductValue/10000;
+				            						}			            						
+				            					}
+				            				}
+				        				}
+				        				double shouldPaySal3 = shouldPaySalDouble;
+				        				shouldPaySal3 =shouldPaySalDouble-voctionDeduct*100;//计算请假扣款后的员工的薪资
+				        				if(shouldPaySal3*100<0){//如果工资额小于0，则采取正算的方式
+				        					double 	shouldPaySal2 = 0.0;
+				        					if(attendanceDay>calSalDays){    						
+				        					 	shouldPaySalDouble=calSalDays*daySal;	        			
+				        					}else{
+				        						shouldPaySal2 = attendanceDay/100*daySal;	        	
+				        						shouldPaySalDouble =shouldPaySal2*100;
+				        					}
+				        				}
+	        				}else{//若是正算
+	        					double 	shouldPaySal2 = 0.0;
+	        					if(attendanceDay>calSalDays){    						
+		        					 	shouldPaySalDouble= calSalDays*daySal;	        			
+	        					}else{
+	        						shouldPaySal2 = attendanceDay/100*daySal;	        	
+	        						shouldPaySalDouble = shouldPaySal2*100;
+	        					}
+	        				}		        		
+		        				/**
+		        				 * 计算该员工的基本考勤的扣款信息
+		        				 */
+		        				double seriousLateDeduct=salStaffAttenEntity.getSeriousLateTimes()*salCorpDeduct.getSeriousLateDeduct()/100;//严重迟到的扣款
+		        				double lateDeduct = 0;//迟到的扣款
+		        				if(salCorpDeduct.getLateEarlyDeductType() == LateEarlyDeductType.Duration.getCode()){
+		        					lateDeduct = salStaffAttenEntity.getLateHours()*salCorpDeduct.getLateEarlyDeduct()/100;
+		        				}else if(salCorpDeduct.getLateEarlyDeductType() == LateEarlyDeductType.Times.getCode()){
+		        					lateDeduct = salStaffAttenEntity.getLateTimes()*salCorpDeduct.getLateEarlyDeduct()/100;
+		        				}
+		        				double earlyLeaveDeduct = 0;//早退扣款
+		        				if(salCorpDeduct.getLateEarlyDeductType() == LateEarlyDeductType.Duration.getCode()){
+		        					earlyLeaveDeduct = salStaffAttenEntity.getEarlyLeaveHours()*salCorpDeduct.getLateEarlyDeduct()/100;
+		        				}else if(salCorpDeduct.getLateEarlyDeductType() == LateEarlyDeductType.Times.getCode()){
+		        					earlyLeaveDeduct = salStaffAttenEntity.getEarlyLeaveTimes()*salCorpDeduct.getLateEarlyDeduct()/100;
+		        				}
+		        				double stayAwayDeduct = 0;//旷工扣款
+		        				if(salCorpDeduct.getStayAwayDeductType() == StayAwayDeductType.FIXED.getCode()){
+		        					stayAwayDeduct = salStaffAttenEntity.getUnWorkDays()*salCorpDeduct.getStayAwayDeduct()/100;
+		        				}else if(salCorpDeduct.getStayAwayDeductType() == StayAwayDeductType.PERCENT.getCode()){
+		        					stayAwayDeduct = daySal*salStaffAttenEntity.getUnWorkDays()*salCorpDeduct.getStayAwayDeduct()/10000;
+		        				}
+		        				double stayAwayLateDeduct = 0;//旷工迟到扣款
+		        				if(salCorpDeduct.getStayAwayDeductType()== StayAwayDeductType.FIXED.getCode()){
+		        					stayAwayLateDeduct = salStaffAttenEntity.getUnWorkLateDays()*salCorpDeduct.getStayAwayDeduct()/100;
+		        				}else if(salCorpDeduct.getStayAwayDeductType() == StayAwayDeductType.PERCENT.getCode()){
+		        					stayAwayLateDeduct =daySal* salStaffAttenEntity.getUnWorkLateDays()*salCorpDeduct.getStayAwayDeduct()/10000;
+		        				}
+		        				double workLackDeduct = 0;//上班缺卡扣款 
+		        				if(salCorpDeduct.getLackDeductType() == LackDeductType.FIXED.getCode()){
+		        					workLackDeduct = salStaffAttenEntity.getWorkAbsenceTimes()*salCorpDeduct.getLackDeduct()/100;
+		        				}else if(salCorpDeduct.getLackDeductType() == LackDeductType.PERCENT.getCode()){
+		        					workLackDeduct = daySal*salStaffAttenEntity.getWorkAbsenceTimes()*salCorpDeduct.getLackDeduct()/10000;
+		        				}
+		        				double offWorkLackDeduct =0;//下班缺卡扣款
+		        				if(salCorpDeduct.getLackDeductType() == LackDeductType.FIXED.getCode()){
+		        					offWorkLackDeduct = salStaffAttenEntity.getOffWorkAbsenceTimes()*salCorpDeduct.getLackDeduct()/100;
+		        				}else if(salCorpDeduct.getLackDeductType() == LackDeductType.PERCENT.getCode()){
+		        					offWorkLackDeduct = daySal*salStaffAttenEntity.getOffWorkAbsenceTimes()*salCorpDeduct.getLackDeduct()/10000;
+		        				}
+		        				attendanceDeduct =offWorkLackDeduct+workLackDeduct+stayAwayDeduct+stayAwayLateDeduct
+		        						+earlyLeaveDeduct+lateDeduct+seriousLateDeduct+voctionDeduct;
+		        				/**
+		        				 * 得到该员工的所有的浮动款项----->初次，因为管理员没有设置浮动款项，所以不用计算
+		        				 */
+		        				shouldPaySalDouble = shouldPaySalDouble -attendanceDeduct*100;
+		        			 /**
+		        		 	 * 实发工资=应发工资-社保公积金-税款
+		        			 */
+		        				/**
+		        				 *  判断该员工是否参与社保公积金
+		        				 */
+	        			   actualSal=shouldPaySalDouble;
+	        				Boolean  attenSocial =true;
+	        				if(attenSocialStatus == null||attenSocialStatus==0){
+	        					attenSocial = false;
+	        				}
+	        				
+	        				if(attenSocial){//若员工要参与社保和公积金
+	        					Double whpActualSal = new Double(0);
+	        					Double whpHighSal = new Double(0);
+	        					Double whpLowSal = new Double(0);
+	        					whpActualSal = actualSal;
+	        					//TODO:计算社保和公积金的扣款额
+	        					for(SalCorpWhpRuleModel salCwhpRule:salCwhpRuleList){
+	        						whpHighSal = salCwhpRule.getBaseHigh();
+	        						whpLowSal = salCwhpRule.getBaseLow();
+	        						if( whpHighSal != null){
+		        						if(whpActualSal>=whpHighSal){
+		        							whpActualSal = whpHighSal;
+		        						}
+		        						else if(whpActualSal<=whpLowSal){
+		        							whpActualSal = whpLowSal;
+		        						}
+	        						}
+	        						corpStaffSocialSal +=whpActualSal/100*(salCwhpRule.getCorpPercent()/10000);
+	        					}
+	        					for(SalCorpWhpRuleModel salCwhpRule :salCwhpRuleList){
+	        						double personPercent =salCwhpRule.getPersonalPercent();
+	        						whpHighSal = salCwhpRule.getBaseHigh();
+	        						whpLowSal = salCwhpRule.getBaseLow();
+	        						if( whpHighSal != null){
+		        						if(whpActualSal>=whpHighSal){
+		        							whpActualSal = whpHighSal;
+		        						}
+		        						else if(whpActualSal<=whpLowSal){
+		        							whpActualSal = whpLowSal;
+		        						}
+	        						}
+	        						replaceDeduct +=whpActualSal/100*(personPercent/10000);				
+	        					}		
+	        				}
+	        				actualSal=actualSal-replaceDeduct*100;
+	        				/**
+	        				 * 判断该员工是否参与个税
+	        				 */		   
+	        				double taxReplace =0;
+	        				Boolean  attenTax =true;
+	        				if(attenPersonTax == null||attenPersonTax==0){
+	        					attenTax = false;
+	        				}
+	        				if(attenTax){//若员工要参与个人所得税
+	        					//TODO:计算个税的扣款额
+	        					taxReplace = PersonalTaxUtils.getPersonalTax(actualSal/100);
+	        				}
+	        				replaceDeduct +=taxReplace;
+	        				actualSal=actualSal-taxReplace*100;        				
+        				}else{
+        					shouldPaySalDouble = 0.0;
+        				}
+        				//actualSal=actualSal-Math.round(replaceDeduct*100);
+        				//Integer salDeduct =replaceDeduct+attendanceDeduct;
+        				/**
+        				 * 更新员工的应发工资和实发工资,扣款和代缴
+        				 */
+        				 salStaffSalReportEntity = new SalStaffSalReportEntity();
+        				 
+        				salStaffSalReportEntity.setId(IdGenerator.newId());
+        				salStaffSalReportEntity.setActualSal((double) Math.round(actualSal));
+        				salStaffSalReportEntity.setShouldPaySal((double) (Math.round(shouldPaySalDouble*100)/100));
+        				salStaffSalReportEntity.setDingStaffId(staffId);
+        				salStaffSalReportEntity.setCreateDate(nowDate);
+        				salStaffSalReportEntity.setModifiedDate(nowDate);
+        				salStaffSalReportEntity.setSalReportId(salReportId);
+        				salStaffSalReportEntity.setMonthTime(monthTime);
+        				corpStaffSocialSal +=replaceDeduct;
+        				salStaffSalReportEntity.setCorpInsuranceSal(corpStaffSocialSal);
+        				salStaffSalReportEntity.setSalDeduct( (double) Math.round(attendanceDeduct*100));
+        				salStaffSalReportEntity.setReplaceDeduct((double) Math.round(replaceDeduct*100));
+        				salSynCorpInfo.addStaffMonthSal(salStaffSalReportEntity);  				
+        				corpShoudPaySal +=Math.round(shouldPaySalDouble);
+        				corpActualPaySal +=Math.round(actualSal);				
+        				corpSocialPaySal +=Math.round(corpStaffSocialSal*100);			
+        			}    			
+        		}
+        		/**
+        		 * 计算企业当月的总工资
+        		 */
+        		corpSocialPaySal = (double) Math.round(corpSocialPaySal);
+				corpStaffPay =corpSocialPaySal+corpShoudPaySal;
+				salReportEntity.setStaffCost((double) Math.round(corpStaffPay));
+				salReportEntity.setInsuranceSal(corpSocialPaySal);
+				salReportEntity.setActualPaySal((double) Math.round(corpActualPaySal));
+				salReportEntity.setModifiedDate(new Date());
+				salReportEntity.setShouldPaySal((double) Math.round(corpShoudPaySal));
+				salReportRepository.updateSalReport(salReportEntity);
+        	}
+        	if(initNum>0){
+        		salReportModels=salReportRepository.getAllSalReports(corpId);//重新去数据库抓取数据
+        	}
+        }
+		return salReportModels;
+	}
+
+	@Override
+	public PageData<SalStaffSalReportModel> getSalDatailByReportId(String reportId , String corpId , Pageable pageable) {
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("getSalaryDatailByMonthId param reportId is null or empty.");
+		}
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getSalaryDatailByMonthId param corpId is null or empty.");
+		}
+		if (pageable == null) {
+			throw new IllegalArgumentException("getSalaryDatailByMonthId param pageable  is null or empty.");
+		}
+		Integer pageSize = pageable.getPageSize();
+		Integer beginNum = (pageable.getPageNo()-1)*pageSize;
+		List<SalStaffSalReportModel> monthStaffSalModels = salReportRepository.getSalDatailByReportId(reportId,corpId,beginNum, pageSize);
+		for(SalStaffSalReportModel salReportModel:monthStaffSalModels){
+			String staffName = "";
+			//找到该人员对应的所有的部门
+			List<String> deptNames = staffBaseInfoRepository.getStaffAllDeptName(corpId, salReportModel.getDingStaffId());
+			for(String s:deptNames){			
+				  staffName +=s+"  ";			
+			}
+			if("".equals(staffName)){
+				staffName ="无部门";
+			}
+			salReportModel.setDeptName(staffName);
+		}
+		
+		Long  count = salReportRepository.getSalDatailCountByReportId(reportId,corpId);
+		pageable.setTotalCount(count);
+	
+		return new PageDataImpl<SalStaffSalReportModel>(monthStaffSalModels , pageable);
+	}
+
+
+	@Override
+	public Boolean updateSalsOnStaffes(String corpId,List<SalStaffSalReportDetailModel> monthStaffSalDetailModels) {
+		if (monthStaffSalDetailModels == null) {
+			throw new IllegalArgumentException("updateSalariesOnStaffes param monthStaffSalDetailModels is null");
+		}
+		if (monthStaffSalDetailModels.isEmpty()) {
+			throw new IllegalArgumentException("updateSalariesOnStaffes param monthStaffSalDetailModels is empty.");
+		}
+		int size = 0;
+		JSONObject.toJSONString(monthStaffSalDetailModels);
+		SalStaffSalReportDetailModel monthStaffSalDetailModel2= new SalStaffSalReportDetailModel();	
+		for (SalStaffSalReportDetailModel monthStaffSalDetailModel : monthStaffSalDetailModels) {
+			SalStaffSalReportEntity salStaffSalReportEntity = salReportRepository
+					.getSalDetailEntityById(monthStaffSalDetailModel.getId());
+			if (salStaffSalReportEntity != null) {				
+				monthStaffSalDetailModel2.setId(monthStaffSalDetailModel.getId());
+				Double annusBonus = monthStaffSalDetailModel.getAnnualBonus();
+				if(annusBonus!=null){
+					annusBonus=annusBonus*100;
+				}
+				monthStaffSalDetailModel2.setAnnualBonus(annusBonus);
+				Double monthBonus = monthStaffSalDetailModel.getMonthBonus();
+				if(monthBonus!=null){
+					monthBonus = monthBonus*100;
+				}
+				monthStaffSalDetailModel2.setMonthBonus(monthBonus);
+				Double otherPrextaxDeduct = monthStaffSalDetailModel.getOtherPretaxDeduct();
+				if(otherPrextaxDeduct!=null){
+					otherPrextaxDeduct=otherPrextaxDeduct*100;
+				}
+				monthStaffSalDetailModel2.setOtherPretaxDeduct(otherPrextaxDeduct);
+				Double otherAftertaxDeduct =monthStaffSalDetailModel.getOtherAftertaxDeduct(); 
+				if(otherAftertaxDeduct!=null){
+					otherAftertaxDeduct=otherAftertaxDeduct*100;
+				}
+				monthStaffSalDetailModel2.setOtherAftertaxDeduct(otherAftertaxDeduct);
+				Double otherPretaxSal = monthStaffSalDetailModel.getOtherPretaxSal();
+				if(otherPretaxSal!=null){
+					otherPretaxSal=otherPretaxSal*100;
+				}
+				monthStaffSalDetailModel2.setOtherPretaxSal(otherPretaxSal);
+				Double otherAftertaxSal = monthStaffSalDetailModel.getOtherAftertaxSal();
+				if(otherAftertaxSal!=null){
+					otherAftertaxSal = otherAftertaxSal*100;
+				}
+				monthStaffSalDetailModel2.setOtherAftertaxSal(otherAftertaxSal);
+				monthStaffSalDetailModel2.setModifiedDate(new Date());
+			    monthStaffSalDetailModel2.setShouldPaySal(salStaffSalReportEntity.getShouldPaySal());
+			}
+			if (salReportRepository.updateStaffSalOnMonth(monthStaffSalDetailModel2) > 0) {
+				size++;
+			}
+		}
+		if (size == monthStaffSalDetailModels.size()) {			
+			/**
+			 * 重新计算企业员工的工资和薪资报表的总工资
+			 */		
+			saCalcuSalService.calcuSalReportAutomatic(corpId);
+			return Boolean.TRUE;
+		} else {
+			return Boolean.FALSE;
+		}
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Boolean lockSalReportById(String reportId, Short reportState) {
+		if (StringUtils.isBlank(reportId)) {
+			throw new IllegalArgumentException("lockSalReportById param reportId is null or empty.");
+		}
+		if (reportState == null) {
+			throw new IllegalArgumentException("lockSalReportById param reportState is null or empty.");
+		}
+		Integer rs = null;
+		rs = salReportRepository.lockSalReportById(reportId, reportState);
+
+		return rs > 0;
+	}
+
+	@Override
+	public Boolean calculateCorpSal(String corpId) {
+		// 应发工资：所有人员应发工资的总和
+		// 实发工资：所有人员实发工资的总和
+		// 公司交金：所有员工拥有公积金或社保的总和
+		// 员工成本：员工成本=应发工资+公司交金
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("calculateCorpSal param corpId is null or empty.");
+		}
+		/**
+		 * 首先应判断当前月份在数据库表中是否存在薪资数据，若存在，在点击显示月度薪资报表的时候，则无需进行计算 若不存在，则要进行计算薪资。
+		 * 
+		 * 如果存在，返回该企业在叮当薪资中存储的所有薪资报表。 不存在，计算完成后，再显示所有月份的薪资报表
+		 */
+
+			// Double shouldPaySal = 0.0;
+			// Double actualSal = 0.0;
+			// Double insuranceSal = 0.0;
+			// Double staffCost
+
+
+		return null;
+	}
+
+	@Override
+	public List<SalCorpReportModel> getUserSalDates(String corpId, String staffId) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getUserSalDates param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(staffId)){
+			throw new IllegalArgumentException("getUserSalDates param staffId is null or empty.");
+		}
+		List<SalCorpReportModel> salReportModels = salReportRepository.getUserSalDates(corpId, staffId);
+		
+		return salReportModels;
+	}
+
+	@Override
+	public SalStaffMbSalInfoModel getStaffMbSalInfo(String corpId , String staffId, String reportId) {
+		if(StringUtils.isBlank(staffId)){
+			throw new IllegalArgumentException("getStaffMbSalInfo param staffId is null or empty.");
+		}
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getStaffMbSalInfo param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(reportId)){
+			reportId =null;
+		}
+		SalStaffMbSalInfoModel salStaffMbSalInfos = salReportRepository.getStaffMbSalInfo(staffId,reportId );
+
+		salStaffMbSalInfos.setDetail(staffBaseInfoRepository.getStaffFieldItems(corpId, staffId));
+
+		return salStaffMbSalInfos;
+	}
+
+	@Override
+	public SalCorpReportModel getSalReportByReportId(String reportId) {
+	    if(StringUtils.isBlank(reportId)){
+	    	throw new IllegalArgumentException("getSalReportByReportId param reportId is null or empty.");
+	    }
+		SalCorpReportModel  salReportModel= salReportRepository.getSalReportByReportId(reportId);
+		return salReportModel;
+	}
+
+	@Override
+	public List<SalStaffSalReportDetailModel> getSelectStaffFloatSalData(List<SalStaffBaseInfoModel> staffs , String corpId , String reportId) {
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("getSelectStaffFloatSalData param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(reportId)){
+			throw new IllegalArgumentException("getSelectStaffFloatSalData param reportId is null or empty.");
+		}
+		if(staffs == null){
+			throw new IllegalArgumentException("getSelectStaffFloatSalData param staffs is null.");
+		}
+		List<SalStaffSalReportDetailModel> salStaffs = new ArrayList<SalStaffSalReportDetailModel>();
+		SalStaffSalReportDetailModel salStaffSalReportDetailModel=null;
+		
+		String id=null;
+		Set<String> unRepeatSet = new HashSet<String>();
+		for(SalStaffBaseInfoModel model:staffs){
+			id = model.getId();
+			if(model.getType() == StaffDeptType.DEPT.getCode()){//如果ID的类型是部门
+				 //找到部门下的所有子部门
+				List<String> deptIds = staffBaseInfoRepository.getDeptInfoByParentId(corpId, id);
+				//找到子部门下的所有人员
+				List<SalStaffSalReportDetailModel>  salStaffs2= salReportRepository.getDeptAllStaffFloatSal(deptIds,reportId,corpId);
+				System.out.println(JSONObject.toJSONString(salStaffs2));
+				for(SalStaffSalReportDetailModel sal:salStaffs2){
+					if(!unRepeatSet.contains(sal.getId())){
+					    salStaffs.add(sal);
+					    unRepeatSet.add(sal.getId());
+					}
+				}
+			}else if(model.getType() == StaffDeptType.STAFF.getCode()){//如果ID的类型是员工
+				//直接得到员工的信息
+				List<SalStaffSalReportDetailModel>  selectedStaffSalDetaiModels= salReportRepository.getSelectedStaffSalDetail(id, reportId, corpId);
+				if(!selectedStaffSalDetaiModels.isEmpty()){
+					salStaffSalReportDetailModel =selectedStaffSalDetaiModels.get(0);
+					if(!unRepeatSet.contains(salStaffSalReportDetailModel.getId())){
+						salStaffs.add(salStaffSalReportDetailModel);
+						unRepeatSet.add(salStaffSalReportDetailModel.getId());
+					}
+				
+				}
+			}
+		}
+		for(SalStaffSalReportDetailModel  salStaff:salStaffs){
+			String deptName ="";
+			//找到该人员对应的所有的部门
+			List<String> deptNames = staffBaseInfoRepository.getStaffAllDeptName(corpId, salStaff.getDingStaffId());
+			for(String s:deptNames){			
+				deptName +=s+"  ";			
+			}
+			if("".equals(deptName)){
+				deptName ="无部门";
+			}
+			salStaff.setDeptName(deptName);
+		}
+		return salStaffs;
+	}
+
+}

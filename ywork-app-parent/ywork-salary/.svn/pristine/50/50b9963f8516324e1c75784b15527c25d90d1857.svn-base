@@ -1,0 +1,148 @@
+package me.ywork.salary.entity;
+
+import me.ywork.base.entity.Entity;
+
+public class MonthStaffAttendanceEntity extends Entity{
+    /**
+     *  企业考勤表的ID
+     */
+     private String attendanceId;
+    /**
+     *  出勤天数
+     */
+    private Integer attendanceDays;
+    /**
+     *  休息天数
+     */
+    private Integer restDays;
+    /**
+     *  工作时长
+     */
+    private Double workHours;
+    /**
+     *  迟到时长
+     */
+    private  Double lateHours;
+    /**
+     *  迟到次数
+     */
+    private Integer lateTimes;
+    /**
+     *  严重迟到时间
+     */
+    private Double seriousLateHours;
+    /**
+     *  严重迟到次数
+     */
+    private Integer seriousLateTimes;
+    /**
+     *  早退时间
+     */
+    private Double earlyLeaveHours;
+    /**
+     *  早退次数
+     */
+    private Integer earlyLeaveTimes;
+    /**
+     *  上班缺卡次数
+     */
+    private Integer workAbsenceTimes;
+    /**
+     * 下班缺卡次数
+     */
+    private Integer offWorkAbsenceTimes;
+    /**
+     *  一天未打卡天数
+     */
+    private Integer unWorkDays;
+    /**
+     *  旷工迟到天数
+     */
+    private Integer unWorkLateDays;
+	public String getAttendanceId() {
+		return attendanceId;
+	}
+	public void setAttendanceId(String attendanceId) {
+		this.attendanceId = attendanceId;
+	}
+	public Integer getAttendanceDays() {
+		return attendanceDays;
+	}
+	public void setAttendanceDays(Integer attendanceDays) {
+		this.attendanceDays = attendanceDays;
+	}
+	public Integer getRestDays() {
+		return restDays;
+	}
+	public void setRestDays(Integer restDays) {
+		this.restDays = restDays;
+	}
+	public Double getWorkHours() {
+		return workHours;
+	}
+	public void setWorkHours(Double workHours) {
+		this.workHours = workHours;
+	}
+	public Double getLateHours() {
+		return lateHours;
+	}
+	public void setLateHours(Double lateHours) {
+		this.lateHours = lateHours;
+	}
+	public Integer getLateTimes() {
+		return lateTimes;
+	}
+	public void setLateTimes(Integer lateTimes) {
+		this.lateTimes = lateTimes;
+	}
+	public Double getSeriousLateHours() {
+		return seriousLateHours;
+	}
+	public void setSeriousLateHours(Double seriousLateHours) {
+		this.seriousLateHours = seriousLateHours;
+	}
+	public Integer getSeriousLateTimes() {
+		return seriousLateTimes;
+	}
+	public void setSeriousLateTimes(Integer seriousLateTimes) {
+		this.seriousLateTimes = seriousLateTimes;
+	}
+	public Double getEarlyLeaveHours() {
+		return earlyLeaveHours;
+	}
+	public void setEarlyLeaveHours(Double earlyLeaveHours) {
+		this.earlyLeaveHours = earlyLeaveHours;
+	}
+	public Integer getEarlyLeaveTimes() {
+		return earlyLeaveTimes;
+	}
+	public void setEarlyLeaveTimes(Integer earlyLeaveTimes) {
+		this.earlyLeaveTimes = earlyLeaveTimes;
+	}
+	public Integer getWorkAbsenceTimes() {
+		return workAbsenceTimes;
+	}
+	public void setWorkAbsenceTimes(Integer workAbsenceTimes) {
+		this.workAbsenceTimes = workAbsenceTimes;
+	}
+	public Integer getOffWorkAbsenceTimes() {
+		return offWorkAbsenceTimes;
+	}
+	public void setOffWorkAbsenceTimes(Integer offWorkAbsenceTimes) {
+		this.offWorkAbsenceTimes = offWorkAbsenceTimes;
+	}
+	public Integer getUnWorkDays() {
+		return unWorkDays;
+	}
+	public void setUnWorkDays(Integer unWorkDays) {
+		this.unWorkDays = unWorkDays;
+	}
+	public Integer getUnWorkLateDays() {
+		return unWorkLateDays;
+	}
+	public void setUnWorkLateDays(Integer unWorkLateDays) {
+		this.unWorkLateDays = unWorkLateDays;
+	}
+    
+    
+}

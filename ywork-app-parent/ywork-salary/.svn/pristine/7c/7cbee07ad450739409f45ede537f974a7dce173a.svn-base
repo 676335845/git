@@ -1,0 +1,78 @@
+package me.ywork.salary.repository;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+import me.ywork.base.repository.IRepository;
+import me.ywork.salary.entity.SalSysFieldItemEntity;
+import me.ywork.salary.entity.SalStaffBaseInfoEntity;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+
+@Repository
+public interface SalStaffBaseInfoRepository extends IRepository<SalStaffBaseInfoEntity> {
+	/**
+	 * 获取员工薪详情：获取所有员工的薪资详情，要分页
+	 * 
+	 * @param corpId 钉钉企业号
+	 * @param pageable  分页的Pageable
+	 * @return 分页的数据
+	 */
+	List<SalStaffBaseInfoModel> getStaffSalInfos(@Param("corpId") String corpId, @Param("beginNum") Integer beginNum,
+			@Param("endNum") Integer endNum);
+
+	/**
+	 * 新增字段
+	 * 
+	 * @param fieldItemModel
+	 * @return
+	 */
+	Integer addNewField(SalSysFieldItemModel fieldItemModel);
+
+	/**
+	 * 根据字段标识去查找字段信息
+	 */
+	SalSysFieldItemModel getItemModel(@Param("itemId") String itemId);
+	
+	/**
+	 * 根据字段标识去查找字段实体
+	 */
+	SalSysFieldItemEntity getItemEntity(@Param("itemId") String itemId);
+
+	/**
+	 * 更新字段
+	 * 
+	 * @param fieldItemModel
+	 * @return
+	 */
+	Integer updateField(SalSysFieldItemModel fieldItemModel);
+
+	/**
+	 * 根据父字段ID去查询该员工所有自定义的字段
+	 */
+	List<SalSysFieldItemModel> getStaffFieldItems(@Param("relativeId") String relativeId);
+	
+   /**
+    *  根据请求的薪资规则类型得到与之匹配的人员
+    * 
+	 * @param corpId 企业标识
+	 * @param salRuleHandleType 薪资规则类型 0 是基本的薪资规则，1是参与社保公积金，2是参与缴纳个人所得税
+	 * @param salBaseRule 如果salRuleHandleType是0，则此选择不能为空
+	 * @return
+	 */
+	List<SalStaffBaseInfoModel>getStafiesByRuleType(@Param("corpId")String corpId, @Param("salRuleHandleType")Short salRuleHandleType,
+			@Param("salBaseRule")Short salBaseRule);
+	
+	/**
+	 *  更新企业人员对应的基本薪资规则
+	 */
+	Integer updateSalRuleStaffies(SalStaffBaseInfoModel salStaffBaseInfoModel);
+	
+	/**
+	 * 删除企业员工的基本薪资规则
+	 * @param staffBaseInfoModels
+	 * @return 删除的结果
+	 */
+	Integer deleteStaffSalRule(SalStaffBaseInfoModel salStaffBaseInfoModel);
+}

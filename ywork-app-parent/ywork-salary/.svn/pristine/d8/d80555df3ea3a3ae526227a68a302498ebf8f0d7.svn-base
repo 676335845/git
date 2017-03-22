@@ -1,0 +1,53 @@
+package me.ywork.salary;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class Test {
+	public static  void main(String args[]){
+		SimpleDateFormat format =  new SimpleDateFormat("yyyy-MM-dd");  
+		String d = "2016-12-31";
+	     Date date =null;
+		try {
+			date = format.parse(d);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	   
+	   Long lonTime = date.getTime();
+	   System.out.println(lonTime);
+	}
+}
+//2、时间戳转化为Date（or String）
+//
+//[java] view plain copy
+//
+//   //时间戳转化为Sting或Date  
+//       SimpleDateFormat format =  newSimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
+//       Long time=newLong(445555555);  
+//       String d = format.format(time);  
+//       Date date=format.parse(d);  
+//       System.out.println("Format To String(Date):"+d);  
+//       System.out.println("Format To Date:"+date);  
+//
+//
+//
+//运行结果：
+//
+//      Format To String(Date):1970-01-06 11:45:55
+//
+//Format To Date:Tue Jan 06 11:45:55 CST 1970
+//
+//
+//
+//3、Date（or String）转化为时间戳
+//
+//[java] view plain copy
+//
+//   //Date或者String转化为时间戳  
+//       SimpleDateFormat format =  newSimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
+//       String time="1970-01-06 11:45:55";  
+//       Date date = format.parse(time);  
+//       System.out.print("Format To times:"+date.getTime());  

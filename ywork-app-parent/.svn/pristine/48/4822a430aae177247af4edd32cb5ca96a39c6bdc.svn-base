@@ -1,0 +1,48 @@
+package me.ywork.ticket.suite.model;
+
+import java.io.Serializable;
+
+
+public class WeHuaWeiModel implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7752205465876763663L;
+	private String title;
+	private String thumbimg;
+	private String summary;
+	private String cententurl;
+	private String imgurls;
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	public String getThumbimg() {
+		return thumbimg;
+	}
+	public void setThumbimg(String thumbimg) {
+		this.thumbimg = thumbimg;
+	}
+	public String getSummary() {
+		return summary;
+	}
+	public void setSummary(String summary) {
+		this.summary = summary;
+	}
+	public String getCententurl() {
+		return cententurl;
+	}
+	public void setCententurl(String cententurl) {
+		this.cententurl = cententurl;
+	}
+	public String getImgurls() {
+		return imgurls;
+	}
+	public void setImgurls(String imgurls) {
+		this.imgurls = imgurls;
+	}
+	
+	
+}

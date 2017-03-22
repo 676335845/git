@@ -1,0 +1,149 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.entity.SalSysFieldItemEntity;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.model.SalInfoDetailModel;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.repository.SalInfoRepository;
+import me.ywork.salary.service.SalInfoService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.alibaba.fastjson.JSONObject;
+import com.heyi.utils.IdGenerator;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalInfoServiceImpl implements SalInfoService {
+	@Autowired
+	private SalInfoRepository staffSalInfoRepository;
+	@Autowired
+	private SalStaffBaseInfoRepository staffBaseInfoRepository;
+	private static final Logger logger = LoggerFactory.getLogger(SalInfoServiceImpl.class);
+
+	@Override
+	public PageData<SalStaffBaseInfoModel> getStaffSalInfos(String corpId, Pageable pageable) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getStaffSalInfos param corpId is null or empty.");
+		}
+		List<SalStaffBaseInfoModel> staffSalInfoModels = null;
+		int pageNo = pageable.getPageNo();
+		int pageSize = pageable.getPageSize();
+		staffSalInfoModels = staffBaseInfoRepository.getStaffSalInfos(corpId, (pageNo - 1) * pageSize, pageSize);
+		return new PageDataImpl<SalStaffBaseInfoModel>(staffSalInfoModels, pageable);
+	}
+
+	@Override
+	public SalInfoDetailModel getSalInfosById(String id) {
+		if (StringUtils.isBlank(id)) {
+			throw new IllegalArgumentException("getSalaryInfosByStaffId param id is null or empty.");
+		}
+		SalInfoDetailModel staffSalInfoDetailModel = new SalInfoDetailModel();
+		List<SalSysFieldItemModel> fieldItemModels = staffBaseInfoRepository.getStaffFieldItems(id);
+		staffSalInfoDetailModel.setItemModels(fieldItemModels);
+		logger.info(JSONObject.toJSONString(staffSalInfoDetailModel));
+		
+		return staffSalInfoDetailModel;
+	}
+
+	@Override
+	public List<SalInfoDetailModel> getMutiStaffSalInfosDetail(String corpId, List<String> staffids) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getMutiStaffSalInfosDetail  param corpId is null or empty.");
+		}
+		List<SalInfoDetailModel> staffSalInfoDetailModels = null;
+		staffSalInfoDetailModels = staffSalInfoRepository.getMutiStaffSalInfosDetail(corpId, staffids);
+		for (SalInfoDetailModel staffSalInfoDetailModel : staffSalInfoDetailModels) {
+			String staffId = staffSalInfoDetailModel.getId();
+			List<SalSysFieldItemModel> fieldItemModels = staffBaseInfoRepository.getStaffFieldItems(staffId);
+			staffSalInfoDetailModel.setItemModels(fieldItemModels);
+		}
+
+		return staffSalInfoDetailModels;
+	}
+
+	@Override
+	public Boolean updateMutiStaffInfos(List<SalInfoDetailModel> staffSaInfos) {
+		if (staffSaInfos == null) {
+			throw new IllegalArgumentException("updateMutiStaffInfos param staffSaInfos is null.");
+		}
+		if (staffSaInfos.isEmpty()) {
+			throw new IllegalStateException("updateMutiStaffInfos param staffSaInfos  is empty.");
+		}
+		int size = 0;
+		for (SalInfoDetailModel staffSalInfoDetailModel : staffSaInfos) {
+			for (SalSysFieldItemModel fieldItemModel : staffSalInfoDetailModel.getItemModels()) {
+				if (StringUtils.isBlank(fieldItemModel.getItemId())) {
+					fieldItemModel.setItemId(IdGenerator.newId());
+					fieldItemModel.setRelativeId(staffSalInfoDetailModel.getId());
+					fieldItemModel.setCreateDate(new Date());
+					fieldItemModel.setModifiedDate(new Date());
+					// 新增字段
+					staffBaseInfoRepository.addNewField(fieldItemModel);
+				} else {
+					SalSysFieldItemEntity fieldItem = staffBaseInfoRepository.getItemEntity(fieldItemModel.getItemId());
+					if(fieldItem == null)
+					{
+						return Boolean.FALSE;
+					}
+					fieldItemModel.setItemId(fieldItem.getId());
+					fieldItemModel.setItemName(fieldItem.getItemName());
+					fieldItemModel.setItemType(fieldItem.getItemType());
+					fieldItemModel.setItemValue(fieldItem.getItemValue());
+					fieldItemModel.setModifiedDate(new Date());
+					// 更新字段
+					staffBaseInfoRepository.updateField(fieldItemModel);
+				}
+			}
+			size++;
+		}
+		if (size == staffSaInfos.size()) {
+			return Boolean.TRUE;
+		} 
+		return Boolean.FALSE;	
+	}
+	
+	@Override
+	public Integer calcuUnSetSalStaffNum(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("calcuUnSetSalStaffNum  param corpId is null or empty.");
+		}
+		Integer num = staffSalInfoRepository.calcuUnSetSalStaffNum(corpId);
+		return num;
+	}
+
+	@Override
+	public Object downloadSalTemplet() {
+		return null;
+	}
+
+	@Override
+	public Object uploadSalTemplet(String fileKey) {
+		return null;
+	}
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+}

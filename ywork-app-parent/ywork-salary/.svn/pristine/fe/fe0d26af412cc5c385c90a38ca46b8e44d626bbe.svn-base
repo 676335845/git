@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.SalAttendanceRepository">
+    <!--所有字段列表 -->
+    <sql id="fields">
+       id,
+       attendance_day,
+       rest_days,
+       work_hours,
+       late_hours,
+       late_times,
+       seriouslate_hours,
+       seriouslate_times,
+       earlyleave_hours,
+       earlyleave_times,
+       workabsence_times,
+       offwork_absence_times,
+       unwork_days,
+       unwork_late_days,
+       atten_report_id,
+       ding_staffid,
+       create_time,
+       update_time,
+       month_time,
+       out_days,
+       busy_away_days,
+       affair_leave_days,
+       sick_leave_days,
+       year_leave_days,
+       day_off_days,
+       marry_off_days,
+       maternity_leave_days,
+       acco_maternity_days,
+       journey_days,
+       other_days
+    </sql>
+
+    <!--从实体中取值 -->
+    <sql id="values">
+      #{staffAttendanceId},  
+      #{attendanceDays},
+      #{restDays},
+      #{workHours},
+      #{lateHours},
+      #{lateTimes},
+      #{seriousLateHours},
+      #{seriousLateTimes},
+      #{earlyLeaveHours},
+      #{earlyLeaveTimes},
+      #{workAbsenceTimes},
+      #{offWorkAbsenceTimes},
+      #{unWorkDays},
+      #{unWorkLateDays},
+      #{attenReportId},
+      #{dingStaffId},
+      #{createTime},
+      #{updateTime},
+      #{monthTime},
+      #{outDays},
+      #{busyAwayDays},
+      #{affairLeaveDays},
+      #{sickLeaveDays},
+      #{yearLeaveDays},
+      #{dayOffDays},
+      #{marryOffDays},
+      #{maternityLeaveDays},
+      #{accoMaternityDays},
+      #{journeyDays},
+      #{otherDays}
+    </sql>
+     <resultMap id="MonthAttendanceMap" type="me.ywork.salary.model.SalAttendanceModel">
+        <id column="id" property="attendanceId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="month_time" property="monthTime"/>
+        <result column="corp_id" property="corpId"/>
+     </resultMap>
+     
+     <resultMap id="StaffAttendanceDisplayMap" type="me.ywork.salary.model.SalStaffAttendanceModel">
+        <id column="id" property="staffAttendanceId"/>
+        <result column="staff_name" property="staffName"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="attendance_day" property="attendanceDays"/>
+        <result column="rest_days" property="restDays"/>
+        <result column="work_hours" property="workHours"/>
+        <result column="late_hours" property="lateHours"/>
+        <result column="late_times" property="lateTimes"/>
+        <result column="seriouslate_hours" property="seriousLateHours"/>
+        <result column="seriouslate_times" property="seriousLateTimes"/>
+        <result column="earlyleave_hours" property="earlyLeaveHours"/>
+        <result column="earlyleave_times" property="earlyLeaveTimes"/>
+        <result column="workabsence_times" property="workAbsenceTimes"/>
+        <result column="offwork_absence_times" property="offWorkAbsenceTimes"/>
+        <result column="unwork_days" property="unWorkDays"/>
+        <result column="unwork_late_days" property="unWorkLateDays"/>
+        <result column="atten_report_id" property="attenReportId"/>
+        <result column="ding_staffid" property="dingStaffId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="month_time" property="monthTime"/>
+        <result column="out_days" property="outDays"/>
+        <result column="busy_away_days" property="busyAwayDays"/>
+        <result column="affair_leave_days" property="affairLeaveDays"/>
+        <result column="sick_leave_days" property="sickLeaveDays"/>
+        <result column="year_leave_days" property="yearLeaveDays"/>
+        <result column="day_off_days" property="dayOffDays"/>
+        <result column="marry_off_days" property="marryOffDays"/>
+        <result column="maternity_leave_days" property="maternityLeaveDays"/>
+        <result column="acco_maternity_days" property="accoMaternityDays"/>
+        <result column="journey_days" property="journeyDays"/>
+        <result column="other_days" property="otherDays"/>
+     </resultMap>
+     
+     <resultMap id="StaffAttendanceMap" type="me.ywork.salary.entity.SalAttendanceEntity">
+        <id column="id" property="id"/>
+        <result column="attendance_day" property="attendanceDays"/>
+        <result column="rest_days" property="restDays"/>
+        <result column="work_hours" property="workHours"/>
+        <result column="late_hours" property="lateHours"/>
+        <result column="late_times" property="lateTimes"/>
+        <result column="seriouslate_hours" property="seriousLateHours"/>
+        <result column="seriouslate_times" property="seriousLateTimes"/>
+        <result column="earlyleave_hours" property="earlyLeaveHours"/>
+        <result column="earlyleave_times" property="earlyLeaveTimes"/>
+        <result column="workabsence_times" property="workAbsenceTimes"/>
+        <result column="offwork_absence_times" property="offWorkAbsenceTimes"/>
+        <result column="unwork_days" property="unWorkDays"/>
+        <result column="unwork_late_days" property="unWorkLateDays"/>
+        <result column="atten_report_id" property="attenReportId"/>
+        <result column="ding_staffid" property="dingStaffId"/>
+        <result column="create_time" property="createDate"/>
+        <result column="update_time" property="modifiedDate"/>
+        <result column="month_time" property="monthTime"/>
+        <result column="out_days" property="outDays"/>
+        <result column="busy_away_days" property="busyAwayDays"/>
+        <result column="affair_leave_days" property="affairLeaveDays"/>
+        <result column="sick_leave_days" property="sickLeaveDays"/>
+        <result column="year_leave_days" property="yearLeaveDays"/>
+        <result column="day_off_days" property="dayOffDays"/>
+        <result column="marry_off_days" property="marryOffDays"/>
+        <result column="maternity_leave_days" property="maternityLeaveDays"/>
+        <result column="acco_maternity_days" property="accoMaternityDays"/>
+        <result column="journey_days" property="journeyDays"/>
+        <result column="other_days" property="otherDays"/>
+     </resultMap>
+    <!-- 根据员工考勤标识得到该员工的考勤数据 -->
+	<select id="getStaffAttendanceEntityById"  resultMap = "StaffAttendanceMap">
+	   select *
+	     from dingsal_staff_attendance
+	     where id=#{attendanceId}
+	</select>
+	
+	<!-- 得到所有的分页的考勤数据 -->
+	<select id = "getAllMonthesAttendanceData" resultMap = "MonthAttendanceMap">
+	    select  *
+	         from dingsal_attendance
+		     where corp_id =#{corpId}	     
+		     limit #{pageable.pageNo},#{pageable.pageSize}
+	</select>
+	
+	<!-- 查询企业总的考勤表总数 -->
+	<select id = "getAttendanceDataCountByCorpId" resultType = "java.lang.Long">
+		 select count(id)
+		     from dingsal_attendance
+		     where corp_id = #{corpId}     
+	</select>
+	
+	<!-- 根据考勤表的id得到当月所有员工的考勤数据 -->
+	<select id = "getAllStaffAttendanceByMonthId" resultMap = "StaffAttendanceDisplayMap">
+	     select e.fd_name as staff_name,			          
+	        pe.fd_name as dept_name,
+	        staffAttendance.id,attendance_day,rest_days,work_hours,late_hours,late_times,
+            seriouslate_hours,seriouslate_times,earlyleave_hours,earlyleave_times,
+            workabsence_times,offwork_absence_times,unwork_days,unwork_late_days,
+            atten_report_id,corp_id,ding_staffid,staffAttendance.create_time,staffAttendance.update_time,staffAttendance.month_time,
+            out_days,busy_away_days,affair_leave_days,sick_leave_days,year_leave_days,
+            day_off_days,marry_off_days,maternity_leave_days,acco_maternity_days,
+            journey_days,other_days
+	        from dingsal_staff_attendance staffAttendance,
+	             dingsal_attendance attendance,
+	             ding_org_element e INNER JOIN ding_org_element as pe
+		          on e.fd_parentid = pe.fd_id	  
+	        where 
+	          staffAttendance.atten_report_id = attendance.id and
+	          attendance.corp_id = e.fd_orgid and
+              staffAttendance.ding_staffid =e.fd_dingid and
+              e.fd_org_type = 64 and        
+              atten_report_id = #{reportId}
+              limit #{beginNum},#{endNum}	              
+	</select>
+	
+	<!--  根据考勤表的id得到当月所有员工的考勤数据的总数 -->
+	<select id = "getAllStaffAttendanceCountByMonthId" resultType = "java.lang.Long">
+	     select count(id)
+	        from dingsal_staff_attendance
+	        where atten_report_id=#{reportId}        
+	</select>
+	
+     <!-- 获取选中人员该月考勤详情(编辑考勤):管理员可以选择多个员工和该月考勤的ID来得到这些员工的考勤详情 -->
+	<select id="getMutiStaffAttendanceDetail" resultMap = "StaffAttendanceDisplayMap">
+	     select *
+	        from dingsal_staff_attendance
+	        where  atten_report_id= #{reportId} and	
+	              ding_staffid in           
+                 <foreach collection="staffIds" item="staffId" index="i" open="("
+												 separator="," close=")">
+											#{staffId}
+				</foreach>
+	</select>  
+	
+	<!-- 更新员工的考勤数据  -->
+	<update id="updateMutiStaffAttendance" parameterType="me.ywork.salary.entity.SalAttendanceEntity"> 
+            update dingsal_staff_attendance
+		        set attendance_day = #{attendanceDays},
+		        rest_days = #{restDays},
+		        work_hours = #{workHours},
+		        late_hours = #{lateHours},
+		        late_times = #{lateTimes},
+		        seriouslate_hours = #{seriousLateHours},
+		        seriouslate_times = #{seriousLateTimes},
+		        earlyleave_hours = #{earlyLeaveHours},
+		        earlyleave_times = #{earlyLeaveTimes},
+		        workabsence_times = #{workAbsenceTimes},
+		        offwork_absence_times = #{offWorkAbsenceTimes},
+		        unwork_days = #{unWorkDays},
+		        unwork_late_days = #{unWorkLateDays},
+		        out_days = #{outDays},
+		        busy_away_days = #{busyAwayDays},
+		        affair_leave_days = #{affairLeaveDays},
+		        sick_leave_days = #{sickLeaveDays},
+		        year_leave_days = #{yearLeaveDays},
+		        day_off_days = #{dayOffDays},
+		        marry_off_days = #{marryOffDays},
+		        maternity_leave_days = #{maternityLeaveDays},
+		        acco_maternity_days = #{accoMaternityDays},
+		        journey_days = #{journeyDays},
+		        other_days = #{otherDays},
+		        update_time = #{modifiedDate}	          
+		        where id=#{id}
+	</update>      	      	             
+</mapper>

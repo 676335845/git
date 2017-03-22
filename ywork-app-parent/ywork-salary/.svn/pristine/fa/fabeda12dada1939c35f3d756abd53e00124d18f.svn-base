@@ -1,0 +1,49 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.context.CallContext;
+import me.ywork.salary.model.CorpPassStateType;
+import me.ywork.salary.model.StaffBaseInfoModel;
+import me.ywork.salary.service.SalPassService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class SalPassServiceImpl implements SalPassService{
+    @Override
+    public Short getCorpPasswordOpenStatus(String corpId) {
+        if(StringUtils.isBlank(corpId)){
+            throw new IllegalArgumentException("getCorpPasswordOpenStatus param corpId is null or empty");
+        }
+        Short corpPassOpenStatus = CorpPassStateType.OPEN.getCode();
+        //TODO 得到企业密码锁的开启状态
+        return corpPassOpenStatus;
+    }
+
+    @Override
+    public StaffBaseInfoModel getStaffInfoByKeyword(String keyword) {
+        if(StringUtils.isBlank(keyword)){
+            throw new IllegalArgumentException("getStaffInfoByKeyword param keyword is null or empty.");
+        }
+        //TODO 得到员工的基本信息
+        StaffBaseInfoModel staffBaseInfoModel = new StaffBaseInfoModel();
+        return staffBaseInfoModel;
+    }
+
+    @Override
+    public Boolean resetStaffPassword(String staffId) {
+        if(StringUtils.isBlank(staffId)){
+            throw new IllegalArgumentException("resetStaffPassword param staffId is null or empty.");
+        }
+        //TODO 重置企业员工的密码
+        return Boolean.TRUE;
+    }
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+}

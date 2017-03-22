@@ -1,0 +1,76 @@
+package me.ywork.salary.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ *  薪资规则的具体信息
+ *
+ * Created by xiaobai on 2017/1/11.
+ */
+public class SalRuleDetailModel extends SalRuleModel implements Serializable{
+    /**
+     *  迟到早退扣款方式
+     */
+    private Short lateEarlyDeductType;
+    /**
+     *  迟到早退扣款数额 元/次或 元/分钟
+     */
+    private Double lateEarlyDeduct;
+    /**
+     *  严重迟到扣款
+     */
+    private Double seriousLateDeduct;
+    /**
+     *  旷工扣款
+     */
+    private Double stayAwayDeduct;
+    /**
+     * 规则适应人员
+     */
+    private List<String> ruleFitStaffs;
+
+    public SalRuleDetailModel() {
+        super();
+    }
+
+    public Short getLateEarlyDeductType() {
+        return lateEarlyDeductType;
+    }
+
+    public void setLateEarlyDeductType(Short lateEarlyDeductType) {
+        this.lateEarlyDeductType = lateEarlyDeductType;
+    }
+
+    public Double getLateEarlyDeduct() {
+        return lateEarlyDeduct;
+    }
+
+    public void setLateEarlyDeduct(Double lateEarlyDeduct) {
+        this.lateEarlyDeduct = lateEarlyDeduct;
+    }
+
+    public Double getSeriousLateDeduct() {
+        return seriousLateDeduct;
+    }
+
+    public void setSeriousLateDeduct(Double seriousLateDeduct) {
+        this.seriousLateDeduct = seriousLateDeduct;
+    }
+
+    public Double getStayAwayDeduct() {
+        return stayAwayDeduct;
+    }
+
+    public void setStayAwayDeduct(Double stayAwayDeduct) {
+        this.stayAwayDeduct = stayAwayDeduct;
+    }
+
+    public List<String> getRuleFitStaffs() {
+        return ruleFitStaffs;
+    }
+
+    public void setRuleFitStaffs(List<String> ruleFitStaffs) {
+        this.ruleFitStaffs = ruleFitStaffs;
+    }
+}

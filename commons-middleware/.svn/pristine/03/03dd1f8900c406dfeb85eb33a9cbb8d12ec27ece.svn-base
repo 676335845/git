@@ -1,0 +1,69 @@
+package com.heyi.epc;
+
+import com.heyi.epc.message.EpcKafkaMessage;
+import com.heyi.epc.message.EpcOnsMessage;
+import com.heyi.framework.messagebus.kafka.KafkaProducer;
+import com.heyi.framework.messagebus.kafka.KafkaTopics;
+import com.heyi.framework.messagebus.ons.OnsProducer;
+import com.heyi.framework.messagebus.ons.OnsTags;
+import com.heyi.framework.messagebus.ons.OnsTopics;
+import com.heyi.framework.messagebus.ons.codec.JsonJacksonCodec;
+
+/**
+ * 发布EPC事件工具类
+ * @author sulta
+ *
+ */
+public abstract class EpcEventUtils {
+	
+	private static JsonJacksonCodec codec = new JsonJacksonCodec();
+	
+	private static final boolean isTestEnv; 
+	
+	static {
+		isTestEnv = OnsTopics.ONLINE_ONS_CHANNEL.getTopic().contains("test");
+	}
+	
+	public static EpcEvent cloneEvent(EpcEvent event) {
+		return (EpcEvent) codec.decodeValue(codec.encodeValue(event));
+	}
+
+	public static void fireEvent(EpcEvent event, String nextEpcEventNo) {
+		EpcEvent newEvent = cloneEvent(event);
+		newEvent.setEpcEventNo(nextEpcEventNo);	
+		
+		EpcKafkaMessage message = new EpcKafkaMessage();
+		message.setSource(newEvent);
+		
+		if (newEvent.getEventMessageKafkaTopic() != null) {
+			KafkaProducer.getInstance().sendMessage(newEvent.getEventMessageKafkaTopic(), message);
+		} else {
+			KafkaProducer.getInstance().sendMessage(KafkaTopics.EPC_CHANNEL.getTopic(), message);
+		}
+	}
+	
+	/**
+	 * 
+	 * @param event
+	 * @param nextEpcEventNo
+	 */
+	public static void fireReliableEvent(EpcEvent event , String nextEpcEventNo) {	
+		if (isTestEnv) {
+			fireEvent(event, nextEpcEventNo);
+			return;
+		}
+		
+		EpcEvent newEvent = cloneEvent(event);
+		newEvent.setEpcEventNo(nextEpcEventNo);
+		
+		EpcOnsMessage message = new EpcOnsMessage();
+		message.setSource(newEvent);
+		message.setMessageKey("EpcOnsMessage_".concat(nextEpcEventNo));
+		
+		if (newEvent.getEventMessageOnsTag() != null) {
+			OnsProducer.getProducer(OnsTopics.ONLINE_ONS_CHANNEL).sendMessage(message, newEvent.getEventMessageOnsTag());
+		} else {
+			OnsProducer.getProducer(OnsTopics.ONLINE_ONS_CHANNEL).sendMessage(message, OnsTags.Tag_Epc);
+		}		
+	}
+}

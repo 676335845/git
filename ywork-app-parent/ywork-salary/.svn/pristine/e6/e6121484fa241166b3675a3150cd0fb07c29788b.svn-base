@@ -1,0 +1,51 @@
+			
+
+           package me.ywork.salary.repository;
+			
+			import java.util.Date;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+			
+			import me.ywork.base.repository.IRepository;
+			import me.ywork.page.PageData;
+			import me.ywork.page.Pageable;
+			import me.ywork.salary.entity.SalaryReportEntity;
+			import me.ywork.salary.model.MonthStaffSalDetailModel;
+			import me.ywork.salary.model.MonthStaffSalModel;
+			import me.ywork.salary.model.SalaryReportModel;
+			import me.ywork.salary.model.StaffSalInfoDetailModel;
+			
+			@Repository
+			public interface SalReportRepository extends IRepository<SalaryReportEntity>{
+			    /**
+			     *   获取所有月份工资表概要:获取所有月份的工资表，分页展示
+			     */
+			    List<SalaryReportModel> getAllMonthSalaryies(@Param("corpId")String corpId ,@Param("pageable")Pageable pageable);
+			
+			    /**
+			     *  获取该月份工资详情：根据工资表ID来获得该月的工资详情
+			     */
+			    List<MonthStaffSalModel> getSalaryDatailByMonthId(String corpId , Date monthId , Pageable pageable);
+			
+			    /**
+			     *  获取员工工资详情：根据员工ID去获取员工的工资详情
+			     */
+			    StaffSalInfoDetailModel getSalaryDatailByStaffId(String staffId);
+			
+			    /**
+			     *  锁定该月工资表：根据工资表ID来锁定该工资表
+			     */
+			    Integer  lockSalaryTablesByMonthId(@Param("corpId")String corpId , @Param("monthId")Date monthId ,@Param("reportState") Short reportState);
+			
+			    /**
+			     *  获取选中人员该月工资详情(修改浮动款项):传递工资表ID和多个员工ID去返回多个员工的工资数据
+			     */
+			    List<MonthStaffSalDetailModel> getSelectedStaffSalaryDetail(List<String> staffids , Date monthId);
+			
+			    /**
+			     *  保存修改:具体员工的工资情况可以修改,向后台传递的是修改后的工资数据
+			     */
+			    Integer updateSalariesOnStaffes(MonthStaffSalDetailModel monthStaffSalDetailModels);
+			}

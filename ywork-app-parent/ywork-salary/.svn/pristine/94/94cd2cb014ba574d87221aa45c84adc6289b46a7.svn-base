@@ -1,0 +1,83 @@
+
+	  /*==============================================================*/
+	 /* Table: dingdang_staff_sal_info  创建员工薪资表                  */
+	/*==============================================================*/
+	CREATE TABLE `dingsal_staff_sal_info` (
+		`id` VARCHAR(32) NOT NULL COMMENT '员工薪资表标识 -- id',
+		`ding_staffid` VARCHAR(32) NOT NULL COMMENT '叮当薪资员工标识  -- dingStaffId',
+		`sal_rule` INT(11) NOT NULL COMMENT '薪资规则 -- salRule',
+		`should_pay_sal` INT(11) NOT NULL COMMENT '应发工资 -- shouldPaySal',
+		`create_time` DATETIME NOT NULL COMMENT '员工薪资表创建时间 -- createTime',
+		`update_time` DATETIME NOT NULL COMMENT '员工薪资表更改时间 -- updateTime',
+		PRIMARY KEY (`id`)
+	)
+	COMMENT='员工薪资表--叮当薪资'
+	COLLATE='utf8_general_ci'
+	ENGINE=InnoDB
+	;
+
+
+	
+      /*==============================================================*/
+	 /* Table: dingdang_staff_sal_info  创建薪资自定义字段表                  */
+	/*==============================================================*/
+	CREATE TABLE `dingsal_field_item` (
+		`id` VARCHAR(32) NOT NULL COMMENT '字段标识 -- itemId',
+		`item_name` VARCHAR(50) NOT NULL COMMENT '员工薪资字段名字 -- itemName',
+		`item_value` DOUBLE NULL DEFAULT NULL COMMENT '字段值 -- itemValue',
+		`item_type` INT(11) NULL DEFAULT NULL COMMENT '字段的类型',
+		`staff_sal_id` VARCHAR(32) NULL DEFAULT NULL COMMENT '员工薪资信息的ID -- staffSalId',
+		PRIMARY KEY (`id`)
+	)
+	COMMENT='自定义字段表--叮当薪资'
+	COLLATE='utf8_general_ci'
+	ENGINE=InnoDB
+	;
+
+
+	
+--   insert into dingsal_field_item (id,parent_item_id,item_name,item_value)values("34675564","4623564622","交通补助",2343532);
+--   insert into dingsal_field_item (id,parent_item_id,item_name,item_value)values("86754w3q35","4623564622","生活补助",2343);
+--   insert into dingsal_field_item (id,parent_item_id,item_name,item_value)values("43654323435","4623564622","基本工资",100);
+--   insert into dingsal_field_item (id,parent_item_id,item_name,item_value)values("234562343","4623564622","岗位工资",100);
+--   insert into dingsal_field_item (id,parent_item_id,item_name,item_value)values("23465435","4623564622","公积金扣款",100);
+--   insert into dingsal_field_item (id,parent_item_id,item_name,item_value)values("854356","4623564622","社保扣款",100);
+--     <!--插入员工薪资-->
+--     
+--     大侠
+--     Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("21324355","12354621",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--     刘丹
+--      Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("2132435","21343512",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--           
+--     王五
+--       Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("213454634","2134356423",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--    alise
+--       Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("5432q324","213454523",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--     大致
+--        Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("867543453","213456524",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--     
+--     刘翔
+--       Insert into staff_sal_info (id,staff_id,sal_rule,total_sal,sal_effect_time,
+--      base_salary, job_salary,allowance,
+--	travel_assistance,pub_funds,social_security
+--     )values("346543756","2136534221",1,100,"20170101",5000,2000,1000,2000,1334,21443);
+--         
+    

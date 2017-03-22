@@ -1,0 +1,74 @@
+package me.ywork.salary.service.impl;
+
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.model.AttendanceModel;
+import me.ywork.salary.model.StaffAttendanceModel;
+import me.ywork.salary.service.AttendanceService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+public class AttendanceServiceImpl implements AttendanceService{
+
+    @Override
+    public PageData<AttendanceModel> getAllMonthesAttendanceData(String corpId , Pageable pageable) {
+        if(StringUtils.isBlank(corpId)){
+            throw new IllegalArgumentException("getAllMonthesAttendanceData param corpId is null or empty");
+        }
+        //TODO 去持久层获得所有月度的考勤数据
+
+        List<AttendanceModel> attendanceModels = new ArrayList<AttendanceModel>();
+
+        return new PageDataImpl<AttendanceModel>(attendanceModels ,pageable);
+    }
+
+    @Override
+    public PageData<StaffAttendanceModel> getAllStaffAttendanceByMonthId(String corpId, String monthId , Pageable pageable) {
+        if(StringUtils.isBlank(corpId)){
+            throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param corpId is null or empty");
+        }
+        if(StringUtils.isBlank(monthId)){
+            throw new IllegalArgumentException("getAllStaffAttendanceByMonthId param monthId is null or empty");
+        }
+        //TODO 去持久层获得当月度所有员工的考勤数据
+        List<StaffAttendanceModel> staffAttendanceModels = new ArrayList<StaffAttendanceModel>();
+        return new PageDataImpl<StaffAttendanceModel>(staffAttendanceModels , pageable);
+    }
+
+    @Override
+    public List<StaffAttendanceModel> getMutiStaffAttendanceDetail(List<String> staffIds, String monthId) {
+        if(staffIds == null){
+            throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is null.");
+        }
+        if(staffIds.isEmpty()){
+            throw new IllegalArgumentException("getMutiStaffAttendanceDetail param staffIds is empty.");
+        }
+        if(StringUtils.isBlank(monthId)){
+            throw new IllegalArgumentException("getMutiStaffAttendanceDetail param monthId is null or empty.");
+        }
+        List<StaffAttendanceModel> staffAttendanceModels = new ArrayList<StaffAttendanceModel>();
+        staffAttendanceModels.add(new StaffAttendanceModel());
+        //TODO 去持久层选择的员工的当月度的考勤数据
+        return staffAttendanceModels;
+    }
+
+    @Override
+    public Boolean updateMutiStaffAttendance(List<StaffAttendanceModel> staffAttendances) {
+        if(staffAttendances == null){
+            throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is null.");
+        }
+        if(staffAttendances.isEmpty()){
+            throw new IllegalArgumentException("updateMutiStaffAttendance param staffAttendances is empty.");
+        }
+        //TODO 去持久层获得更新考勤数据的返回情况
+        return Boolean.TRUE;
+    }
+}

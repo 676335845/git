@@ -1,0 +1,118 @@
+			
+
+           package me.ywork.salary.model;
+			
+			import java.io.Serializable;
+			
+			/**
+			 * Created by xiaobai on 2017/1/11.
+			 */
+			public class MonthStaffSalDetailModel extends StaffBaseInfoModel implements Serializable{
+			    /**
+			     *  员工月工资ID
+			     */
+				private String staffMonthSalId;;
+			    /**
+			     *  年终奖
+			     */
+			    private Double annualBonus;
+
+			    /**
+			     *  当月奖金
+			     */
+			    private Double monthBonus;
+
+			    /**
+			     * 其他税前补款
+			     */
+			    private Double otherPretaxSal;
+
+			    /**
+			     * 其他税后补款
+			     */
+			    private Double otherAftertaxSal;
+			    /**
+			     * 其他税后补款
+			     */
+			    private String  otherAftertaxSalNote;
+			    /**
+			     * 其他税前扣款
+			     */
+			    private Double otherPretaxdeduct;
+
+			    /**
+			     * 其他税后扣款
+			     */
+			    private Double otherAftertaxDeduct;
+
+			
+			    public MonthStaffSalDetailModel() {
+			        super();
+			    }
+			
+			    public Double getAnnualBonus() {
+			        return annualBonus;
+			    }
+			
+			    public void setAnnualBonus(Double annualBonus) {
+			        this.annualBonus = annualBonus;
+			    }
+			
+			    public Double getMonthBonus() {
+			        return monthBonus;
+			    }
+			
+			    public void setMonthBonus(Double monthBonus) {
+			        this.monthBonus = monthBonus;
+			    }			
+			
+			    public Double getOtherPretaxSal() {
+			        return otherPretaxSal;
+			    }
+			
+			    public void setOtherPretaxSal(Double otherPretaxSal) {
+			        this.otherPretaxSal = otherPretaxSal;
+			    }
+			
+
+
+				public Double getOtherPretaxdeduct() {
+			        return otherPretaxdeduct;
+			    }
+			
+			    public void setOtherPretaxdeduct(Double otherPretaxdeduct) {
+			        this.otherPretaxdeduct = otherPretaxdeduct;
+			    }
+
+				public String getStaffMonthSalId() {
+					return staffMonthSalId;
+				}
+
+				public void setStaffMonthSalId(String staffMonthSalId) {
+					this.staffMonthSalId = staffMonthSalId;
+				}
+
+
+				public Double getOtherAftertaxSal() {
+					return otherAftertaxSal;
+				}
+
+				public void setOtherAftertaxSal(Double otherAftertaxSal) {
+					this.otherAftertaxSal = otherAftertaxSal;
+				}
+
+				public String getOtherAftertaxSalNote() {
+					return otherAftertaxSalNote;
+				}
+
+				public void setOtherAftertaxSalNote(String otherAftertaxSalNote) {
+					this.otherAftertaxSalNote = otherAftertaxSalNote;
+				}
+				public Double getOtherAftertaxDeduct() {
+					return otherAftertaxDeduct;
+				}
+
+				public void setOtherAftertaxDeduct(Double otherAftertaxDeduct) {
+					this.otherAftertaxDeduct = otherAftertaxDeduct;
+				}				
+			}

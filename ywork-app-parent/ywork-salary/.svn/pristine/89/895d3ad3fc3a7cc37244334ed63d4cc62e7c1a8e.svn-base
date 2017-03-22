@@ -1,0 +1,452 @@
+package me.ywork.salary.service.impl;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.redisson.cache.CacheableService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+import com.heyi.utils.IdGenerator;
+
+import me.ywork.context.CallContext;
+import me.ywork.oss.OSSObjectService;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.Pageable;
+import me.ywork.salary.entity.SalStaffBaseInfoEntity;
+import me.ywork.salary.entity.SalStaffSalReportEntity;
+import me.ywork.salary.entity.SalSysFieldItemEntity;
+import me.ywork.salary.enumeration.ExcelTimeType;
+import me.ywork.salary.enumeration.SalDetailShowType;
+import me.ywork.salary.exception.StaffNotExistException;
+import me.ywork.salary.model.SalInfoDetailModel;
+import me.ywork.salary.model.SalInfoExcelModel;
+import me.ywork.salary.model.SalStaffBaseInfoModel;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.repository.SalInfoRepository;
+import me.ywork.salary.repository.SalReportRepository;
+import me.ywork.salary.repository.SalStaffBaseInfoRepository;
+import me.ywork.salary.repository.SalSynCorpInfoRepository;
+import me.ywork.salary.service.SalBaseService;
+import me.ywork.salary.service.SalCalcuSalService;
+import me.ywork.salary.service.SalInfoService;
+import me.ywork.salary.util.WorkBookUtil;
+
+/**
+ * Created by xiaobai on 2017/1/11.
+ */
+@Service
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+public class SalInfoServiceImpl implements SalInfoService {
+	@Autowired
+	private SalInfoRepository staffSalInfoRepository;
+	@Autowired
+	private SalStaffBaseInfoRepository staffBaseInfoRepository;
+	@Autowired
+	private SalReportRepository salReportRepository;
+	@Autowired 
+	private WorkBookUtil workBookUtil;
+	@Autowired
+	private SalSynCorpInfoRepository salSynCorpInfoRepository;
+	// 缓存机制
+	@Autowired
+	private CacheableService cacheableService;
+	@Autowired
+	private SalCalcuSalService saCalcuSalService;
+	@Autowired
+	private SalBaseService salBaseService;
+	private static final Logger logger = LoggerFactory.getLogger(SalInfoServiceImpl.class);
+
+	@Override
+	public PageData<SalStaffBaseInfoModel> getStaffSalInfos(String corpId, Pageable pageable) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getStaffSalInfos param corpId is null or empty.");
+		}
+		if(pageable == null){
+			throw new IllegalArgumentException("getStaffSalInfos param pageable is null.");
+		}
+		List<SalStaffBaseInfoModel> staffSalInfoModels = null;
+		int pageNo = pageable.getPageNo();// 当前页数
+		int pageSize = pageable.getPageSize();//一页显示的最大数量 
+	
+		staffSalInfoModels = staffBaseInfoRepository.getStaffSalInfos(corpId, (pageNo - 1) * pageSize, pageSize);
+		
+		String staffId = null;
+		Integer updateShouldPaySalRs =null;
+		for(SalStaffBaseInfoModel salStaffBaseInfoModel:staffSalInfoModels){
+			staffId = salStaffBaseInfoModel.getDingStaffId();
+			Double shouldPaySal = null;
+			if(salStaffBaseInfoModel.getShouldPaySal() ==null){
+				//找到该员工所有的的薪资字段
+				List<SalSysFieldItemModel>  salSysFieldItemList = staffBaseInfoRepository.getStaffFieldItems(corpId,staffId);
+				
+				if(salSysFieldItemList.isEmpty() ==Boolean.FALSE){
+					shouldPaySal =0.0;
+				}
+
+					for(SalSysFieldItemModel salSysFieldItem:salSysFieldItemList){
+					     	shouldPaySal+=(long)salSysFieldItem.getItemValue();//得到该人员的工资组成部分的值
+					}
+				if(shouldPaySal != null){
+					//存储该员工的工资总数
+					updateShouldPaySalRs = staffSalInfoRepository.saveStaffShouldPaySal(corpId , staffId,shouldPaySal);
+					if(updateShouldPaySalRs >0){
+						salStaffBaseInfoModel.setShouldPaySal(shouldPaySal);
+					}
+				}			
+			}
+			salStaffBaseInfoModel.setDeptName(salBaseService.getStaffAllDeptName(corpId, staffId));
+		}
+		
+		Long totalCount =staffBaseInfoRepository.getStaffSalInfosCount(corpId);
+		pageable.setTotalCount(totalCount);
+		return new PageDataImpl<SalStaffBaseInfoModel>(staffSalInfoModels, pageable);
+	}
+
+	@Override
+	public SalInfoDetailModel getSalInfosByStaffId(String corpId ,String reportId, Short showType,String dingStaffId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getSalaryInfosByStaffId param corpId is null or empty.");
+		}
+		if(StringUtils.isBlank(dingStaffId)){
+			throw new IllegalArgumentException("getSalaryInfosByStaffId param dingStaffId is null or empty.");
+		}
+		SalInfoDetailModel staffSalInfoDetailModel = new SalInfoDetailModel();
+		List<SalSysFieldItemModel> salSysFieldItemList = staffBaseInfoRepository.getStaffFieldItems(corpId , dingStaffId);//得到员工的薪资条目
+		
+		/**
+		 * 为员工薪资组成部分的条目进行封装
+		 */
+		if(showType == SalDetailShowType.MonthSalType.getCode()){//若是月度薪资报表中展示的员工的薪资,则要展示更为详细的信息
+			SalStaffSalReportEntity  salStaffSalReportEntity =	salReportRepository.getStaffMonthSalEntity(reportId, dingStaffId);
+			salBaseService.initCorpStaffReportSalItem(salStaffSalReportEntity,salSysFieldItemList);//对组成部分的条目进行封装
+		}
+		
+		staffSalInfoDetailModel.setItemModels(salSysFieldItemList);
+		
+		return staffSalInfoDetailModel;
+	}
+
+	@Override
+	public List<SalInfoDetailModel> getMutiStaffSalInfosDetail(String corpId, List<String> staffids) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("getMutiStaffSalInfosDetail  param corpId is null or empty.");
+		}
+		List<SalInfoDetailModel> staffSalInfoDetailModels = null;
+		staffSalInfoDetailModels = staffSalInfoRepository.getMutiStaffSalInfosDetail(corpId, staffids);
+		for (SalInfoDetailModel staffSalInfoDetailModel : staffSalInfoDetailModels) {
+			String staffId = staffSalInfoDetailModel.getDingStaffId();
+			List<SalSysFieldItemModel> fieldItemModels = staffBaseInfoRepository.getStaffFieldItems(corpId,staffId);
+			staffSalInfoDetailModel.setItemModels(fieldItemModels);
+		}
+
+		return staffSalInfoDetailModels;
+	}
+
+	@Override
+	public Boolean updateMutiStaffInfos(List<SalInfoDetailModel> staffSaInfos) {
+		if (staffSaInfos == null) {
+			throw new IllegalArgumentException("updateMutiStaffInfos param staffSaInfos is null.");
+		}
+		if (staffSaInfos.isEmpty()) {
+			throw new IllegalStateException("updateMutiStaffInfos param staffSaInfos  is empty.");
+		}
+		int size = 0;
+		for (SalInfoDetailModel staffSalInfoDetailModel : staffSaInfos) {
+			for (SalSysFieldItemModel fieldItemModel : staffSalInfoDetailModel.getItemModels()) {
+				if (StringUtils.isBlank(fieldItemModel.getItemId())) {
+					fieldItemModel.setItemId(IdGenerator.newId());
+					fieldItemModel.setRelativeId(staffSalInfoDetailModel.getId());
+					fieldItemModel.setCreateDate(new Date());
+					fieldItemModel.setModifiedDate(new Date());
+					// 新增字段
+					staffBaseInfoRepository.addNewField(fieldItemModel);
+				} else {
+					SalSysFieldItemEntity fieldItem = staffBaseInfoRepository.getItemEntity(fieldItemModel.getItemId());
+					if(fieldItem == null)
+					{
+						return Boolean.FALSE;
+					}
+					fieldItemModel.setItemId(fieldItem.getId());
+					fieldItemModel.setItemName(fieldItem.getItemName());
+					fieldItemModel.setItemType(fieldItem.getItemType());
+					fieldItemModel.setItemValue(fieldItem.getItemValue());
+					fieldItemModel.setModifiedDate(new Date());
+					// 更新字段
+					staffBaseInfoRepository.updateField(fieldItemModel);
+				}
+			}
+			size++;
+		}
+		if (size == staffSaInfos.size()) {
+			return Boolean.TRUE;
+		} 
+		return Boolean.FALSE;	
+	}
+	
+	@Override
+	public Integer calcuUnSetSalStaffNum(String corpId) {
+		if (StringUtils.isBlank(corpId)) {
+			throw new IllegalArgumentException("calcuUnSetSalStaffNum  param corpId is null or empty.");
+		}
+		Integer num = staffSalInfoRepository.calcuUnSetSalStaffNum(corpId);
+		return num;
+	}
+
+	@Override
+	public SalInfoExcelModel parseSalInfoExcel(CallContext callContext, String fileId) {
+		if(callContext == null){
+			throw new IllegalArgumentException("parseSalInfoExcel  param callContext is null.");
+		}
+		if(StringUtils.isBlank(fileId)){
+			throw new IllegalArgumentException("parseSalInfoExcel  param fileId is null.");
+		}
+		String corpId = callContext.getCorpId();
+		String userId = callContext.getUserId();
+		if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("parseSalInfoExcel  param corpId is null.");
+		}
+		InputStream instream;
+		Workbook wb = null;
+		try {
+			instream = OSSObjectService.getObject("alidsalarybill", fileId);		
+			if(fileId.endsWith(".xlsx")){
+				try{
+					wb = new XSSFWorkbook(instream);
+				}catch(Exception e){
+					wb = new HSSFWorkbook(instream);
+				}
+			}else{
+				try{
+					wb = new HSSFWorkbook(instream);
+				}catch(Exception e){
+					wb = new XSSFWorkbook(instream);
+				}
+			}
+		} catch (IOException e1) {
+			//e1.printStackTrace();
+			logger.error("parseSalInfoExcel--".concat(corpId).concat("--fileId:").concat(fileId).concat("--不存在！"));
+			return new SalInfoExcelModel();
+		}
+       if(wb==null){//若excel文件为空
+    	   logger.warn("parseSalInfoExcel --".concat(corpId).concat("--XSSFWorkbook is null"));
+    	   return new SalInfoExcelModel();
+       }
+		
+		List<SalStaffBaseInfoModel> salStaffInfos=new ArrayList<SalStaffBaseInfoModel>();
+		List<String> detailSalTitle=new ArrayList<>();//存储员工自定义字段的集合
+		SalInfoExcelModel salInfoExcelModel =new SalInfoExcelModel();//封装员工薪资报表信息的数据包s
+		SalStaffBaseInfoModel salStaffBaseInfoModel =null;//封装员工薪资信息的数据包
+		int rowCount=0; //记录行数的标志器
+		int failCount=0;//记录失败数目的标志器
+
+		Map<String,Integer> titleAddress=new HashMap<String,Integer>();//存储字段标题的map
+		for(int sheetCount=0;sheetCount<wb.getNumberOfSheets();sheetCount++){//循环所有的sheet
+			if(sheetCount>0){//如果文件中表格的数目大于1，则跳出循环
+				break;
+			}
+			Sheet sheet = wb.getSheetAt(sheetCount);//得到文件中的表格
+			int totalRowNum = sheet.getLastRowNum();	// 表格的行总数		
+			for(rowCount=0;rowCount<=totalRowNum;rowCount++){//循环表格中所有的行
+				if(rowCount<=1){
+					if(rowCount==1){//如果是表格中的第二行，得到所有的标题，并把标题加入到存储标题的集合中，同时也把标题的名字和列的下标值加入到map中
+						Row titleSalRow =sheet.getRow(rowCount);
+					   for(int k=4;k<titleSalRow.getLastCellNum();k++){
+						  detailSalTitle.add( workBookUtil.getCellValue(titleSalRow.getCell(k)));
+					   }
+					   Iterator<Cell> cellIterator = titleSalRow.cellIterator();
+					   int beginNum=0;
+					   while(cellIterator.hasNext()){
+							Cell cell = cellIterator.next();
+							String cellTitle = workBookUtil.getCellValue(cell);
+							titleAddress.put(cellTitle , beginNum);
+							   beginNum++;
+					   }
+					}
+					continue;
+				}
+				Row row = sheet.getRow(rowCount);
+
+				try{
+					salStaffBaseInfoModel = new SalStaffBaseInfoModel();
+					String dingStaffId = workBookUtil.getCellValue(row.getCell(titleAddress.get("员工UserID")));
+					if(StringUtils.isBlank(dingStaffId)){
+						throw new Exception("员工钉钉ID不能为空");
+					}
+					SalStaffBaseInfoModel salStaff =staffBaseInfoRepository.getOrgStaffInfo(corpId, dingStaffId);
+	               if(salStaff ==null){
+						throw new StaffNotExistException();
+					}
+
+	                salStaffBaseInfoModel.setId(salStaff.getId());
+					salStaffBaseInfoModel.setDeptName(workBookUtil.getCellValue(row.getCell(titleAddress.get("部门"))));
+					salStaffBaseInfoModel.setStaffName(workBookUtil.getCellValue(row.getCell(titleAddress.get("姓名"))));
+					salStaffBaseInfoModel.setJobNum(workBookUtil.getCellValue(row.getCell(titleAddress.get("工号"))));
+					salStaffBaseInfoModel.setDingStaffId(dingStaffId);
+				    
+					 List<SalSysFieldItemModel> sysFields = new  ArrayList<SalSysFieldItemModel>();
+					 SalSysFieldItemModel salSysFieldItemModel =null;
+					for(int k=4;k<row.getLastCellNum();k++){//循环得到员工所有薪资字段的值
+						Cell  cell=	row.getCell(k);
+						String cellName = workBookUtil.getCellValue(sheet.getRow(1).getCell(k));
+						String cellValue  = workBookUtil.getCellValue(cell);
+						if(StringUtils.isBlank(cellValue)){
+							cellValue="0";
+						}
+						salSysFieldItemModel = new SalSysFieldItemModel();
+						salSysFieldItemModel.setItemName(cellName);
+
+						salSysFieldItemModel.setItemValue(workBookUtil.getLongNum(cellValue,ExcelTimeType.DOUBLE.getCode()));
+						sysFields.add(salSysFieldItemModel);
+					}
+					salStaffBaseInfoModel.setSalFields(sysFields);			
+				}
+				catch(StaffNotExistException e){
+					salStaffBaseInfoModel.setFailReason("该人员不在组织架构！");
+					failCount++;
+				}catch(Exception e){
+					salStaffBaseInfoModel.setFailReason("单位不合格或员工钉钉ID为空！");
+					failCount++;
+				}
+				salStaffInfos.add(salStaffBaseInfoModel);
+			}}
+	    	String  cachekey = corpId+userId+System.currentTimeMillis();
+	    	Integer totalCount =salStaffInfos.size();
+		    salInfoExcelModel.setDetailTitle(detailSalTitle);
+		    salInfoExcelModel.setCacheKey(cachekey);
+		    salInfoExcelModel.setPageNo(1);
+	     
+		    salInfoExcelModel.setTotalCount(totalCount);
+		    salInfoExcelModel.setFailCount(failCount);
+		    Integer successCount = totalCount-failCount;
+		    salInfoExcelModel.setSuccessCount(successCount);
+		    salInfoExcelModel.setPageSize(50);
+		    logger.info("parseSalInfoExcel --".concat(corpId).concat("--totalCount:"+totalCount+"")
+		    		.concat("--successCount:"+successCount+"").concat("failCount"+failCount+""));
+		    if(totalCount<=50&&totalCount>0){
+		    	salInfoExcelModel.setTotalPages(1);
+		    }else{
+		    	salInfoExcelModel.setTotalPages(totalCount/50+1);
+		    }
+			salInfoExcelModel.setSalInfos(salStaffInfos);
+			if(StringUtils.isNotBlank(salInfoExcelModel.getCacheKey())){//存缓存
+				salInfoExcelModel.setSalInfos(salStaffInfos);
+				cacheableService.setRawObjectInCache(cachekey , salInfoExcelModel, 1, TimeUnit.DAYS);
+				logger.info("parseSalInfoExcel -- ".concat(corpId).concat("REDIS 存储薪资数据成功,cahcekey是:"+salInfoExcelModel.getCacheKey()));
+			}
+			 if(totalCount>50){
+				  logger.info("parseSalInfoExcel -- ".concat(corpId).concat("--上传薪资数据 总数大于50，截取50条数据"));
+				 salStaffInfos= salStaffInfos.subList(0, 50);
+				 salInfoExcelModel.setSalInfos(salStaffInfos);
+			 }
+		    return salInfoExcelModel;
+	}
+
+	@Override
+	public Boolean commitSalInfoExcel(CallContext callContext, String cacheKey) {
+		if(callContext==null){
+			throw new IllegalArgumentException("commitSalInfoExcel param callContext is null");
+		}
+		if(StringUtils.isBlank(cacheKey)){
+			throw new IllegalArgumentException("commitSalInfoExcel param cacheKey is null or empty");
+		}
+		
+		String corpId=callContext.getCorpId();
+	   if(StringUtils.isBlank(corpId)){
+			throw new IllegalArgumentException("commitSalInfoExcel param corpId is null or empty");
+		}
+		Date nowDate= new Date();
+		SalInfoExcelModel salInfoExcelModel = (SalInfoExcelModel) cacheableService.getRawObjectFromCache(cacheKey);
+		List<SalStaffBaseInfoModel> salInfos = salInfoExcelModel.getSalInfos();
+		SalStaffBaseInfoEntity salStaffBaseInfoEntity = null;
+		SalStaffBaseInfoModel salStaffBaseInfoModel = null;
+		String id=null;
+		String staffId=null;
+		for(SalStaffBaseInfoModel salInfo:salInfos){
+			staffId = salInfo.getDingStaffId();
+			salStaffBaseInfoModel = staffBaseInfoRepository.getStaffBaseInfo(corpId, salInfo.getDingStaffId());//查找该人员是否在应用内存在
+			if(salStaffBaseInfoModel == null){
+				logger.info("commitSalInfoExcel -- ".concat(corpId).concat("-- 抓取员工ID为：").concat(staffId).concat("到应用下！"));
+				//向数据库中初始化员工的基本信息
+			    salStaffBaseInfoEntity =new SalStaffBaseInfoEntity();
+			    id =IdGenerator.newId();
+			    salStaffBaseInfoEntity.setId(id);
+			    salStaffBaseInfoEntity.setCorpId(corpId);
+			    salStaffBaseInfoEntity.setCreateDate(nowDate);
+			    salStaffBaseInfoEntity.setDingStaffId(staffId);
+			    salStaffBaseInfoEntity.setModifiedDate(nowDate);
+			    salSynCorpInfoRepository.synchStaffBaseInfo(salStaffBaseInfoEntity);
+			}else{		
+		    	//根据员工的信息删除与员工原先的薪资信息
+			   staffBaseInfoRepository.deleteStaffSalField(salStaffBaseInfoModel.getId());
+			}
+			//新增员工的薪资信息
+			List<SalSysFieldItemModel> salFields = salInfo.getSalFields();
+			for(SalSysFieldItemModel salF:salFields){
+				if(salF.getItemValue()==0.0){
+					continue;
+				}
+				salF.setCreateDate(nowDate);
+				salF.setModifiedDate(nowDate);
+				salF.setItemId(IdGenerator.newId());
+				if(salStaffBaseInfoModel == null){
+				   salF.setRelativeId(id);
+				}else{
+					salF.setRelativeId(salStaffBaseInfoModel.getId());
+				}
+				staffBaseInfoRepository.addNewSalInfoField(salF);
+			}
+			//计算该员工的应发薪资总数
+			staffId = salInfo.getDingStaffId();
+			Double shouldPaySal = null;
+			if(salInfo.getShouldPaySal() ==null){
+				Integer updateShouldPaySalRs =null;
+				//找到该员工所有的的薪资字段
+				List<SalSysFieldItemModel>  salSysFieldItemList = staffBaseInfoRepository.getStaffFieldItems(corpId,staffId);
+				if(salSysFieldItemList.isEmpty() ==Boolean.FALSE){
+					shouldPaySal =0.0;
+				}
+				for(SalSysFieldItemModel salSysFieldItem:salSysFieldItemList){
+				     	shouldPaySal+=(long)salSysFieldItem.getItemValue();//得到该人员的工资组成部分的值
+				}
+				if(shouldPaySal != null){
+					//存储该员工的工资总数
+					updateShouldPaySalRs = staffSalInfoRepository.saveStaffShouldPaySal(corpId , staffId,shouldPaySal);
+				}		
+			}
+		}
+		/**
+		 * 重新计算企业员工的工资和薪资报表的总工资
+		 */		
+		saCalcuSalService.calcuSalReportAutomatic(corpId);
+		return Boolean.TRUE;
+	}
+	
+
+	@Override
+	public boolean deleteById(CallContext callContext, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+}

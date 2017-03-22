@@ -1,0 +1,46 @@
+package me.ywork.salary.repository;
+
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import me.ywork.base.repository.IRepository;
+import me.ywork.page.PageData;
+import me.ywork.page.Pageable;
+import me.ywork.salary.entity.StaffSalInfoEntity;
+import me.ywork.salary.model.StaffSalInfoDetailModel;
+import me.ywork.salary.model.StaffSalInfoModel;
+
+@Repository
+public interface StaffSalInfoRepository extends IRepository<StaffSalInfoEntity>{
+    /**
+     *   获取员工薪详情:获取所有员工的薪资规则，要分页
+     */
+    PageData<StaffSalInfoModel> getStaffSalaryInfos(String corpId , Pageable pageable);
+
+    /**
+     *   获取员工规则详情:通过员工ID来获取该员工的薪资规则
+     */
+    StaffSalInfoDetailModel getSalaryInfosByStaffId(String staffId);
+
+    /**
+     *   获取选中人员工资规则详情(编辑规则):通过编辑可以获取多个人的薪资规则
+     */
+    List<StaffSalInfoDetailModel> getMutiStaffSalaryInfosDetail(String corpId , List<String> staffids);
+
+    /**
+     *   提交编辑数据:批量修改多个人的薪资
+     */
+    Boolean updateMutiStaffInfos(List<StaffSalInfoDetailModel> staffRules);
+
+    /**
+     *   下载薪资模板
+     */
+    Object downloadSalaryTemplet();
+
+    /**
+     *   上传薪资模板
+     *   线上文件key：654465465465
+     */
+    Object uploadSalaryTemplet(String fileKey);
+}

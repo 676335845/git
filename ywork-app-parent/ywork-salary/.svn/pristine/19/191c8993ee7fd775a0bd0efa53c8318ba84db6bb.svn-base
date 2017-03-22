@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.ywork.salary.repository.AttendanceRepository">
+    <!--  获取所有月份工资表概要:获取所有月份的工资表，分页展示 -->
+    <select id="getAllMonthSalaryies" resultType="me.ywork.salary.model.SalaryReportModel">
+       select *
+           from sal_report
+           where corp_id=#{corpId}
+                 limit #{pageable.pageNo},#{pageable.pageSize}
+    </select>
+    
+    <!--  获取该月份工资详情：根据工资表ID来获得该月的工资详情 -->
+    <select id = "getSalaryDatailByMonthId" resultType="me.ywork.salary.model.MonthStaffSalModel">
+       select 
+           month_sal as monthSal,
+           sal_deduct as salDeduct,
+           replace_deduct as replaceDeduct,
+           actual_sal as actualSal
+	          from staff_month_sal
+	          where corp_id=#{corpId} and
+	                create_time = #{monthId}
+	                limit #{pageable.pageNo},#{pageable.pageSize}
+    </select>
+    
+    <!-- 根据员工ID去获取员工的工资详情 -->
+    <select id="getSalaryDatailByStaffId" resultType="me.ywork.salary.model.StaffSalInfoDetailModel">
+       select 
+	        sBaseInfo.staff_name as staffName,
+	        sSalInfo.base_salary as baseSalary
+	        sSalInfo.job_salary as jobSalary,
+	        sSalInfo.allowance,
+	        sSalInfo.travel_assistance as travelAssistance,
+	        sMonthSal.pub_funds as pubFunds,
+	        sMonthSal.social_security as socialSecurity
+            from 
+               staff_baseinfo sBaseInfo,
+               staff_month_sal sMonthSal,
+               staff_sal_info sSalInfo
+               where sBaseInfo.staff_id = sMonthSal.staff_id and
+                     sMonthSal.staff_id = sSalInfo.staff_id and
+                     sMonthSal.create_time = #{monthDate} and
+                     sMonthSal.staff_id = #{staffId} and
+                     sBaseInfo.corp_id = #{corpId}                         
+    </select>
+    
+    <!-- 根据工资表ID来锁定该工资表 -->
+    <update id="lockSalaryTablesByMonthId">
+        update sal_report
+           set sal_report_state = #{reportState}
+            where corp_id=#{corpId} and
+                  create_time=#{monthDate}
+    </update>
+    
+    <!-- 获取选中人员该月工资详情(修改浮动款项):传递工资表ID和多个员工ID去返回多个员工的工资数据 -->
+    <select id="getSelectedStaffSalaryDetail" resultType="me.ywork.salary.model.MonthStaffSalDetailModel">
+      select
+	       id,
+	       staff_name as StaffName
+	       annual_bonus as annualBonus,
+		   annual_bonus_comment as annualBonusComment,
+		   month_bonus as monthBonus,
+		   month_bonus_comment as monthBonusComment,
+		   other_pretax_sal as otherPretaxSal,
+		   other_pretax_sal_comment as otherPretaxSalComment,
+           other_after_pretax_sal as otherAfterPretaxSal,
+           other_after_pretax_sal_comment as otherAfterPretaxSalComment,
+           other_pretax_deduct as otherPretaxDeduct,
+           other_pretax_deduct_comment as otherPretaxDeductComment,
+           other_after_pretax_deduct as otherAfterPretaxDeduct,
+           other_after_pretax_deduct_comment as otherAfterPretaxDeductComment 
+            from 
+               staff_baseinfo sBaseInfo,
+               staff_month_sal sMonthSal
+               where sBaseInfo.staff_id = sMonthSal.staff_id and
+                     sMonthSal.create_time = #{monthDate} and
+                     sBaseInfo.corp_id = #{corpId}    
+                     staff_id in           
+	                 <foreach collection="staffIds" item="staffId" index="i" open="("
+													 separator="," close=")">
+												#{staffId}
+					</foreach>            
+    </select>
+
+    <!-- 具体员工的工资情况可以修改,向后台传递的是修改后的工资数据 -->
+    <update id="updateSalariesOnStaffes">
+     update staff_month_sal 
+            set annualBonus = #{annualBonus,
+                annualBonusComment = #{annualBonusComment},
+                monthBonus = #{monthBonus},
+                monthBonusComment = #{monthBonusComment},
+                otherPretaxSal = #{otherPretaxSal},
+                otherPretaxSalComment = #{otherPretaxSalComment},
+                otherAfterPretaxSal = #{otherAfterPretaxSal},
+                otherAfterPretaxSalComment = #{otherAfterPretaxSalComment},
+                otherPretaxdeduct = #{otherPretaxdeduct},
+                otherPretaxdeductComment = #{otherPretaxdeductComment},
+                otherAfterPretaxDeduct = #{otherAfterPretaxDeduct},
+                otherAfterPretaxDeductComment = #{otherAfterPretaxDeductComment}
+            where id=#{id}          
+    </update>
+</mapper>

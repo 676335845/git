@@ -1,0 +1,302 @@
+package me.ywork.salary.controller;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
+
+import me.ywork.context.CallContext;
+import me.ywork.controller.RestController;
+import me.ywork.page.PageData;
+import me.ywork.page.PageDataImpl;
+import me.ywork.page.PageRequest;
+import me.ywork.salary.enumeration.SalDetailShowType;
+import me.ywork.salary.model.SalCorpMbSalListModel;
+import me.ywork.salary.model.SalCorpReportModel;
+import me.ywork.salary.model.SalInfoDetailModel;
+import me.ywork.salary.model.SalStaffMbSalInfoModel;
+import me.ywork.salary.model.SalStaffSalReportModel;
+import me.ywork.salary.model.SalSysFieldItemModel;
+import me.ywork.salary.service.SalInfoService;
+import me.ywork.salary.service.SalReportService;
+import me.ywork.salary.util.ValidateUtils;
+/**
+ * 手机端的控制器
+ * 
+ */
+@Controller
+@RequestMapping(value = { "**/app/calsalary/mobile" })
+public class SalMbController extends RestController<SalInfoService> {
+
+	@Autowired
+	private SalReportService salReportService;
+	
+	@Autowired
+	private SalInfoService salInfoService;
+	
+	private static final Logger logger = LoggerFactory.getLogger(SalMbController.class);
+	
+    /**
+     *  获取员工所有工资月份
+     *  
+     * @param request
+     * @param response
+     */
+	@RequestMapping(value = "/getUserSalDates**" , method = RequestMethod.GET)
+	public void getUserSalDates(HttpServletRequest request, HttpServletResponse response){
+		CallContext callContext = this.getCallContext(request);
+		if(ValidateUtils.existCorpIdAndStaffId(callContext)==Boolean.FALSE){
+			logger.error("--getUserSalDates -- corpId or userId is null");
+			this.writeFailJsonToClient(response);
+			return;
+		}
+		String staffId = callContext.getUserId();
+		String corpId = callContext.getCorpId();
+		try{
+			List<SalCorpReportModel> salReportModels = salReportService.getUserSalDates(corpId , staffId);
+			this.writeSuccessJsonToClient(response, salReportModels);
+		}catch(Exception e){
+		      logger.error("getUserSalDates -- ".concat(corpId).concat("出现异常："),e);
+			  this.writeFailJsonToClient(response);
+		}		
+	}
+	 /**
+	  * 获取该月公司员工工资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param reportId 薪资报表的主键
+	 */
+	@RequestMapping(value = "/getUserSalDetail**" , method = RequestMethod.GET)
+	public void getUserSalDetail(HttpServletRequest request, HttpServletResponse response,
+			                                             @RequestParam(value = "reportId")String reportId){
+		CallContext callContext = this.getCallContext(request);
+		if(ValidateUtils.existCorpIdAndStaffId(callContext)==Boolean.FALSE){
+			logger.error("--getUserSalDetail -- corpId or userId is null");
+			this.writeFailJsonToClient(response);
+			return;
+		}
+		String staffId = callContext.getUserId();
+		String corpId =callContext.getCorpId();
+		try{
+			SalStaffMbSalInfoModel  salStaffMbSalInfo =  salReportService.getStaffMbSalInfo(corpId , staffId, reportId);
+			this.writeSuccessJsonToClient(response , salStaffMbSalInfo);
+		}catch(Exception e){
+		      logger.error("getUserSalDetail -- ".concat(corpId).concat("出现异常："),e);
+			  this.writeFailJsonToClient(response);
+		}			
+	}
+	
+	/**
+	 * 获取员工薪资详情的列表
+	 * 
+	 * @param request
+	 * @param response
+	 * @param reportId  月度新增报表的主键
+	 * @param pageNo
+	 * @param pageSize
+	 * @param totalCount
+	 */
+	@RequestMapping(value = "/getUserSalList**", method = RequestMethod.GET)
+	public void getSalaryDatailByMonthId(HttpServletRequest request, HttpServletResponse response,
+			                                                            @RequestParam(value = "reportId") String reportId,
+																		@RequestParam(value = "pageNo") Integer pageNo,
+																		@RequestParam(value = "pageSize") Integer pageSize,
+																		@RequestParam(value ="totalCount") Long totalCount) {
+		PageRequest pageable = new PageRequest(pageNo , pageSize , totalCount);
+		CallContext callContext = this.getCallContext(request);
+		if(ValidateUtils.existCorpIdAndStaffId(callContext)==Boolean.FALSE){
+			logger.error("--getUserSalList -- corpId or userId is null");
+			this.writeFailJsonToClient(response);
+			return;
+		}
+		String corpId = callContext.getCorpId();
+		logger.info("getUserSalList --".concat(corpId).concat("管理员请求得到薪资报表ID为：").concat(reportId).concat("的员工薪资数据"));
+		
+		SalCorpReportModel salCorpReportModel =	salReportService.getSalReportByReportId(reportId);
+		if(salCorpReportModel==null){
+			logger.error("--getUserSalList -- salCorpReportModel is null");
+			this.writeFailJsonToClient(response);
+			return;
+		}
+		try {
+			PageData<SalStaffSalReportModel> monthStaffModels = salReportService.getSalDatailByReportId(reportId,corpId,pageable);
+			if(monthStaffModels==null){
+				logger.error("--getUserSalList -- monthStaffModels is null");
+				this.writeFailJsonToClient(response);
+				return;
+			}
+			List<SalStaffSalReportModel> datas =monthStaffModels.getDatas();
+			if(datas==null){
+				logger.error("--getUserSalList -- datas is null");
+				this.writeFailJsonToClient(response);
+				return;
+			}
+			/**
+			 * 
+			 *  数字方面的都除以100
+			 * 
+			 */
+			Double actualSal=null;
+			Double replaceDeduct=null;
+			Double shouldPaySal=null;
+			Double salDeduct=null;
+			for(SalStaffSalReportModel salStaffSalReportModel:datas){
+				actualSal =salStaffSalReportModel.getActualSal();
+				replaceDeduct=salStaffSalReportModel.getReplaceDeduct();
+				shouldPaySal = salStaffSalReportModel.getShouldPaySal();
+				salDeduct = salStaffSalReportModel.getSalDeduct();
+				if(actualSal!=null){
+				   salStaffSalReportModel.setActualSal(actualSal/100);
+				}
+				if(replaceDeduct!=null){
+				   salStaffSalReportModel.setReplaceDeduct(replaceDeduct/100);
+				}
+				if(shouldPaySal!=null){
+				   salStaffSalReportModel.setShouldPaySal(shouldPaySal/100l);
+				}
+				if(salDeduct!=null){
+				   salStaffSalReportModel.setSalDeduct(salDeduct/100);
+				}					
+			}
+		   totalCount = monthStaffModels.getTotalCount();
+		  Integer totalPages = monthStaffModels.getTotalPages();
+		  SalCorpMbSalListModel salCorpMbSalListModel =new SalCorpMbSalListModel();
+		  salCorpMbSalListModel.setCorpId(corpId);
+		  salCorpMbSalListModel.setCreateDate(salCorpReportModel.getCreateDate());
+		  salCorpMbSalListModel.setDatas(datas);
+		  salCorpMbSalListModel.setShouldPaySal(salCorpReportModel.getShouldPaySal()/100);
+		  salCorpMbSalListModel.setFileUrl(salCorpReportModel.getFileUrl());
+		  salCorpMbSalListModel.setId(salCorpReportModel.getId());
+		  salCorpMbSalListModel.setInsuranceSal(salCorpReportModel.getInsuranceSal()/100);
+		  salCorpMbSalListModel.setModifiedDate(salCorpReportModel.getModifiedDate());
+		  salCorpMbSalListModel.setMonthTime(salCorpReportModel.getMonthTime());
+		  salCorpMbSalListModel.setStaffCost(salCorpReportModel.getStaffCost()/100);
+		  salCorpMbSalListModel.setPageNo(pageNo);
+		  salCorpMbSalListModel.setPageSize(pageSize);
+		  salCorpMbSalListModel.setTotalCount(totalCount);
+		  salCorpMbSalListModel.setTotalPages(totalPages);
+			this.writeSuccessJsonToClient(response, salCorpMbSalListModel);
+		} catch (Exception e) {
+		      logger.error("getUserSalList -- ".concat(corpId).concat("出现异常："),e);
+			   this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 获取所有月份的工资报表
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/getAllSalReports**", method = RequestMethod.GET)
+	public void getAllSalReports(HttpServletRequest request, HttpServletResponse response) {
+		CallContext callContext = this.getCallContext(request);
+		if(ValidateUtils.existCorpIdAndStaffId(callContext)==Boolean.FALSE){
+			logger.error("--getAllSalReports -- corpId or userId is null");
+			this.writeFailJsonToClient(response);
+			return;
+		}
+		String corpId = callContext.getCorpId();
+		try {
+			logger.info("开始获得钉钉企业号为：".concat(corpId).concat("的所有月份的工资报表"));
+			List<SalCorpReportModel> salReportModels = salReportService.getAllSalReports(corpId);
+			
+			/**
+			 * 
+			 *  对企业每月薪资涉及到数字方面的都除以100
+			 * 
+			 */
+			Double actualPaySal=null;
+			Double insuranceSal=null;
+			Double shouldPaySal=null;
+			Double staffPay=null;
+			for(SalCorpReportModel salCorpReportModel:salReportModels){
+				actualPaySal = salCorpReportModel.getActualPaySal();
+				insuranceSal = salCorpReportModel.getInsuranceSal();
+				shouldPaySal = salCorpReportModel.getShouldPaySal();
+				staffPay = salCorpReportModel.getStaffCost();
+				if(actualPaySal!=null){
+			    	salCorpReportModel.setActualPaySal(actualPaySal/100);
+				}
+				if(insuranceSal !=null){
+				   salCorpReportModel.setInsuranceSal(insuranceSal/100);
+				}
+				if(shouldPaySal !=null){
+				   salCorpReportModel.setShouldPaySal(shouldPaySal/100);
+				}
+				if(staffPay != null){
+					salCorpReportModel.setStaffCost(staffPay/100);
+				}
+			}
+			if(salReportModels!=null&&!salReportModels.isEmpty()){
+			   logger.info("getAllSalReports -- 钉钉号为".concat(corpId).concat("返回").concat(""+salReportModels.size()+"").concat("个月份的数据"));
+			}
+			this.writeSuccessJsonToClient(response, salReportModels);
+		} catch (Exception e) {
+		      logger.error("getAllSalReports -- ".concat(corpId).concat("出现异常："),e);
+			   this.writeFailJsonToClient(response);
+		}
+	}
+	
+	/**
+	 * 通过员工ID来获取该员工的薪资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param dingStaffId 员工钉钉ID
+	 * @param reportId  企业薪资报表的ID
+	 */
+	@RequestMapping(value = "/getSalInfosByStaffId**", method = RequestMethod.GET)
+	public void getSalaryInfosByStaffId(HttpServletRequest request, HttpServletResponse response,
+																	@RequestParam(value="reportId")String reportId) {
+		CallContext callContext = this.getCallContext(request);
+		if(ValidateUtils.existCorpIdAndStaffId(callContext)==Boolean.FALSE){
+			logger.error("--getSalInfosByStaffId -- corpId or userId is null");
+			this.writeFailJsonToClient(response);
+			return;
+		}
+		String corpId = callContext.getCorpId();
+		String dingStaffId=callContext.getUserId();
+		Short showTyppe=SalDetailShowType.MonthSalType.getCode();
+		try {
+			SalInfoDetailModel staffSalInfoDetailModel = salInfoService.getSalInfosByStaffId(corpId ,reportId,showTyppe, dingStaffId);
+			double itemValue =0.0;
+			List<SalSysFieldItemModel> sysFieldItemList  = staffSalInfoDetailModel.getItemModels();
+			for(SalSysFieldItemModel salSysFieldItem:sysFieldItemList){//循环将员工工资组成部分除以100
+				itemValue = salSysFieldItem.getItemValue();;
+				salSysFieldItem.setItemValue(itemValue/100);
+			}
+			staffSalInfoDetailModel.setItemModels(sysFieldItemList);
+			SalStaffMbSalInfoModel  salStaffMbSalInfoModel =salReportService.getStaffMbSalInfo(corpId,dingStaffId,reportId);
+			salStaffMbSalInfoModel.setDetail(sysFieldItemList);
+			this.writeSuccessJsonToClient(response, salStaffMbSalInfoModel);
+		} catch (Exception e) {
+		      logger.error("getSalInfosByStaffId -- ".concat(corpId).concat("出现异常："),e);
+			   this.writeFailJsonToClient(response);			
+		}
+	}
+	
+	
+	@Override
+	protected String getHomePageUrl(String param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected SalInfoService getService() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+}

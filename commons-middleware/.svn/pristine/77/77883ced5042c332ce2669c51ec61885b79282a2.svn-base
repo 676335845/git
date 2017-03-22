@@ -1,0 +1,20 @@
+package com.heyi.epc.message;
+
+import com.heyi.framework.messagebus.message.DefaultMessage;
+
+public class EpcKafkaMessage extends DefaultMessage implements EpcMessage{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4949388774193955160L;
+
+	protected Object source;
+
+	public Object getSource() {
+		return source;
+	}
+
+	public void setSource(Object source) {
+		this.source = source;
+	}
+}

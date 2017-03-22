@@ -1,0 +1,21 @@
+package com.heyi.epc.message;
+
+import com.heyi.framework.messagebus.message.OnsMessage;
+
+public class EpcOnsMessage extends OnsMessage implements EpcMessage{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4619535099112556463L;
+	
+	protected Object source;
+
+	public Object getSource() {
+		return source;
+	}
+
+	public void setSource(Object source) {
+		this.source = source;
+	}
+}

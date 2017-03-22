@@ -1,0 +1,165 @@
+package me.ywork.salary.controller;
+
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import me.ywork.controller.RestController;
+import me.ywork.page.PageData;
+import me.ywork.page.PageRequest;
+import me.ywork.salary.model.MonthStaffSalDetailModel;
+import me.ywork.salary.model.MonthStaffSalModel;
+import me.ywork.salary.model.MutiStaffInfoModel;
+import me.ywork.salary.model.SalaryReportModel;
+import me.ywork.salary.model.StaffSalInfoDetailModel;
+import me.ywork.salary.model.UpdateMutiStaffAttendanceModel;
+import me.ywork.salary.service.SalReportService;
+
+/**
+ * 
+ * 工资报表的控制器
+ *
+ **/
+@Controller
+@RequestMapping(value = { "**/app/calsalary/salreport" })
+public class SalReportController extends RestController<SalReportService> {
+
+	@Autowired
+	private SalReportService salReportService;
+
+	/**
+	 * 获取所有月份工资表概要:获取所有月份的工资表，分页展示
+	 * 
+	 * @param request
+	 * @param response
+	 * @param corpId
+	 *            钉钉企业号
+	 * @param pageable
+	 *            分页pageable
+	 */
+	@RequestMapping(value = "/getAllMonthSalaryies**", method = RequestMethod.GET)
+	public void getAllMonthSalaryies(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("corpId") String corpId) {
+		PageRequest pageable = new PageRequest(9, 10, 0);
+		try {
+			PageData<SalaryReportModel> salReportModels = salReportService.getAllMonthSalaryies(corpId, pageable);
+			this.writeSuccessJsonToClient(response, salReportModels);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 计算该月企业的薪资
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	public void caculateCorpSal(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("corpId") String corpId) {
+
+	}
+
+	/**
+	 * 获取该月份工资详情：根据工资表ID来获得该月的工资详情
+	 * 
+	 * @param request
+	 * @param response
+	 * @param monthSalId
+	 *            月度工作报表ID
+	 * @param pageable
+	 *            分页插件Pageable
+	 */
+	@RequestMapping(value = "/getSalDatailByReportId**", method = RequestMethod.GET)
+	public void getSalaryDatailByMonthId(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("reportId") String reportId) {
+		PageRequest pageable = new PageRequest(1, 10, 0);
+		try {
+			PageData<MonthStaffSalModel> monthStaffModels = salReportService.getSalaryDatailByMonthId(reportId,
+					pageable);
+			this.writeSuccessJsonToClient(response, monthStaffModels);
+		} catch (Exception e) {
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 锁定该月工资表：根据工资表ID来锁定该工资表
+	 * 
+	 * @param request
+	 * @param response
+	 * @param 工资报表主键
+	 * @param reportState
+	 *            更新的状态
+	 */
+	@RequestMapping(value = "/lockSalReportById**", method = RequestMethod.POST)
+	public void lockSalaryTablesByMonthId(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam(value = "salReportId") String reportId,
+			@RequestParam(value = "reportState") Short reportState) {
+		try {
+			Boolean updateRs = salReportService.lockSalaryTablesByMonthId(reportId, reportState);
+			this.writeSuccessJsonToClient(response, updateRs);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 获取选中人员该月工资详情(修改浮动款项):传递工资表ID和多个员工ID去返回多个员工的工资数据
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/getSelectedStaffSalDetail**", method = RequestMethod.POST)
+	public void getSelectedStaffSalaryDetail(HttpServletRequest request, HttpServletResponse response) {
+		MutiStaffInfoModel mutiStaffInfoModel = this.fromInputJson(request, MutiStaffInfoModel.class);
+		try {
+			List<MonthStaffSalDetailModel> monthStaffSalModels = salReportService.getSelectedStaffSalaryDetail(
+					mutiStaffInfoModel.getStaffIds(), mutiStaffInfoModel.getSalReportId());
+			this.writeSuccessJsonToClient(response, monthStaffSalModels);
+		} catch (Exception e) {
+			e.printStackTrace();
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	/**
+	 * 保存修改:具体员工的工资情况可以修改,向后台传递的是修改后的工资数据
+	 * 
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value = "/updateSalsOnStaffes**", method = RequestMethod.POST)
+	public void updateSalariesOnStaffes(HttpServletRequest request, HttpServletResponse response) {
+		UpdateMutiStaffAttendanceModel updateMutiStaffAttendanceModel = this.fromInputJson(request,
+				UpdateMutiStaffAttendanceModel.class);
+		try {
+			Boolean updateRs = null;
+			if (updateMutiStaffAttendanceModel != null) {
+				updateRs = salReportService
+						.updateSalariesOnStaffes(updateMutiStaffAttendanceModel.getMonthStaffSalDetailModels());
+			}
+			this.writeSuccessJsonToClient(response, updateRs);
+		} catch (Exception e) {
+			this.writeFailJsonToClient(response);
+		}
+	}
+
+	@Override
+	protected String getHomePageUrl(String param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected SalReportService getService() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

@@ -1,0 +1,34 @@
+			package me.ywork.salary.controller;
+			
+			import org.springframework.stereotype.Controller;
+			
+			
+			import org.springframework.web.bind.annotation.RequestMapping;
+			
+			import me.ywork.controller.RestController;
+			import me.ywork.salary.service.SalPassService;
+			import me.ywork.salary.service.SalRuleService;
+			
+			
+			/**
+			 *     
+			 *     密码管理的控制器
+			 *
+			 **/
+			@Controller
+			@RequestMapping(value = {  "**/app/calsalary/attendance" })
+			public class SalPassController  extends RestController<SalPassService> {
+			
+				@Override
+				protected String getHomePageUrl(String param) {
+					// TODO Auto-generated method stub
+					return null;
+				}
+			
+				@Override
+				protected SalPassService getService() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+			
+			}

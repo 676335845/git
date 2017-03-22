@@ -1,0 +1,15 @@
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\ResponsibleMessageKey.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\async\AsyncOperationListner.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\event\QueueEventHandler.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\config\MessageBusInitializer.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\service\ConsumerRefreshedEvent.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\DefaultTopicMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\DefaultResponsibleService.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\DefaultResponseFaultMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\async\AsyncOperation.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\Messages.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\service\ConsumerInitializer.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\consumer\DefaultMessageConsumer.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\PlatformEventMessage.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\error\ErrorHandler.java
+D:\workspace\dingding\commons-middleware\trunk\common-messagebus\src\main\java\com\heyi\framework\messagebus\message\responsible\DefaultResponseMessage.java
