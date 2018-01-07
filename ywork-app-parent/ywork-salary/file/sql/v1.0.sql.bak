@@ -4,7 +4,7 @@ CREATE TABLE `dingsal_sys_salrule` (
 	`sal_rule_des` VARCHAR(200) NOT NULL COMMENT '薪资规则描述 -- salRuleDes',
 	`sal_rule_name` VARCHAR(50) NOT NULL COMMENT '薪资规则的名字 -- salRuleName',
 	`sal_rule_type` INT(11) NULL DEFAULT NULL COMMENT '薪资规则的类型 正算是1 ，反算是0-- salRuleType ',
-	`create_date` DATETIME NOT NULL COMMENT '系统薪资规则创建1时间 -- createDate',
+	`create_date` DATETIME NOT NULL COMMENT '系统薪资规则创建时间 -- createDate',
 	`modified_date` DATETIME NOT NULL COMMENT '系统薪资规则更改时间 -- modifiedDate',
 	PRIMARY KEY (`id`)
 )
